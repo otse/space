@@ -1,18 +1,63 @@
 namespace space {
 
+	export var sectors, locations
+
+	function makeRequest(method, url) {
+		return new Promise(function (resolve, reject) {
+			var xhr = new XMLHttpRequest();
+			xhr.open(method, url);
+			xhr.onload = function () {
+				if (xhr.status >= 200 && xhr.status < 300) {
+					resolve(xhr.response);
+				} else {
+					reject({
+						status: xhr.status,
+						statusText: xhr.statusText
+					});
+				}
+			};
+			xhr.onerror = function () {
+				reject({
+					status: xhr.status,
+					statusText: xhr.statusText
+				});
+			};
+			xhr.send();
+		});
+	}
+
+	// Example:
+
 	export function init() {
-		askServer('whereami');
+
+		makeRequest('GET', 'sectors.json')
+		.then(function (res: any) {
+			console.log('got sectors');
+			sectors = JSON.parse(res);
+			return makeRequest('GET', 'locations.json');
+		})
+		.then(function (res: any) {
+			console.log('got locations');
+			locations = JSON.parse(res);
+			
+		}).catch(function (err) {
+			console.error('Augh, there was an error!', err.statusText);
+		});
+
+		askServer('sectors.json', (res) => sectors = JSON.parse(res));
+
+		askServer('whereami', receiveAnswer);
 
 	}
 
-	export function askServer(url) {
+	export function askServer(url, callback: (res) => any) {
 		console.log('space askServer', url);
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", url, true);
 		xhr.onload = function (e) {
 			if (xhr.readyState === 4) {
 				if (xhr.status === 200)
-					receiveAnswer(xhr.responseText);
+					callback(xhr.responseText);
 				else
 					console.error(xhr.statusText);
 			}
@@ -30,7 +75,7 @@ namespace space {
 		let input = <HTMLInputElement>document.getElementById('cli');
 		if (input == null)
 			return;
-		askServer(input.value);
+		askServer(input.value, receiveAnswer);
 		return false;
 	}
 
@@ -38,12 +83,14 @@ namespace space {
 		console.log('unpack res', res);
 		if (!res)
 			return;
-		type ServerAnswer = [string, any]
 		let answer: ServerAnswer = JSON.parse(res);
 		const type = answer[0];
 		if (type == 'where') {
-			let textHead = document.getElementById("textHead")!;
-			textHead.innerHTML = 'You are at '+answer[1].type;
+			if (answer[1].type == 'station')
+				layoutStation(answer);
+			else
+				console.warn(' unrecognized whereabout ');
+
 		}
 		/*let output = document.getElementById(object["dest"]);
 		if (output == null)
@@ -56,6 +103,12 @@ namespace space {
 		console.log('build large tile from', tile);
 		let gameBox = document.createElement('div');
 		gameBox.classList.toggle('gameBox');
+	}
+
+	function layoutStation(answer) {
+		let textHead = document.getElementById("textHead")!;
+
+		textHead.innerHTML = `You are at ${answer[1].type} ${answer[1].name}`;
 	}
 
 }

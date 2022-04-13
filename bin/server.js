@@ -17,9 +17,12 @@ const header = `
 <wut>
 `;
 const indent = ``;
-const locations = {};
+var sectors;
+var locations;
 function init() {
-    let mcf = JSON.parse(fs.readFileSync('mcf', 'utf8'));
+    let mcf = JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
+    let sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
+    let locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
     const WriteMcf = function () {
         mcf.writes++;
         fs.writeFileSync('mcf', JSON.stringify(mcf, null, 4));
@@ -86,9 +89,19 @@ function init() {
             res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
             Send(client);
         }
+        else if (req.url == '/sectors.json') {
+            res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
+            SendObject(sectors);
+        }
+        else if (req.url == '/locations.json') {
+            res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
+            SendObject(locations);
+        }
         else if (req.url == '/whereami') {
             console.log('received whereami');
-            SendTuple([['where'], { type: 'station' }]);
+            SendTuple([['where'], {
+                    location: 'darthwing'
+                }]);
         }
         else if (-1 < req.url.indexOf('/app/')) {
             let appId = req.url.split('app/')[1];
