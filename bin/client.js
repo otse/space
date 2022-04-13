@@ -1,17 +1,17 @@
-var steam_days;
-(function (steam_days) {
+var space;
+(function (space) {
     function init() {
-        Get('featured');
+        askServer('whereami');
     }
-    steam_days.init = init;
-    function Get(msg) {
-        console.log('steam_days Get', msg);
+    space.init = init;
+    function askServer(url) {
+        console.log('space askServer', url);
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", 'msg?=' + msg, true);
+        xhr.open("GET", url, true);
         xhr.onload = function (e) {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200)
-                    ReceiveMsg(xhr.responseText);
+                    receiveAnswer(xhr.responseText);
                 else
                     console.error(xhr.statusText);
             }
@@ -24,27 +24,24 @@ var steam_days;
         };
         xhr.send(null);
     }
-    steam_days.Get = Get;
+    space.askServer = askServer;
     function submit(event) {
         let input = document.getElementById('cli');
         if (input == null)
             return;
-        Get(input.value);
+        askServer(input.value);
         return false;
     }
-    steam_days.submit = submit;
-    function ReceiveMsg(res) {
+    space.submit = submit;
+    function receiveAnswer(res) {
         console.log('unpack res', res);
         if (!res)
             return;
-        let outMsg = JSON.parse(res);
-        const type = outMsg[0];
-        if (type == 'featured') {
-            for (let tile of outMsg[1]) {
-                console.log('show featured tiles');
-                //document.querySelectorAll('.my #awesome selector');
-                BuildLargeTile(tile);
-            }
+        let answer = JSON.parse(res);
+        const type = answer[0];
+        if (type == 'where') {
+            let textHead = document.getElementById("textHead");
+            textHead.innerHTML = 'You are at ' + answer[1].type;
         }
         /*let output = document.getElementById(object["dest"]);
         if (output == null)
@@ -56,29 +53,8 @@ var steam_days;
         console.log('build large tile from', tile);
         let gameBox = document.createElement('div');
         gameBox.classList.toggle('gameBox');
-        let dayCandles = document.createElement('div');
-        dayCandles.classList.toggle('dayCandles');
-        gameBox.appendChild(dayCandles);
-        let target = document.getElementsByClassName('featuredTiles')[0];
-        target === null || target === void 0 ? void 0 : target.appendChild(gameBox);
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        let clampedDays = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
-        let max = 99999999;
-        for (let day of days)
-            max = Math.max(tile.days[day]);
-        for (let day of days)
-            clampedDays[day] = tile.days[day] / max * 100.0;
-        for (let day of days) {
-            const plys = clampedDays[day];
-            console.log(`day ${day} has ${plys} plys`);
-            let dayCandle = document.createElement('div');
-            dayCandle.classList.toggle('dayCandle');
-            dayCandle.classList.toggle(day);
-            dayCandle.style.height = plys + '%';
-            dayCandles.appendChild(dayCandle);
-        }
     }
-})(steam_days || (steam_days = {}));
+})(space || (space = {}));
 function cls() {
 }
-window.steam_days = steam_days;
+window.space = space;

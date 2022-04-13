@@ -4,7 +4,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 const querystring = require('querystring');
-var format = require('date-format');
+//var format = require('date-format');
 
 const port = 2;
 
@@ -26,34 +26,25 @@ const indent = ``
 
 type appId = number;
 
-interface MainComputerFile {
-	writes: number;
-	webApiCalls: number;
-	tasksCompleted: number;
-	apps: App[];
-	//bills: Bill[];
+interface mcf {
+	writes: number
+	boo: number
 }
 
-interface App {
-	appId: number;
-	snapshots: Snapshot[];
-}
-
-interface Snapshot {
-	appId: number;
-	timeN: number;
+const locations = {
+	
 }
 
 function init() {
 
-	let mcf = <MainComputerFile>JSON.parse(fs.readFileSync('mcf', 'utf8'));
+	let mcf = <mcf>JSON.parse(fs.readFileSync('mcf', 'utf8'));
 
 	const WriteMcf = function () {
 		mcf.writes++;
 		fs.writeFileSync('mcf', JSON.stringify(mcf, null, 4));
 	}
 
-	const APICall = function (url: string) {
+	/*const APICall = function (url: string) {
 		// https://partner.steamgames.com/doc/webapi_overview/responses
 		const options =
 		{
@@ -73,26 +64,11 @@ function init() {
 		}).on("error", (err) => {
 			console.log("Error: " + err.message);
 		});
-	}
+	}*/
 
-	function packGame() {
-
-	}
 
 	// appid 261550 m&b wb
 
-	function GetApp(appId: number): App {
-		let found;
-		for (let app of mcf.apps) {
-			if (app.appId == appId) {
-				found = app;
-				console.log('found existing entry');
-			}
-		}
-		return found;
-	}
-
-	APICall('https://store.steampowered.com/appreviews/261550?json=1');
 	//apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
 
 	http.createServer(function (req, res) {
@@ -102,25 +78,25 @@ function init() {
 			res.end();
 		}
 
-		const SendObject = function (anything: any) {
+		const SendObject = function (anything: object) {
 			let str = JSON.stringify(anything);
 			Send(str);
 		}
 
-		function IncomingMsg(input: string) {
+		const SendTuple = function (anything: object) {
+			let str = JSON.stringify(anything);
+			Send(str);
+		}
+
+		function receiveOverride(input: string) {
 			console.log('Msg ', input);
 			let arg = input.split(' ');
 			if ('featured' == input) {
-				let value = [{ appId: 261550, days: { mon: 123, tue: 125, wed: 100, thu: 201, fri: 90, sat: 120, sun: 200 } }];
-				const outMsg: Msg = ['featured', value];
+				const outMsg = ['featured', 1];
 				SendObject(outMsg);
 			}
 			else
 				SendObject(['na', '']);
-		}
-
-		function Transmit() {
-
 		}
 
 		if (req.method !== 'GET') {
@@ -139,11 +115,19 @@ function init() {
 			res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
 			Send(client);
 		}
+		else if (req.url == '/whereami') {
+			console.log('received whereami');
+			
+			SendTuple([['where'], { type: 'station'}]);
+		}
 		else if (-1 < req.url.indexOf('/app/')) {
 			let appId = req.url.split('app/')[1];
 			console.log('ask app/', appId);
-			const app = GetApp(appId);
 			Send('woo app: ' + appId);
+		}
+		else if (-1 < req.url.indexOf('/getobject/')) {
+			let appId = req.url.split('getobject/')[1];
+			SendObject({ someObject: true });
 		}
 		else if (req.url == '/api/server/2/booking') {
 
@@ -152,7 +136,7 @@ function init() {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
 			const parsed = querystring.parse(req.url);
 			console.log(parsed);
-			IncomingMsg(parsed['/msg?']);
+			receiveOverride(parsed['/msg?']);
 		}
 		else {
 			res.end();

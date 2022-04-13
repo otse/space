@@ -1,17 +1,18 @@
-namespace steam_days {
+namespace space {
 
 	export function init() {
-		Get('featured');
+		askServer('whereami');
+
 	}
 
-	export function Get(msg) {
-		console.log('steam_days Get', msg);
+	export function askServer(url) {
+		console.log('space askServer', url);
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", 'msg?=' + msg, true);
+		xhr.open("GET", url, true);
 		xhr.onload = function (e) {
 			if (xhr.readyState === 4) {
 				if (xhr.status === 200)
-					ReceiveMsg(xhr.responseText);
+					receiveAnswer(xhr.responseText);
 				else
 					console.error(xhr.statusText);
 			}
@@ -29,22 +30,20 @@ namespace steam_days {
 		let input = <HTMLInputElement>document.getElementById('cli');
 		if (input == null)
 			return;
-		Get(input.value);
+		askServer(input.value);
 		return false;
 	}
 
-	function ReceiveMsg(res) {
+	function receiveAnswer(res) {
 		console.log('unpack res', res);
 		if (!res)
 			return;
-		let outMsg: Msg = JSON.parse(res);
-		const type = outMsg[0];
-		if (type == 'featured') {
-			for (let tile of outMsg[1]) {
-				console.log('show featured tiles');
-				//document.querySelectorAll('.my #awesome selector');
-				BuildLargeTile(tile);
-			}
+		type ServerAnswer = [string, any]
+		let answer: ServerAnswer = JSON.parse(res);
+		const type = answer[0];
+		if (type == 'where') {
+			let textHead = document.getElementById("textHead")!;
+			textHead.innerHTML = 'You are at '+answer[1].type;
 		}
 		/*let output = document.getElementById(object["dest"]);
 		if (output == null)
@@ -65,4 +64,4 @@ function cls() {
 
 }
 
-(window as any).steam_days = steam_days;
+(window as any).space = space;

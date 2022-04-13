@@ -8,16 +8,16 @@
             "dom",
             "es6"
         ],
-        "outDir": "../bin/",
+        "outDir": "bin/",
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "node",
         "strictNullChecks": true
     },
     "files": [
-        "space.d.ts"
+        "src/space.d.ts"
     ],
     "include": [
-        ".",
+        "src/",
         "util"
     ],
     "exclude": [
