@@ -148,7 +148,7 @@ namespace space {
 
 		if (location.facilities) {
 			if (location.facilities.indexOf("Refuel") > -1)
-				text += 'You can <span class="spanButton" onclick="space.transportSublocation("Refuel")">refuel</span> here <br />';
+				text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here <br />';
 		}
 		text += `</span>`;
 
@@ -179,7 +179,7 @@ namespace space {
 
 	export function transportSublocation(facility) {
 		
-		makeRequest('GET', 'transportSublocation?xx')
+		makeRequest('GET', 'knock&sublocation=refuel')
 		.then(function (res: any) {
 			console.log('returned from sublocation');
 			

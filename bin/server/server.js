@@ -79,8 +79,13 @@ function init() {
             let str = JSON.stringify(anything);
             Send(str);
         };
-        function receivedMsg(inputs) {
-            console.log('Msg ', inputs);
+        function receivedKnock(inputs) {
+            console.log('Knock ', inputs);
+            const sublocation = inputs.sublocation;
+            if (sublocation == 'refuel') {
+                player.sublocation = 'Refuel';
+                sendWhere();
+            }
             //let arg = input.split(' ');
         }
         if (req.method !== 'GET') {
@@ -112,15 +117,9 @@ function init() {
             sendWhere();
         }
         else if (req.url == '/returnSublocation') {
-            console.log('return from sublocation');
+            //console.log('return from sublocation');
             player.sublocation = 'None';
             sendWhere();
-        }
-        else if (req.url.substr(0, 5) == '/transportSublocation?') {
-            res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-            const parsed = querystring.parse(req.url);
-            console.log(parsed);
-            transportSublocation(parsed['/transportSublocation?']);
         }
         else if (-1 < req.url.indexOf('/app/')) {
             let appId = req.url.split('app/')[1];
@@ -133,11 +132,12 @@ function init() {
         }
         else if (req.url == '/api/server/2/booking') {
         }
-        else if (req.url.substr(0, 4) == '/msg') {
+        else if (req.url.search("/knock") == 0) {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             const parsed = querystring.parse(req.url);
+            // msg&boo&shu '/knock': '', boo: '', shu: ''
             console.log(parsed);
-            receivedMsg(parsed);
+            receivedKnock(parsed);
         }
         else {
             res.end();
