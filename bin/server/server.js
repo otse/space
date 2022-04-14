@@ -8,7 +8,7 @@ const querystring = require('querystring');
 const port = 2;
 const CONTENT_TYPE = 'Content-Type';
 const TEXT_HTML = 'text/html';
-const TEXT_JAVASCRIPT = 'text/javascript';
+const TEXT_JAVASCRIPT = 'application/javascript';
 const APPLICATION_JSON = 'application/json';
 const logo = `
 S(t)ream
@@ -51,6 +51,22 @@ function init() {
     // appid 261550 m&b wb
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
+        var player = {
+            sector: 'Great Suldani Belt',
+            location: 'Dartwing',
+            sublocation: 'None'
+        };
+        const sendWhere = function () {
+            SendTuple([['where'], {
+                    sector: player.sector,
+                    location: player.location,
+                    sublocation: player.sublocation
+                }]);
+        };
+        const transportSublocation = function (where) {
+            if (where == 'Refuel')
+                console.log('requesting refuel sublocation');
+        };
         const Send = function (str) {
             res.write(str);
             res.end();
@@ -63,15 +79,9 @@ function init() {
             let str = JSON.stringify(anything);
             Send(str);
         };
-        function receiveOverride(input) {
-            console.log('Msg ', input);
-            let arg = input.split(' ');
-            if ('featured' == input) {
-                const outMsg = ['featured', 1];
-                SendObject(outMsg);
-            }
-            else
-                SendObject(['na', '']);
+        function receivedMsg(inputs) {
+            console.log('Msg ', inputs);
+            //let arg = input.split(' ');
         }
         if (req.method !== 'GET') {
             res.end('boo');
@@ -84,8 +94,8 @@ function init() {
             res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
             Send(page);
         }
-        else if (req.url == '/client.js') {
-            let client = fs.readFileSync('client.js');
+        else if (req.url == '/bundle.js') {
+            let client = fs.readFileSync('bundle.js');
             res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
             Send(client);
         }
@@ -99,9 +109,18 @@ function init() {
         }
         else if (req.url == '/whereami') {
             console.log('received whereami');
-            SendTuple([['where'], {
-                    location: 'darthwing'
-                }]);
+            sendWhere();
+        }
+        else if (req.url == '/returnSublocation') {
+            console.log('return from sublocation');
+            player.sublocation = 'None';
+            sendWhere();
+        }
+        else if (req.url.substr(0, 5) == '/transportSublocation?') {
+            res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
+            const parsed = querystring.parse(req.url);
+            console.log(parsed);
+            transportSublocation(parsed['/transportSublocation?']);
         }
         else if (-1 < req.url.indexOf('/app/')) {
             let appId = req.url.split('app/')[1];
@@ -114,11 +133,11 @@ function init() {
         }
         else if (req.url == '/api/server/2/booking') {
         }
-        else if (req.url.substr(0, 5) == '/msg?') {
+        else if (req.url.substr(0, 4) == '/msg') {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             const parsed = querystring.parse(req.url);
             console.log(parsed);
-            receiveOverride(parsed['/msg?']);
+            receivedMsg(parsed);
         }
         else {
             res.end();

@@ -11,7 +11,7 @@ const port = 2;
 const CONTENT_TYPE = 'Content-Type';
 
 const TEXT_HTML = 'text/html';
-const TEXT_JAVASCRIPT = 'text/javascript';
+const TEXT_JAVASCRIPT = 'application/javascript';
 const APPLICATION_JSON = 'application/json';
 
 const logo = `
@@ -26,8 +26,9 @@ const indent = ``
 
 type appId = number;
 
-var sectors: Sectors
-var locations: Locations
+
+var sectors
+var locations
 
 interface MainComputerFile {
 	writes: number
@@ -38,8 +39,8 @@ function init() {
 
 	let mcf = <MainComputerFile>JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
 
-	let sectors = <Sectors>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
-	let locations = <Locations>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
+	let sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
+	let locations = <any>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
 
 	const WriteMcf = function () {
 		mcf.writes++;
@@ -75,6 +76,26 @@ function init() {
 
 	http.createServer(function (req, res) {
 
+		var player = {
+			sector: 'Great Suldani Belt',
+			location: 'Dartwing',
+			sublocation: 'None'
+		};
+
+		const sendWhere = function() {
+			SendTuple([['where'], {
+				sector: player.sector,
+				location: player.location,
+				sublocation: player.sublocation
+			}]);
+		}
+
+		const transportSublocation = function(where) {
+			if (where == 'Refuel')
+				console.log('requesting refuel sublocation');
+				
+		}
+
 		const Send = function (str: string) {
 			res.write(str);
 			res.end();
@@ -90,15 +111,9 @@ function init() {
 			Send(str);
 		}
 
-		function receiveOverride(input: string) {
-			console.log('Msg ', input);
-			let arg = input.split(' ');
-			if ('featured' == input) {
-				const outMsg = ['featured', 1];
-				SendObject(outMsg);
-			}
-			else
-				SendObject(['na', '']);
+		function receivedMsg(inputs: string) {
+			console.log('Msg ', inputs);
+			//let arg = input.split(' ');
 		}
 
 		if (req.method !== 'GET') {
@@ -112,8 +127,8 @@ function init() {
 			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
 			Send(page);
 		}
-		else if (req.url == '/client.js') {
-			let client = fs.readFileSync('client.js');
+		else if (req.url == '/bundle.js') {
+			let client = fs.readFileSync('bundle.js');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
 			Send(client);
 		}
@@ -128,9 +143,20 @@ function init() {
 		else if (req.url == '/whereami') {
 			console.log('received whereami');
 			
-			SendTuple([['where'], {
-				location: 'darthwing'
-			}]);
+			sendWhere();
+		}
+		else if (req.url == '/returnSublocation') {
+			console.log('return from sublocation');
+			
+			player.sublocation = 'None';
+
+			sendWhere();
+		}
+		else if (req.url.substr(0, 5) == '/transportSublocation?') {
+			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
+			const parsed = querystring.parse(req.url);
+			console.log(parsed);
+			transportSublocation(parsed['/transportSublocation?']);
 		}
 		else if (-1 < req.url.indexOf('/app/')) {
 			let appId = req.url.split('app/')[1];
@@ -144,11 +170,11 @@ function init() {
 		else if (req.url == '/api/server/2/booking') {
 
 		}
-		else if (req.url.substr(0, 5) == '/msg?') {
+		else if (req.url.substr(0, 4) == '/msg') {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
 			const parsed = querystring.parse(req.url);
 			console.log(parsed);
-			receiveOverride(parsed['/msg?']);
+			receivedMsg(parsed);
 		}
 		else {
 			res.end();

@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Dartwing",
+        "type": "Station",
+        "color": "#c4a5c4",
+        "facilities": [
+            "Refuel"
+        ]
+    },
+    {
+        "name": "Trawler Collision",
+        "type": "Debris"
+    }
+]
