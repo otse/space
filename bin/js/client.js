@@ -17,6 +17,10 @@ var space;
                 return sector;
         //console.warn("sector doesnt exist");
     }
+    function getSublocationDescription(sublocation) {
+        if (sublocation == 'Refuel')
+            return 'You are at a refuelling bay.';
+    }
     function makeRequest(method, url) {
         return new Promise(function (resolve, reject) {
             var xhr = new XMLHttpRequest();
@@ -100,8 +104,8 @@ var space;
         let answer = JSON.parse(res);
         const type = answer[0];
         if (type == 'where') {
-            const location = getLocationByName(answer[1].location);
-            if (answer[1].sublocation == 'Refuel') {
+            const location = getLocationByName(answer[1].where.location);
+            if (answer[1].where.sublocation == 'Refuel') {
                 layoutRefuel(answer);
                 console.log(answer[1]);
             }
@@ -114,29 +118,41 @@ var space;
         let gameBox = document.createElement('div');
         gameBox.classList.toggle('gameBox');
     }
+    function breadcrumbs(where) {
+        const sector = getSectorByName(where.sector);
+        const location = getLocationByName(where.location);
+        let text = `
+		You are in the <span class="sector">${sector.name}</span>
+		/ <span class="location" style="colors: ${location.color || "inherit"} ">${location.name}
+		(${location.type})</span>
+		`;
+        if (where.sublocation != 'None') {
+            text += '<p>';
+            //text +=`/ <span class="sublocation">${where.sublocation}</span>`;
+            text += getSublocationDescription(where.sublocation);
+        }
+        return text;
+    }
     function layoutStation(answer) {
         let textHead = document.getElementById("textHead");
-        const sector = getSectorByName(answer[1].sector);
-        const location = getLocationByName(answer[1].location);
-        let text = `
-			You are in the <span class="sector">${sector.name}</span>
-			/ <span class="location" style="colors: ${location.color || "inherit"} ">${location.name}
-			(${location.type})</span>
-			`;
+        const where = answer[1].where;
+        const sector = getSectorByName(where.sector);
+        const location = getLocationByName(where.location);
+        let text = breadcrumbs(where);
         text += `<p>`;
         text += `<span class="facilities">`;
         if (location.facilities) {
             if (location.facilities.indexOf("Refuel") > -1)
-                text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here <br />';
+                text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here.';
         }
         text += `</span>`;
         textHead.innerHTML = text;
     }
     function layoutRefuel(answer) {
         let textHead = document.getElementById("textHead");
-        let text = `
-
-		`;
+        const where = answer[1].where;
+        let text = breadcrumbs(where);
+        text += '<p>';
         text += '<span class="spanButton" onclick="space.returnSublocation()">Go back to Station?</span>';
         textHead.innerHTML = text;
     }

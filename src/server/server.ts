@@ -76,24 +76,28 @@ function init() {
 
 	http.createServer(function (req, res) {
 
+		console.log('request from ', req.socket.remoteAddress);
+		
 		var player = {
 			sector: 'Great Suldani Belt',
 			location: 'Dartwing',
 			sublocation: 'None'
 		};
 
-		const sendWhere = function() {
+		const sendWhere = function () {
 			SendTuple([['where'], {
-				sector: player.sector,
-				location: player.location,
-				sublocation: player.sublocation
+				where: {
+					sector: player.sector,
+					location: player.location,
+					sublocation: player.sublocation
+				}
 			}]);
 		}
 
-		const transportSublocation = function(where) {
+		const transportSublocation = function (where) {
 			if (where == 'Refuel')
 				console.log('requesting refuel sublocation');
-				
+
 		}
 
 		const Send = function (str: string) {
@@ -112,14 +116,14 @@ function init() {
 		}
 
 		function receivedKnock(inputs: any) {
-			console.log('Knock ', inputs);
+			//console.log('Knock ', inputs);
 
 			const sublocation = inputs.sublocation;
 			if (sublocation == 'refuel') {
 				player.sublocation = 'Refuel';
 				sendWhere();
-			}				
-			
+			}
+
 			//let arg = input.split(' ');
 		}
 
@@ -149,7 +153,7 @@ function init() {
 		}
 		else if (req.url == '/whereami') {
 			console.log('received whereami');
-			
+
 			sendWhere();
 		}
 		else if (req.url == '/returnSublocation') {
@@ -173,7 +177,7 @@ function init() {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
 			const parsed = querystring.parse(req.url);
 			// msg&boo&shu '/knock': '', boo: '', shu: ''
-			console.log(parsed);
+			//console.log(parsed);
 			receivedKnock(parsed);
 		}
 		else {

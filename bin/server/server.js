@@ -51,6 +51,7 @@ function init() {
     // appid 261550 m&b wb
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
+        console.log('request from ', req.socket.remoteAddress);
         var player = {
             sector: 'Great Suldani Belt',
             location: 'Dartwing',
@@ -58,9 +59,11 @@ function init() {
         };
         const sendWhere = function () {
             SendTuple([['where'], {
-                    sector: player.sector,
-                    location: player.location,
-                    sublocation: player.sublocation
+                    where: {
+                        sector: player.sector,
+                        location: player.location,
+                        sublocation: player.sublocation
+                    }
                 }]);
         };
         const transportSublocation = function (where) {
@@ -80,7 +83,7 @@ function init() {
             Send(str);
         };
         function receivedKnock(inputs) {
-            console.log('Knock ', inputs);
+            //console.log('Knock ', inputs);
             const sublocation = inputs.sublocation;
             if (sublocation == 'refuel') {
                 player.sublocation = 'Refuel';
@@ -136,7 +139,7 @@ function init() {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             const parsed = querystring.parse(req.url);
             // msg&boo&shu '/knock': '', boo: '', shu: ''
-            console.log(parsed);
+            //console.log(parsed);
             receivedKnock(parsed);
         }
         else {
