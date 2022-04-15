@@ -1,9 +1,12 @@
 {
-    "id": 12,
-    "ip": "1",
-    "unregistered": true,
+    "id": 32,
+    "ip": "N/A",
+    "name": "asdff",
+    "password": "asdf",
+    "speed": 1,
+    "unregistered": false,
     "flight": false,
-    "flightLocation": "Midsection",
+    "flightLocation": "",
     "position": [
         0,
         0

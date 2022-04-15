@@ -54,7 +54,8 @@ interface Ply {
 var main_computer_file
 var sectors
 var locations
-var ips_logged_in
+var remembrance_table = {}
+var ips_logged_in: {} = {}
 var players: Ply[]
 
 
@@ -66,7 +67,13 @@ interface MainComputerFile {
 
 export function writeMcf() {
 	main_computer_file.writes++;
-	fs.writeFileSync('mcf.json', JSON.stringify(main_computer_file, null, 4));
+	const payload = JSON.stringify(main_computer_file, null, 4);
+	fs.writeFileSync('mcf.json', payload);
+}
+
+export function write_ips_logged_in() {
+	const payload = JSON.stringify(ips_logged_in, null, 4);
+	fs.writeFileSync('ips_logged_in.json', payload);
 }
 
 export function writePly(ply: Ply) {
@@ -94,7 +101,7 @@ export function plyPath(username) {
 	return `players/${username}.json`;
 }
 
-var ipPlys = {};
+var unregisteredPlys = {};
 
 export function plyTempl() {
 	main_computer_file.players++;
@@ -121,13 +128,33 @@ export function getPly(ip) {
 
 	let ply: Ply;
 
-	if (ipPlys[cleanIp]) {
-		ply = ipPlys[cleanIp];
-		console.log('got ply safely from table');
+	if (ips_logged_in[`${cleanIp}`]) {
+		//console.log('this ip is remembered to be logged in');
+
+		const username = ips_logged_in[`${cleanIp}`];
+
+		if (remembrance_table[username]) {
+			//console.log('we have remembrance this server session');
+
+			ply = remembrance_table[username];
+		}
+		else {
+			console.log('we dont have a remembrance this server session');
+
+			const path = `players/${username}.json`;
+
+			ply = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+			remembrance_table[username] = ply;
+		}
+	}
+	else if (unregisteredPlys[`${cleanIp}`]) {
+		ply = unregisteredPlys[`${cleanIp}`];
+		console.log('got ply safely from unregistered table');
 	}
 	else {
 		if (fs.existsSync(unregisteredPath(cleanIp)))
-			ply = ipPlys[cleanIp] = JSON.parse(fs.readFileSync(unregisteredPath(cleanIp), 'utf8'));
+			ply = unregisteredPlys[`${cleanIp}`] = JSON.parse(fs.readFileSync(unregisteredPath(cleanIp), 'utf8'));
 		else {
 			ply = plyTempl();
 			ply.unregistered = true;
@@ -145,7 +172,7 @@ function init() {
 
 	sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
 	locations = <any>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
-	//ips_logged_in = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+	ips_logged_in = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
 
 	//apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
 
@@ -153,7 +180,17 @@ function init() {
 
 		// console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
 
+		const ip = sanitizeIp(req.socket.remoteAddress);
+
 		let ply = getPly(req.socket.remoteAddress);
+
+		const sendSply = function () {
+			sendStuple([['sply'], {
+				id: ply.id,
+				name: ply.name,
+				unregistered: ply.unregistered
+			}]);
+		}
 
 		const sendSwhere = function () {
 			if (ply.flight) {
@@ -206,11 +243,12 @@ function init() {
 		}
 
 		if (req.url == '/login' && req.method == 'POST') {
-			console.log('received post login');
 			let body = '';
+
 			req.on('data', function (chunk) {
 				body += chunk;
 			});
+
 			req.on('end', function () {
 				const parsed = qs.parse(body);
 
@@ -225,11 +263,18 @@ function init() {
 				const path = `players/${username}.json`;
 
 				if (fs.existsSync(path)) {
-					console.log('this file exists');
+
 					ply = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+					remembrance_table[`${username}`] = ply;
+
 					if (ply.password == password) {
 						res.writeHead(200);
 						res.end('success');
+						console.log(`ips_logged_in[${ip}] = ${ply.name}`);
+
+						ips_logged_in[`${ip}`] = ply.name;
+						write_ips_logged_in();
 					}
 					else {
 						res.writeHead(400);
@@ -251,15 +296,25 @@ function init() {
 			req.on('data', function (chunk) {
 				body += chunk;
 			});
+
 			req.on('end', function () {
 				const parsed = qs.parse(body);
 
 				console.log(body);
 
+				const regex = /[a-zA-Z]/;
+
+				const doesItHaveLetter = regex.test(parsed['username']);
+
 				var letterNumber = /^[0-9a-zA-Z]+$/;
+
 				if (!parsed['username'].match(letterNumber)) {
 					res.writeHead(400);
 					res.end('username not alpha numeric');
+				}
+				else if (!doesItHaveLetter) {
+					res.writeHead(400);
+					res.end('need at least one letter');
 				}
 				else if (parsed['username'].length < 4) {
 					res.writeHead(400);
@@ -331,10 +386,29 @@ function init() {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
 			sendObject(locations);
 		}
-		else if (req.url == '/getwhere') {
-			console.log('got getwhere');
+
+		else if (req.url == '/where') {
+			console.log('got where');
 
 			sendSwhere();
+		}
+		else if (req.url == '/ply') {
+			console.log('get ply');
+			
+			sendSply();
+		}
+		else if (req.url == '/logout') {
+			console.log('going to log you out');
+			if (ips_logged_in[`${ip}`]) {
+				delete ips_logged_in[`${ip}`];
+				write_ips_logged_in();
+				res.end('logged you out');
+			}
+			else
+			{
+				res.end(`you're not in the logged in table`);
+			}
+			
 		}
 		else if (req.url.search('/submitFlight') == 0) {
 			console.log('received flight');

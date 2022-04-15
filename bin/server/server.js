@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPly = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.writeMcf = void 0;
+exports.getPly = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -31,13 +31,20 @@ const indent = ``;
 var main_computer_file;
 var sectors;
 var locations;
-var ips_logged_in;
+var remembrance_table = {};
+var ips_logged_in = {};
 var players;
 function writeMcf() {
     main_computer_file.writes++;
-    fs.writeFileSync('mcf.json', JSON.stringify(main_computer_file, null, 4));
+    const payload = JSON.stringify(main_computer_file, null, 4);
+    fs.writeFileSync('mcf.json', payload);
 }
 exports.writeMcf = writeMcf;
+function write_ips_logged_in() {
+    const payload = JSON.stringify(ips_logged_in, null, 4);
+    fs.writeFileSync('ips_logged_in.json', payload);
+}
+exports.write_ips_logged_in = write_ips_logged_in;
 function writePly(ply) {
     console.log('writing ply ', ply.id);
     let payload = JSON.stringify(ply, null, 4);
@@ -61,7 +68,7 @@ function plyPath(username) {
     return `players/${username}.json`;
 }
 exports.plyPath = plyPath;
-var ipPlys = {};
+var unregisteredPlys = {};
 function plyTempl() {
     main_computer_file.players++;
     writeMcf();
@@ -84,13 +91,27 @@ exports.plyTempl = plyTempl;
 function getPly(ip) {
     let cleanIp = sanitizeIp(ip);
     let ply;
-    if (ipPlys[cleanIp]) {
-        ply = ipPlys[cleanIp];
-        console.log('got ply safely from table');
+    if (ips_logged_in[`${cleanIp}`]) {
+        //console.log('this ip is remembered to be logged in');
+        const username = ips_logged_in[`${cleanIp}`];
+        if (remembrance_table[username]) {
+            //console.log('we have remembrance this server session');
+            ply = remembrance_table[username];
+        }
+        else {
+            console.log('we dont have a remembrance this server session');
+            const path = `players/${username}.json`;
+            ply = JSON.parse(fs.readFileSync(path, 'utf8'));
+            remembrance_table[username] = ply;
+        }
+    }
+    else if (unregisteredPlys[`${cleanIp}`]) {
+        ply = unregisteredPlys[`${cleanIp}`];
+        console.log('got ply safely from unregistered table');
     }
     else {
         if (fs.existsSync(unregisteredPath(cleanIp)))
-            ply = ipPlys[cleanIp] = JSON.parse(fs.readFileSync(unregisteredPath(cleanIp), 'utf8'));
+            ply = unregisteredPlys[`${cleanIp}`] = JSON.parse(fs.readFileSync(unregisteredPath(cleanIp), 'utf8'));
         else {
             ply = plyTempl();
             ply.unregistered = true;
@@ -105,11 +126,19 @@ function init() {
     main_computer_file = JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
     sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
     locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
-    //ips_logged_in = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+    ips_logged_in = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
         // console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
+        const ip = sanitizeIp(req.socket.remoteAddress);
         let ply = getPly(req.socket.remoteAddress);
+        const sendSply = function () {
+            sendStuple([['sply'], {
+                    id: ply.id,
+                    name: ply.name,
+                    unregistered: ply.unregistered
+                }]);
+        };
         const sendSwhere = function () {
             if (ply.flight) {
                 sendStuple([['flight'], {
@@ -153,7 +182,6 @@ function init() {
             //let arg = input.split(' ');
         }
         if (req.url == '/login' && req.method == 'POST') {
-            console.log('received post login');
             let body = '';
             req.on('data', function (chunk) {
                 body += chunk;
@@ -167,11 +195,14 @@ function init() {
                 //	console.log('this is not your windows frend');
                 const path = `players/${username}.json`;
                 if (fs.existsSync(path)) {
-                    console.log('this file exists');
                     ply = JSON.parse(fs.readFileSync(path, 'utf8'));
+                    remembrance_table[`${username}`] = ply;
                     if (ply.password == password) {
                         res.writeHead(200);
                         res.end('success');
+                        console.log(`ips_logged_in[${ip}] = ${ply.name}`);
+                        ips_logged_in[`${ip}`] = ply.name;
+                        write_ips_logged_in();
                     }
                     else {
                         res.writeHead(400);
@@ -193,10 +224,16 @@ function init() {
             req.on('end', function () {
                 const parsed = qs.parse(body);
                 console.log(body);
+                const regex = /[a-zA-Z]/;
+                const doesItHaveLetter = regex.test(parsed['username']);
                 var letterNumber = /^[0-9a-zA-Z]+$/;
                 if (!parsed['username'].match(letterNumber)) {
                     res.writeHead(400);
                     res.end('username not alpha numeric');
+                }
+                else if (!doesItHaveLetter) {
+                    res.writeHead(400);
+                    res.end('need at least one letter');
                 }
                 else if (parsed['username'].length < 4) {
                     res.writeHead(400);
@@ -262,9 +299,24 @@ function init() {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             sendObject(locations);
         }
-        else if (req.url == '/getwhere') {
-            console.log('got getwhere');
+        else if (req.url == '/where') {
+            console.log('got where');
             sendSwhere();
+        }
+        else if (req.url == '/ply') {
+            console.log('get ply');
+            sendSply();
+        }
+        else if (req.url == '/logout') {
+            console.log('going to log you out');
+            if (ips_logged_in[`${ip}`]) {
+                delete ips_logged_in[`${ip}`];
+                write_ips_logged_in();
+                res.end('logged you out');
+            }
+            else {
+                res.end(`you're not in the logged in table`);
+            }
         }
         else if (req.url.search('/submitFlight') == 0) {
             console.log('received flight');

@@ -5,6 +5,7 @@ var space;
     // comment
     pts;
     aabb2;
+    var sply; // = { name: 'Captain', unregistered: true }
     space.ply = {
         id: 0,
         unregistered: true,
@@ -76,12 +77,19 @@ var space;
         getInitTrios();
     }
     space.init = init;
+    function fetchSply() {
+        makeRequest('GET', 'ply').then(function (res) {
+            receiveStuple(res);
+        });
+    }
+    space.fetchSply = fetchSply;
     function showLoginOrRegister() {
         let textHead = document.getElementById("mainDiv");
         let text = `
-		<span class="spanButton" onclick="space.showLogin()">login</span>
+		<span class="spanButton" onclick="space.showLogin()">login</span>,
+		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
-		<span class="spanButton" onclick="space.showRegister()">register</span>?
+		<span class="spanButton" onclick="space.showRegister()">register</span>
 
 		`;
         textHead.innerHTML = text;
@@ -96,35 +104,35 @@ var space;
             .then(function (res) {
             console.log('got locations');
             space.locations = JSON.parse(res);
-            return makeRequest('GET', 'getwhere');
+            return makeRequest('GET', 'ply');
         })
             .then(function (res) {
-            //console.log('got whereami');
             receiveStuple(res);
-        }).catch(function (err) {
-            console.error('Augh, there was an error!', err.statusText);
-        });
-        makeRequest('GET', 'sectors.json')
+            return makeRequest('GET', 'where');
+        })
             .then(function (res) {
-            console.log('got sectors');
-            space.sectors = JSON.parse(res);
-            return makeRequest('GET', 'locations.json');
+            receiveStuple(res);
         });
+        /*.catch(function (err) {
+            console.error('Augh, there was an error!', err.statusText);
+        });*/
     }
     function receiveStuple(res) {
-        console.log('receiveStuple');
-        if (!res)
-            return;
         let stuple = JSON.parse(res);
         const type = stuple[0];
-        if (type == 'flight') {
+        const payload = stuple[1];
+        console.log('received stuple type', type);
+        if (type == 'sply') {
+            sply = payload;
+        }
+        else if (type == 'flight') {
             // we are nowhere, in flight
             layoutFlight(stuple);
         }
-        if (type == 'swhere') {
-            const sector = getSectorByName(stuple[1].swhere.sectorName);
-            const location = getLocationByName(stuple[1].swhere.locationName);
-            if (stuple[1].swhere.sublocation == 'Refuel') {
+        else if (type == 'swhere') {
+            const sector = getSectorByName(payload.swhere.sectorName);
+            const location = getLocationByName(payload.swhere.locationName);
+            if (payload.swhere.sublocation == 'Refuel') {
                 layoutRefuel(stuple);
                 //console.log(answer[1]);
             }
@@ -143,10 +151,10 @@ var space;
         let text = '';
         text += `
 		<p class="smallish">`;
-        if (space.ply.unregistered)
+        if (sply.unregistered)
             text += `[Playing via ip (unregistered).]`;
         else
-            text += `[You are player #${space.ply.id}]`;
+            text += `[You are player #${sply.id}, ${sply.name}]`;
         text += `<p>`;
         text += `
 		You are in the <span class="sector">${sector.name}</span>
@@ -272,6 +280,13 @@ var space;
         });
     }
     space.transportSublocation = transportSublocation;
+    function logout() {
+        makeRequest('GET', 'logout')
+            .then(function (res) {
+            alert(res);
+        });
+    }
+    space.logout = logout;
     function xhrLogin() {
         let username = document.getElementById("username").value;
         let password = document.getElementById("password").value;
@@ -284,7 +299,12 @@ var space;
         http.onreadystatechange = function () {
             if (http.readyState == 4 && http.status == 200) {
                 alert(http.responseText);
-                makeRequest('GET', 'getwhere').then(function (res) {
+                makeRequest('GET', 'ply')
+                    .then(function (res) {
+                    receiveStuple(res);
+                    return makeRequest('GET', 'where');
+                })
+                    .then(function (res) {
                     receiveStuple(res);
                 });
             }
@@ -309,9 +329,6 @@ var space;
             if (http.readyState == 4 && http.status == 200) {
                 alert(http.responseText);
                 showLogin();
-                /*makeRequest('GET', 'getwhere').then(function (res: any) {
-                    receiveStuple(res);
-                });*/
             }
             else if (http.readyState == 4 && http.status == 400) {
                 alert(http.responseText);

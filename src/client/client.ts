@@ -19,6 +19,8 @@ namespace space {
 		where: Where
 	}
 
+	var sply;// = { name: 'Captain', unregistered: true }
+
 	export var ply: Ply = {
 		id: 0,
 		unregistered: true,
@@ -107,13 +109,20 @@ namespace space {
 
 	}
 
+	export function fetchSply() {
+		makeRequest('GET', 'ply').then(function (res: any) {
+			receiveStuple(res);
+		});
+	}
+
 	function showLoginOrRegister() {
 		let textHead = document.getElementById("mainDiv")!;
 
 		let text = `
-		<span class="spanButton" onclick="space.showLogin()">login</span>
+		<span class="spanButton" onclick="space.showLogin()">login</span>,
+		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
-		<span class="spanButton" onclick="space.showRegister()">register</span>?
+		<span class="spanButton" onclick="space.showRegister()">register</span>
 
 		`;
 		textHead.innerHTML = text;
@@ -129,42 +138,44 @@ namespace space {
 			.then(function (res: any) {
 				console.log('got locations');
 				locations = JSON.parse(res);
-				return makeRequest('GET', 'getwhere');
+				return makeRequest('GET', 'ply');
 			})
 			.then(function (res: any) {
-				//console.log('got whereami');
 				receiveStuple(res);
-			}).catch(function (err) {
-				console.error('Augh, there was an error!', err.statusText);
-			});
-
-		makeRequest('GET', 'sectors.json')
-			.then(function (res: any) {
-				console.log('got sectors');
-				sectors = JSON.parse(res);
-				return makeRequest('GET', 'locations.json');
+				return makeRequest('GET', 'where');
 			})
+			.then(function (res: any) {
+				receiveStuple(res);
+			})
+		/*.catch(function (err) {
+			console.error('Augh, there was an error!', err.statusText);
+		});*/
+
 	}
 
 	function receiveStuple(res) {
-		console.log('receiveStuple');
-		if (!res)
-			return;
 
 		let stuple: Stuple = JSON.parse(res);
 
 		const type = stuple[0];
+		const payload = stuple[1];
 
-		if (type == 'flight') {
+		console.log('received stuple type', type);
+
+		if (type == 'sply') {
+			sply = payload;
+		}
+
+		else if (type == 'flight') {
 			// we are nowhere, in flight
 			layoutFlight(stuple);
 		}
 
-		if (type == 'swhere') {
-			const sector = getSectorByName(stuple[1].swhere.sectorName);
-			const location = getLocationByName(stuple[1].swhere.locationName);
+		else if (type == 'swhere') {
+			const sector = getSectorByName(payload.swhere.sectorName);
+			const location = getLocationByName(payload.swhere.locationName);
 
-			if (stuple[1].swhere.sublocation == 'Refuel') {
+			if (payload.swhere.sublocation == 'Refuel') {
 				layoutRefuel(stuple);
 				//console.log(answer[1]);
 			}
@@ -189,10 +200,10 @@ namespace space {
 		text += `
 		<p class="smallish">`;
 
-		if (ply.unregistered)
+		if (sply.unregistered)
 			text += `[Playing via ip (unregistered).]`;
 		else
-			text += `[You are player #${ply.id}]`;
+			text += `[You are player #${sply.id}, ${sply.name}]`;
 
 		text += `<p>`;
 
@@ -362,6 +373,13 @@ namespace space {
 			});
 	}
 
+	export function logout() {
+		makeRequest('GET', 'logout')
+		.then(function (res: any) {
+			alert(res);
+		})
+	}
+
 	export function xhrLogin() {
 		let username = (<any>document.getElementById("username")!).value;
 		let password = (<any>document.getElementById("password"))!.value;
@@ -378,9 +396,15 @@ namespace space {
 		http.onreadystatechange = function () {//Call a function when the state changes.
 			if (http.readyState == 4 && http.status == 200) {
 				alert(http.responseText);
-				makeRequest('GET', 'getwhere').then(function (res: any) {
-					receiveStuple(res);
-				});
+
+				makeRequest('GET', 'ply')
+					.then(function (res: any) {
+						receiveStuple(res);
+						return makeRequest('GET', 'where');
+					})
+					.then(function (res: any) {
+						receiveStuple(res);
+					});
 			}
 			else if (http.readyState == 4 && http.status == 400) {
 				alert(http.responseText);
@@ -407,9 +431,6 @@ namespace space {
 			if (http.readyState == 4 && http.status == 200) {
 				alert(http.responseText);
 				showLogin();
-				/*makeRequest('GET', 'getwhere').then(function (res: any) {
-					receiveStuple(res);
-				});*/
 			}
 			else if (http.readyState == 4 && http.status == 400) {
 				alert(http.responseText);
