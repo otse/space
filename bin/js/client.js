@@ -144,7 +144,7 @@ var space;
         text += `
 		<p class="smallish">`;
         if (space.ply.unregistered)
-            text += `[Playing via ip.]`;
+            text += `[Playing via ip (unregistered).]`;
         else
             text += `[You are player #${space.ply.id}]`;
         text += `<p>`;
@@ -239,7 +239,7 @@ var space;
 		<label for="password-repeat">Repeat Password</label><br />
 		<input class="wrong" type="password" placeholder="" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required><br /><br />
 	
-		<button type="submit" class="registerbtn">Register</button>
+		<button type="button" onclick="space.xhrRegister()">Register</button>
 		
 		</form>`;
         textHead.innerHTML = text;
@@ -289,12 +289,37 @@ var space;
                 });
             }
             else if (http.readyState == 4 && http.status == 400) {
-                alert('try again');
+                alert(http.responseText);
             }
         };
         http.send(params);
     }
     space.xhrLogin = xhrLogin;
+    function xhrRegister() {
+        let username = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
+        let password_repeat = document.getElementById("password-repeat").value;
+        var http = new XMLHttpRequest();
+        var url = 'register';
+        var params = `username=${username}&password=${password}&password-repeat=${password_repeat}`;
+        http.open('POST', url, true);
+        //Send the proper header information along with the request
+        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        http.onreadystatechange = function () {
+            if (http.readyState == 4 && http.status == 200) {
+                alert(http.responseText);
+                showLogin();
+                /*makeRequest('GET', 'getwhere').then(function (res: any) {
+                    receiveStuple(res);
+                });*/
+            }
+            else if (http.readyState == 4 && http.status == 400) {
+                alert(http.responseText);
+            }
+        };
+        http.send(params);
+    }
+    space.xhrRegister = xhrRegister;
 })(space || (space = {}));
 function cls() {
 }

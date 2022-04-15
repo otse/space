@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPly = exports.plyTempl = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.writeMcf = void 0;
+exports.getPly = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.writeMcf = void 0;
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -31,6 +31,7 @@ const indent = ``;
 var main_computer_file;
 var sectors;
 var locations;
+var ips_logged_in;
 var players;
 function writeMcf() {
     main_computer_file.writes++;
@@ -56,6 +57,10 @@ function unregisteredPath(ip) {
     return `players/ip/${ip}.json`;
 }
 exports.unregisteredPath = unregisteredPath;
+function plyPath(username) {
+    return `players/${username}.json`;
+}
+exports.plyPath = plyPath;
 var ipPlys = {};
 function plyTempl() {
     main_computer_file.players++;
@@ -100,6 +105,7 @@ function init() {
     main_computer_file = JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
     sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
     locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
+    //ips_logged_in = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
         // console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
@@ -180,46 +186,37 @@ function init() {
             return;
         }
         if (req.url == '/register' && req.method == 'POST') {
-            res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
             let body = '';
             req.on('data', function (chunk) {
                 body += chunk;
             });
             req.on('end', function () {
                 const parsed = qs.parse(body);
-                // email=as&psw=as&psw-repeat=as
                 console.log(body);
-                res.write(`
-				<html>
-				<head>
-				<style>
-				body {
-					background: #27343a;
-					color: white;
-					font-family: monospace;
-				}
-				</style>
-				</head>
-				<body>`);
                 var letterNumber = /^[0-9a-zA-Z]+$/;
                 if (!parsed['username'].match(letterNumber)) {
+                    res.writeHead(400);
                     res.end('username not alpha numeric');
                 }
                 else if (parsed['username'].length < 4) {
+                    res.writeHead(400);
                     res.end('username too short (4 letters or more please)');
                 }
                 else if (parsed['password'].length < 4 || parsed['password'].length > 20) {
+                    res.writeHead(400);
                     res.end('password length (4 - 20)');
                 }
                 else if (parsed['password'] != parsed['password-repeat']) {
+                    res.writeHead(400);
                     res.end('your passwords arent the same');
-                    return;
                 }
                 else {
                     const username = parsed.username;
                     const password = parsed.password;
-                    if (fs.existsSync(`players(${username}.json)`)) {
-                        res.write(`a player already exists with username ${username}. try logging in`);
+                    const path = `players/${username}.json`;
+                    if (fs.existsSync(path)) {
+                        res.writeHead(400);
+                        res.end(`a player already exists with username ${username}. try logging in`);
                     }
                     else {
                         let ply = plyTempl();
@@ -227,12 +224,12 @@ function init() {
                         ply.ip = 'N/A';
                         ply.name = parsed['username'];
                         ply.password = parsed['password'];
-                        res.write(`you\'re registered as ${parsed['username']} with pw ${parsed['password']}. good luck`);
+                        res.writeHead(200);
+                        res.end(`you're registered as ${username}. now login`);
                         const payload = JSON.stringify(ply, null, 4);
                         fs.writeFileSync(`players/${username}.json`, payload);
                     }
                 }
-                res.end('</body></html>');
             });
             return;
         }

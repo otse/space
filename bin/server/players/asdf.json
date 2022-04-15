@@ -1,0 +1,17 @@
+{
+    "id": 29,
+    "ip": "N/A",
+    "name": "asdf",
+    "password": "asdf",
+    "speed": 1,
+    "unregistered": false,
+    "flight": false,
+    "flightLocation": "",
+    "position": [
+        0,
+        0
+    ],
+    "sector": "Great Suldani Belt",
+    "location": "Dartwing",
+    "sublocation": "None"
+}

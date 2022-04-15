@@ -54,6 +54,7 @@ interface Ply {
 var main_computer_file
 var sectors
 var locations
+var ips_logged_in
 var players: Ply[]
 
 
@@ -87,6 +88,10 @@ export function sanitizeIp(ip: string) {
 
 export function unregisteredPath(ip) {
 	return `players/ip/${ip}.json`;
+}
+
+export function plyPath(username) {
+	return `players/${username}.json`;
 }
 
 var ipPlys = {};
@@ -140,6 +145,7 @@ function init() {
 
 	sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
 	locations = <any>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
+	//ips_logged_in = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
 
 	//apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
 
@@ -217,6 +223,7 @@ function init() {
 				//	console.log('this is not your windows frend');
 
 				const path = `players/${username}.json`;
+
 				if (fs.existsSync(path)) {
 					console.log('this file exists');
 					ply = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -240,51 +247,42 @@ function init() {
 		}
 
 		if (req.url == '/register' && req.method == 'POST') {
-			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
-
 			let body = '';
 			req.on('data', function (chunk) {
 				body += chunk;
 			});
 			req.on('end', function () {
 				const parsed = qs.parse(body);
-				// email=as&psw=as&psw-repeat=as
-				console.log(body);
 
-				res.write(`
-				<html>
-				<head>
-				<style>
-				body {
-					background: #27343a;
-					color: white;
-					font-family: monospace;
-				}
-				</style>
-				</head>
-				<body>`);
+				console.log(body);
 
 				var letterNumber = /^[0-9a-zA-Z]+$/;
 				if (!parsed['username'].match(letterNumber)) {
+					res.writeHead(400);
 					res.end('username not alpha numeric');
 				}
 				else if (parsed['username'].length < 4) {
+					res.writeHead(400);
 					res.end('username too short (4 letters or more please)');
 				}
 				else if (parsed['password'].length < 4 || parsed['password'].length > 20) {
+					res.writeHead(400);
 					res.end('password length (4 - 20)');
 				}
 				else if (parsed['password'] != parsed['password-repeat']) {
+					res.writeHead(400);
 					res.end('your passwords arent the same');
-					return;
 				}
 				else {
 
 					const username = parsed.username;
 					const password = parsed.password;
 
-					if (fs.existsSync(`players(${username}.json)`)) {
-						res.write(`a player already exists with username ${username}. try logging in`);
+					const path = `players/${username}.json`;
+
+					if (fs.existsSync(path)) {
+						res.writeHead(400);
+						res.end(`a player already exists with username ${username}. try logging in`);
 					}
 					else {
 						let ply = plyTempl();
@@ -292,15 +290,16 @@ function init() {
 						ply.ip = 'N/A';
 						ply.name = parsed['username'];
 						ply.password = parsed['password'];
-						res.write(`you\'re registered as ${parsed['username']} with pw ${parsed['password']}. good luck`);
+
+						res.writeHead(200);
+						res.end(`you're registered as ${username}. now login`);
 
 						const payload = JSON.stringify(ply, null, 4);
 						fs.writeFileSync(`players/${username}.json`, payload);
 					}
 				}
-
-				res.end('</body></html>')
 			});
+
 			return;
 		}
 		else if (req.method !== 'GET') {
