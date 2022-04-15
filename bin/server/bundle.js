@@ -106,35 +106,6 @@
                 return makeRequest('GET', 'locations.json');
             });
         }
-        function askServer(url, callback) {
-            console.log('space askServer', url);
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", url, true);
-            xhr.onload = function (e) {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200)
-                        callback(xhr.responseText);
-                    else
-                        console.error(xhr.statusText);
-                }
-            };
-            xhr.onerror = function (e) {
-                let output = document.getElementById("output1");
-                if (output == null)
-                    return;
-                output.innerHTML = xhr.statusText;
-            };
-            xhr.send(null);
-        }
-        space.askServer = askServer;
-        function submit(event) {
-            let input = document.getElementById('cli');
-            if (input == null)
-                return;
-            askServer(input.value, receiveStuple);
-            return false;
-        }
-        space.submit = submit;
         function receiveStuple(res) {
             console.log('receiveStuple');
             if (!res)
@@ -222,12 +193,12 @@
             let text = `
 		<form action="login" method="post">
 		<label for="username">Username</label><br />
-		<input type="text" placeholder="" name="username" required><br /><br />
+		<input id="username" type="text" placeholder="" name="username" required><br /><br />
 	
 		<label for="psw">Password</label><br />
-		<input type="password" placeholder="" name="psw" required><br /><br />
+		<input id="password" type="password" placeholder="" name="psw" required><br /><br />
 	
-		<button type="submit">Login</button>
+		<button type="button" onclick="space.xhrLogin()">Login</button>
 
 		</form>`;
             textHead.innerHTML = text;
@@ -239,7 +210,7 @@
 		<form action="register" method="post">
 
 		<label for="username">Username</label><br />
-		<input class="wrong" type="text" placeholder="" name="username" id="username" minlength="4" maxlength="15" required><br /><br />
+		<input class="wrong" type="text" placeholder="" name="username" id="username" minlength="4" maxlength="15"  required pattern="[a-zA-Z0-9]+"><br /><br />
 	
 		<label for="password">Password</label><br />
 		<input class="wrong" type="password" placeholder="" name="password" id="password" minlength="4" maxlength="20" required><br /><br />
@@ -280,6 +251,29 @@
             });
         }
         space.transportSublocation = transportSublocation;
+        function xhrLogin() {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            var http = new XMLHttpRequest();
+            var url = 'login';
+            var params = `username=${username}&password=${password}`;
+            http.open('POST', url, true);
+            //Send the proper header information along with the request
+            http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            http.onreadystatechange = function () {
+                if (http.readyState == 4 && http.status == 200) {
+                    alert(http.responseText);
+                    makeRequest('GET', 'getwhere').then(function (res) {
+                        receiveStuple(res);
+                    });
+                }
+                else if (http.readyState == 4 && http.status == 400) {
+                    alert('try again');
+                }
+            };
+            http.send(params);
+        }
+        space.xhrLogin = xhrLogin;
     })(space || (space = {}));
     window.space = space;
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPly = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.writeMcf = void 0;
+exports.getPly = exports.plyTempl = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.writeMcf = void 0;
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -57,32 +57,40 @@ function unregisteredPath(ip) {
 }
 exports.unregisteredPath = unregisteredPath;
 var ipPlys = {};
+function plyTempl() {
+    main_computer_file.players++;
+    writeMcf();
+    return {
+        id: main_computer_file.players,
+        ip: 'N/A',
+        name: 'Captain',
+        password: 'N/A',
+        speed: 1,
+        unregistered: false,
+        flight: false,
+        flightLocation: '',
+        position: [0, 0],
+        sector: 'Great Suldani Belt',
+        location: 'Dartwing',
+        sublocation: 'None',
+    };
+}
+exports.plyTempl = plyTempl;
 function getPly(ip) {
-    ip = sanitizeIp(ip);
+    let cleanIp = sanitizeIp(ip);
     let ply;
-    if (ipPlys[ip]) {
-        ply = ipPlys[ip];
+    if (ipPlys[cleanIp]) {
+        ply = ipPlys[cleanIp];
         console.log('got ply safely from table');
     }
     else {
-        if (fs.existsSync(unregisteredPath(ip)))
-            ply = ipPlys[ip] = JSON.parse(fs.readFileSync(unregisteredPath(ip), 'utf8'));
+        if (fs.existsSync(unregisteredPath(cleanIp)))
+            ply = ipPlys[cleanIp] = JSON.parse(fs.readFileSync(unregisteredPath(cleanIp), 'utf8'));
         else {
-            main_computer_file.players++;
-            writeMcf();
-            ply = {
-                id: main_computer_file.players,
-                ip: ip,
-                speed: 1,
-                unregistered: true,
-                flight: false,
-                flightLocation: '',
-                position: [0, 0],
-                sector: 'Great Suldani Belt',
-                location: 'Dartwing',
-                sublocation: 'None',
-            };
-            fs.writeFileSync(unregisteredPath(ip), JSON.stringify(ply, null, 4));
+            ply = plyTempl();
+            ply.unregistered = true;
+            ply.ip = cleanIp;
+            fs.writeFileSync(unregisteredPath(cleanIp), JSON.stringify(ply, null, 4));
         }
     }
     return ply;
@@ -138,15 +146,38 @@ function init() {
             }
             //let arg = input.split(' ');
         }
-        if (req.method == 'POST' && req.url == '/login') {
-            //console.log('received POST tokensignin', req);
+        if (req.url == '/login' && req.method == 'POST') {
+            console.log('received post login');
             let body = '';
             req.on('data', function (chunk) {
                 body += chunk;
             });
             req.on('end', function () {
-                console.log('POSTed: ' + body);
+                const parsed = qs.parse(body);
+                console.log(parsed);
+                const username = parsed.username;
+                const password = parsed.password;
+                // if (parsed['username'] == 'asdf')
+                //	console.log('this is not your windows frend');
+                const path = `players/${username}.json`;
+                if (fs.existsSync(path)) {
+                    console.log('this file exists');
+                    ply = JSON.parse(fs.readFileSync(path, 'utf8'));
+                    if (ply.password == password) {
+                        res.writeHead(200);
+                        res.end('success');
+                    }
+                    else {
+                        res.writeHead(400);
+                        res.end('wrong pw');
+                    }
+                }
+                else {
+                    res.writeHead(400);
+                    res.end('user not found');
+                }
             });
+            return;
         }
         if (req.url == '/register' && req.method == 'POST') {
             res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
@@ -158,7 +189,23 @@ function init() {
                 const parsed = qs.parse(body);
                 // email=as&psw=as&psw-repeat=as
                 console.log(body);
-                if (parsed['username'].length < 4) {
+                res.write(`
+				<html>
+				<head>
+				<style>
+				body {
+					background: #27343a;
+					color: white;
+					font-family: monospace;
+				}
+				</style>
+				</head>
+				<body>`);
+                var letterNumber = /^[0-9a-zA-Z]+$/;
+                if (!parsed['username'].match(letterNumber)) {
+                    res.end('username not alpha numeric');
+                }
+                else if (parsed['username'].length < 4) {
                     res.end('username too short (4 letters or more please)');
                 }
                 else if (parsed['password'].length < 4 || parsed['password'].length > 20) {
@@ -168,7 +215,24 @@ function init() {
                     res.end('your passwords arent the same');
                     return;
                 }
-                res.end();
+                else {
+                    const username = parsed.username;
+                    const password = parsed.password;
+                    if (fs.existsSync(`players(${username}.json)`)) {
+                        res.write(`a player already exists with username ${username}. try logging in`);
+                    }
+                    else {
+                        let ply = plyTempl();
+                        ply.unregistered = false;
+                        ply.ip = 'N/A';
+                        ply.name = parsed['username'];
+                        ply.password = parsed['password'];
+                        res.write(`you\'re registered as ${parsed['username']} with pw ${parsed['password']}. good luck`);
+                        const payload = JSON.stringify(ply, null, 4);
+                        fs.writeFileSync(`players/${username}.json`, payload);
+                    }
+                }
+                res.end('</body></html>');
             });
             return;
         }
