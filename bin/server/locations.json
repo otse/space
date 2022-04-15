@@ -2,6 +2,7 @@
     {
         "name": "Dartwing",
         "type": "Station",
+        "position": [0, 1],
         "color": "#c4a5c4",
         "facilities": [
             "Refuel"
@@ -9,6 +10,7 @@
     },
     {
         "name": "Trawler Collision",
-        "type": "Debris"
+        "position": [2, 10],
+        "type": "Junk"
     }
 ]

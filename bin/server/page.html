@@ -3,7 +3,7 @@
 <head>
 
 	<title>Space</title>
-
+	
 	<link rel="stylesheet" type="text/css" href="style.css">
 
 	<script type="text/javascript" src="bundle.js"></script>
@@ -17,117 +17,6 @@
 	<meta http-equiv="Pragma" content="no-cache" />
 	<meta http-equiv="Expires" content="0" />
 
-	<style>
-		body {
-			background: #303d4a;
-			font-family: Arial, Helvetica, sans-serif;
-			color: white;
-			font-size: 16px;
-			margin: 0;
-		}
-
-		:root {
-			--blue: #00000000;
-			--white: rgb(114 114 114);
-			--circle: 70px;
-			--spread: 4px;
-		}
-
-		input[type="text"] {
-			font-family: 'Space Mono';
-			border: none;
-			color: inherit;
-			font-size: inherit;
-			background: transparent;
-			z-index: 9;
-		}
-
-		input[type="text"]:focus {
-			outline: 0;
-		}
-
-		.mission {
-			margin: 0px;
-			color: #c9c9c9;
-		}
-
-		.logo {
-			display: flex;
-			align-items: center;
-			color: #e8e8e8;
-		}
-
-		.logo .text {
-			display: inline-block;
-			font-family: sans-serif;
-			ccolor: #e8e8e8;
-			font-size: 27px;
-			margin-left: 2ex;
-			letter-spacing: 2px;
-		}
-
-		.logo .bulb span {
-			font-size: 30px !important;
-			ccolor: #101010;
-			ccolor: #9b9b9b;
-			text-shadow: 0 0 3px #656565;
-		}
-
-		.logo .bulb {
-			display: inline-block;
-			width: var(--circle);
-			height: var(--circle);
-			text-align: center;
-			line-height: var(--circle);
-			border-radius: 100%;
-			xborder: 5px solid #23272e;
-			background-image: linear-gradient(45deg, var(--white) 25%, var(--blue) 25%, var(--blue) 50%, var(--white) 50%, var(--white) 75%, var(--blue) 75%, var(--blue) 100%);
-			background-size: var(--spread) var(--spread);
-		}
-
-		.content {
-			display: block;
-			margin: 10px;
-			color: #ffffff;
-		}
-
-		.content .text {
-			margin: 00px 0;
-			font-size: 18px;
-			color: #ffffff;
-		}
-
-		span.sector {
-			bborder-bottom: 1px dashed white;
-			ffont-style: italic;
-			background: #665938;
-			border: 1px inset darkgoldenrod;
-			padding: 6px;
-		}
-		
-		span.location {
-			border-bottom: 1px dotted white;
-			padding: 6px;
-		}
-
-		span.facilities {
-
-		}
-
-		span.spanButton {
-			border: 1px inset white;
-			padding: 6px;
-			cursor: pointer;
-		}
-
-		span.refuel {
-			font-weight: bold;
-			border: 1px inset darkgoldenrod;
-			padding: 6px;
-
-		}
-	</style>
-
 	<script>
 		document.addEventListener("DOMContentLoaded", function (event) {
 			space.init();
@@ -138,16 +27,22 @@
 <body unselectable="on" class="unselectable">
 
 	<div class="mission">
+		<span id="menu_button" class="material-icons">
+			menu
+		</span>
+		<!--<span id="user_button" class="material-icons">
+			account_circle
+		</span>-->
 		<div class="logo">
-			<div class="bulb"><span style="line-height: inherit;" class="material-icons">videogame_asset</span></div>
 			<div class="text">space</div>
 		</div>
 
 	</div>
 
 	<div class="content">
-		<div class="text" id="textHead">
-			Text
+		<div class="text" id="mainDiv">
+			<div class="g-signin2" data-onsuccess="onSignIn"></div>
+
 		</div>
 
 		<!--<form action="#" method="GET" onSubmit="return steam_days.submit()">

@@ -1,0 +1,14 @@
+{
+    "id": 13,
+    "ip": "ffff192.168.2.16",
+    "unregistered": true,
+    "flight": false,
+    "flightLocation": "Midsection",
+    "position": [
+        0,
+        0
+    ],
+    "sector": "Great Suldani Belt",
+    "location": "Dartwing",
+    "sublocation": "Refuel"
+}

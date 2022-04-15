@@ -1,0 +1,102 @@
+body {
+	background: #303d4a;
+	font-family: Arial, Helvetica, sans-serif;
+	color: white;
+	font-size: 16px;
+	margin: 0;
+}
+
+:root {
+	--blue: #00000000;
+	--circle: 70px;
+	--spread: 4px;
+}
+
+input[type="text"] {
+	font-family: 'Space Mono';
+	border: none;
+	color: inherit;
+	font-size: inherit;
+	background: transparent;
+	z-index: 9;
+}
+
+input[type="text"]:focus {
+	outline: 0;
+}
+
+.mission {
+	margin: 0px;
+	color: #c9c9c9;
+}
+
+.logo {
+	color: #e8e8e8;
+}
+
+.logo .text {
+	display: inline-block;
+	font-family: sans-serif;
+	ccolor: #e8e8e8;
+	font-size: 27px;
+	margin-left: 2ex;
+	letter-spacing: 2px;
+}
+
+#menu_button {
+	margin: 30px;
+	cursor: pointer;
+}
+
+#user_button {
+	mmargin: 30px;
+	cursor: pointer;
+}
+
+.smallish {
+	font-size: 0.9em;
+	color: #d1d1d1;
+	padding: 4px;
+}
+
+.content {
+	display: block;
+	margin: 30px;
+	color: #ffffff;
+}
+
+.content .text {
+	margin: 00px 0;
+	font-size: 18px;
+	color: #ffffff;
+}
+
+span.sector {
+	bborder-bottom: 1px dashed white;
+	ffont-style: italic;
+	background: #665938;
+	border: 1px inset darkgoldenrod;
+	padding: 6px;
+}
+
+span.location {
+	border-bottom: 1px dotted white;
+	padding: 6px;
+}
+
+span.facilities {
+
+}
+
+span.spanButton {
+	border: 1px inset white;
+	padding: 6px;
+	cursor: pointer;
+}
+
+span.refuel {
+	font-weight: bold;
+	border: 1px inset darkgoldenrod;
+	padding: 6px;
+
+}
