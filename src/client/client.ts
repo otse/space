@@ -13,13 +13,13 @@ namespace space {
 		sublocation?: string
 	}
 
-	interface Player {
+	interface Ply {
 		id: number
 		unregistered: boolean
 		where: Where
 	}
 
-	export var cplayer: Player = {
+	export var ply: Ply = {
 		id: 0,
 		unregistered: true,
 		where: {
@@ -111,7 +111,9 @@ namespace space {
 		let textHead = document.getElementById("mainDiv")!;
 
 		let text = `
-		<span class="spanButton">login</span> or <span class="spanButton">register</span>?
+		<span class="spanButton" onclick="space.showLogin()">login</span>
+		or
+		<span class="spanButton" onclick="space.showRegister()">register</span>?
 
 		`;
 		textHead.innerHTML = text;
@@ -213,14 +215,13 @@ namespace space {
 
 		let text = '';
 
-		let reg = ``;
 		text += `
 		<p class="smallish">`;
 
-		if (cplayer.unregistered)
+		if (ply.unregistered)
 			text += `[Playing via ip.]`;
 		else
-			text += `[You are player #${cplayer.id}]`;
+			text += `[You are player #${ply.id}]`;
 
 		text += `<p>`;
 
@@ -297,9 +298,9 @@ namespace space {
 		text += '<br>'
 		text += `Other locations within this sector.`;
 		text += `<select name="cars" id = "cars" >`;
-		if (!cplayer.where.sector)
+		if (!ply.where.sector)
 			return;
-		console.log(cplayer.where.sector);
+		console.log(ply.where.sector);
 		return;
 
 		//for (let location of cplayer.where.sector.locations) {
@@ -311,6 +312,46 @@ namespace space {
 
 		textHead.innerHTML += text;
 
+	}
+
+	export function showLogin() {
+		let textHead = document.getElementById("mainDiv")!;
+
+		let text = `
+		<form action="login" method="post">
+		<label for="username">Username</label><br />
+		<input type="text" placeholder="" name="username" required><br /><br />
+	
+		<label for="psw">Password</label><br />
+		<input type="password" placeholder="" name="psw" required><br /><br />
+	
+		<button type="submit">Login</button>
+
+		</form>`;
+
+		textHead.innerHTML = text;
+	}
+
+	export function showRegister() {
+		let textHead = document.getElementById("mainDiv")!;
+
+		let text = `
+		<form action="register" method="post">
+
+		<label for="username">Username</label><br />
+		<input class="wrong" type="text" placeholder="" name="username" id="username" minlength="4" maxlength="15" required><br /><br />
+	
+		<label for="password">Password</label><br />
+		<input class="wrong" type="password" placeholder="" name="password" id="password" minlength="4" maxlength="20" required><br /><br />
+	
+		<label for="password-repeat">Repeat Password</label><br />
+		<input class="wrong" type="password" placeholder="" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required><br /><br />
+	
+		<button type="submit" class="registerbtn">Register</button>
+		
+		</form>`;
+
+		textHead.innerHTML = text;
 	}
 
 	export function submitFlight() {

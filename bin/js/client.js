@@ -5,7 +5,7 @@ var space;
     // comment
     pts;
     aabb2;
-    space.cplayer = {
+    space.ply = {
         id: 0,
         unregistered: true,
         where: {}
@@ -79,7 +79,9 @@ var space;
     function showLoginOrRegister() {
         let textHead = document.getElementById("mainDiv");
         let text = `
-		<span class="spanButton">login</span> or <span class="spanButton">register</span>?
+		<span class="spanButton" onclick="space.showLogin()">login</span>
+		or
+		<span class="spanButton" onclick="space.showRegister()">register</span>?
 
 		`;
         textHead.innerHTML = text;
@@ -168,13 +170,12 @@ var space;
         const sector = getSectorByName(where.sectorName);
         const location = getLocationByName(where.locationName);
         let text = '';
-        let reg = ``;
         text += `
 		<p class="smallish">`;
-        if (space.cplayer.unregistered)
+        if (space.ply.unregistered)
             text += `[Playing via ip.]`;
         else
-            text += `[You are player #${space.cplayer.id}]`;
+            text += `[You are player #${space.ply.id}]`;
         text += `<p>`;
         text += `
 		You are in the <span class="sector">${sector.name}</span>
@@ -225,9 +226,9 @@ var space;
         text += '<br>';
         text += `Other locations within this sector.`;
         text += `<select name="cars" id = "cars" >`;
-        if (!space.cplayer.where.sector)
+        if (!space.ply.where.sector)
             return;
-        console.log(space.cplayer.where.sector);
+        console.log(space.ply.where.sector);
         return;
         //for (let location of cplayer.where.sector.locations) {
         text += `<option vvalue="volvo" > ${location} < /option>`;
@@ -237,6 +238,42 @@ var space;
 		</form>`;
         textHead.innerHTML += text;
     }
+    function showLogin() {
+        let textHead = document.getElementById("mainDiv");
+        let text = `
+		<form action="login" method="post">
+		<label for="username">Username</label><br />
+		<input type="text" placeholder="" name="username" required><br /><br />
+	
+		<label for="psw">Password</label><br />
+		<input type="password" placeholder="" name="psw" required><br /><br />
+	
+		<button type="submit">Login</button>
+
+		</form>`;
+        textHead.innerHTML = text;
+    }
+    space.showLogin = showLogin;
+    function showRegister() {
+        let textHead = document.getElementById("mainDiv");
+        let text = `
+		<form action="register" method="post">
+
+		<label for="username">Username</label><br />
+		<input class="wrong" type="text" placeholder="" name="username" id="username" minlength="4" maxlength="15" required><br /><br />
+	
+		<label for="password">Password</label><br />
+		<input class="wrong" type="password" placeholder="" name="password" id="password" minlength="4" maxlength="20" required><br /><br />
+	
+		<label for="password-repeat">Repeat Password</label><br />
+		<input class="wrong" type="password" placeholder="" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required><br /><br />
+	
+		<button type="submit" class="registerbtn">Register</button>
+		
+		</form>`;
+        textHead.innerHTML = text;
+    }
+    space.showRegister = showRegister;
     function submitFlight() {
         var e = document.getElementById("cars");
         var strUser = e.options[e.selectedIndex].text;

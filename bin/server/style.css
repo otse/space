@@ -12,13 +12,20 @@ body {
 	--spread: 4px;
 }
 
-input[type="text"] {
-	font-family: 'Space Mono';
-	border: none;
-	color: inherit;
+input {
+	ffont-family: monospace;
+	color: white;
 	font-size: inherit;
 	background: transparent;
-	z-index: 9;
+	border: 1px inset white;
+}
+
+input.wrong:invalid {
+	border: 1px dashed red;
+}
+
+input.wrong:invalid:focus {
+	border: 1px dashed red;
 }
 
 input[type="text"]:focus {
@@ -84,9 +91,7 @@ span.location {
 	padding: 6px;
 }
 
-span.facilities {
-
-}
+span.facilities {}
 
 span.spanButton {
 	border: 1px inset white;

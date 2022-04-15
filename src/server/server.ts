@@ -3,7 +3,7 @@ import { write } from "fs";
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
-const querystring = require('querystring');
+const qs = require('querystring');
 //var format = require('date-format');
 
 const port = 2;
@@ -40,6 +40,7 @@ interface Ply {
 	id: number
 	ip: number
 	unregistered: boolean
+	speed: number
 	flight: boolean
 	flightLocation
 	position
@@ -107,9 +108,10 @@ export function getPly(ip) {
 			ply = {
 				id: main_computer_file.players,
 				ip: ip,
+				speed: 1,
 				unregistered: true,
 				flight: false,
-				flightLocation: 'Midsection',
+				flightLocation: '',
 				position: [0, 0],
 				sector: 'Great Suldani Belt',
 				location: 'Dartwing',
@@ -188,7 +190,7 @@ function init() {
 
 		if (req.method == 'POST' && req.url == '/login') {
 			//console.log('received POST tokensignin', req);
-			let body;
+			let body = '';
 			req.on('data', function (chunk) {
 				body += chunk;
 			});
@@ -197,7 +199,36 @@ function init() {
 			});
 		}
 
-		if (req.method !== 'GET') {
+		if (req.url == '/register' && req.method == 'POST') {
+			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
+			
+			let body = '';
+			req.on('data', function (chunk) {
+				body += chunk;
+			});
+			req.on('end', function () {
+				const parsed = qs.parse(body);
+				// email=as&psw=as&psw-repeat=as
+				console.log(body);
+
+				if (parsed['username'].length < 4)
+				{
+					res.end('username too short (4 letters or more please)');
+				}
+				else if (parsed['password'].length < 4 || parsed['password'].length > 20)
+				{
+					res.end('password length (4 - 20)');
+				}
+				else if (parsed['password'] != parsed['password-repeat']) {
+					res.end('your passwords arent the same');
+					return;
+				}
+				
+				res.end()
+			});
+			return;
+		}
+		else if (req.method !== 'GET') {
 			res.end('boo');
 			return;
 		}
@@ -240,7 +271,6 @@ function init() {
 
 			console.log(val);
 
-
 			sendSwhere();
 		}
 		else if (req.url == '/returnSublocation') {
@@ -263,7 +293,7 @@ function init() {
 		}
 		else if (req.url.search("/knock") == 0) {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			const parsed = querystring.parse(req.url);
+			const parsed = qs.parse(req.url);
 			// msg&boo&shu '/knock': '', boo: '', shu: ''
 			//console.log(parsed);
 			receivedKnock(parsed);
