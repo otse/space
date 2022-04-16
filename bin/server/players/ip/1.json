@@ -2,6 +2,7 @@
     "id": 12,
     "ip": "1",
     "unregistered": true,
+    "username": "Captain",
     "flight": false,
     "flightLocation": "Midsection",
     "position": [

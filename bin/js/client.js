@@ -5,12 +5,7 @@ var space;
     // comment
     pts;
     aabb2;
-    var sply; // = { name: 'Captain', unregistered: true }
-    space.ply = {
-        id: 0,
-        unregistered: true,
-        where: {}
-    };
+    var sply, swhere;
     function getLocationByName(name) {
         for (let location of space.locations)
             if (location.name == name)
@@ -77,12 +72,14 @@ var space;
         getInitTrios();
     }
     space.init = init;
-    function fetchSply() {
-        makeRequest('GET', 'ply').then(function (res) {
-            receiveStuple(res);
-        });
+    function handleSply() {
+        let logo = document.querySelector(".logo .text");
+        if (sply.unregistered)
+            logo.innerHTML = `space`;
+        else
+            logo.innerHTML = `space - ${sply.username}`;
     }
-    space.fetchSply = fetchSply;
+    space.handleSply = handleSply;
     function showLoginOrRegister() {
         let textHead = document.getElementById("mainDiv");
         let text = `
@@ -117,6 +114,7 @@ var space;
             console.error('Augh, there was an error!', err.statusText);
         });*/
     }
+    var sector, location;
     function receiveStuple(res) {
         let stuple = JSON.parse(res);
         const type = stuple[0];
@@ -124,15 +122,20 @@ var space;
         console.log('received stuple type', type);
         if (type == 'sply') {
             sply = payload;
+            handleSply();
         }
         else if (type == 'flight') {
             // we are nowhere, in flight
             layoutFlight(stuple);
         }
         else if (type == 'swhere') {
-            const sector = getSectorByName(payload.swhere.sectorName);
-            const location = getLocationByName(payload.swhere.locationName);
-            if (payload.swhere.sublocation == 'Refuel') {
+            swhere = payload;
+            console.log(swhere);
+            console.log(swhere.sublocation);
+            sector = getSectorByName(payload.sectorName);
+            location = getLocationByName(payload.locationName);
+            if (swhere.sublocation == 'Refuel') {
+                console.log('refueling');
                 layoutRefuel(stuple);
                 //console.log(answer[1]);
             }
@@ -145,35 +148,30 @@ var space;
         let gameBox = document.createElement('div');
         gameBox.classList.toggle('gameBox');
     }
-    function breadcrumbs(where) {
-        const sector = getSectorByName(where.sectorName);
-        const location = getLocationByName(where.locationName);
+    function breadcrumbs() {
         let text = '';
         text += `
 		<p class="smallish">`;
         if (sply.unregistered)
-            text += `[Playing via ip (unregistered).]`;
+            text += `[ Playing via this ip (unregistered). ]`;
         else
-            text += `[You are player #${sply.id}, ${sply.name}]`;
+            text += `[ Welcome back, ${sply.username} (#${sply.id}) ]`;
         text += `<p>`;
         text += `
 		You are in the <span class="sector">${sector.name}</span>
 		/ <span class="location" style="colors: ${location.color || "inherit"} ">${location.name}
 		(${location.type})</span>
 		`;
-        if (where.sublocation != 'None') {
+        if (swhere.sublocation != 'None') {
             text += '<p>';
             //text +=`/ <span class="sublocation">${where.sublocation}</span>`;
-            text += getSublocationDescription(where.sublocation);
+            text += getSublocationDescription(swhere.sublocation);
         }
         return text;
     }
     function layoutStation(answer) {
         let textHead = document.getElementById("mainDiv");
-        const swhere = answer[1].swhere;
-        const sector = getSectorByName(swhere.sectorName);
-        const location = getLocationByName(swhere.locationName);
-        let text = breadcrumbs(swhere);
+        let text = breadcrumbs();
         text += `<p>`;
         text += `<span class="facilities">`;
         if (location.facilities) {
@@ -186,8 +184,8 @@ var space;
     }
     function layoutRefuel(answer) {
         let textHead = document.getElementById("mainDiv");
-        const swhere = answer[1].swhere;
-        let text = breadcrumbs(swhere);
+        let text = breadcrumbs();
+        console.log('layout refuel');
         //text += '<p>'
         text += ' <span class="spanButton" onclick="space.returnSublocation()">Back to Station</span>';
         textHead.innerHTML = text;
@@ -201,17 +199,15 @@ var space;
     }
     function layoutFlightControls() {
         let textHead = document.getElementById("mainDiv");
+        if (!swhere || !sector)
+            return;
         let text = '<p>';
         text += '<br>';
         text += `Other locations within this sector.`;
-        text += `<select name="cars" id = "cars" >`;
-        if (!space.ply.where.sector)
-            return;
-        console.log(space.ply.where.sector);
-        return;
-        //for (let location of cplayer.where.sector.locations) {
-        text += `<option vvalue="volvo" > ${location} < /option>`;
-        //}
+        text += `<select name="flights" id="flights" >`;
+        for (let location of sector.locations) {
+            text += `<option value="volvo">${location}</option>`;
+        }
         text += `</select>
 		<span class="spanButton" onclick="space.submitFlight()">Flight</span>
 		</form>`;
@@ -254,7 +250,7 @@ var space;
     }
     space.showRegister = showRegister;
     function submitFlight() {
-        var e = document.getElementById("cars");
+        var e = document.getElementById("flights");
         var strUser = e.options[e.selectedIndex].text;
         console.log(strUser);
         makeRequest('GET', 'submitFlight=' + strUser)
@@ -284,6 +280,8 @@ var space;
         makeRequest('GET', 'logout')
             .then(function (res) {
             alert(res);
+            sply.unregistered = true;
+            handleSply();
         });
     }
     space.logout = logout;

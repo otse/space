@@ -32,7 +32,7 @@ var main_computer_file;
 var sectors;
 var locations;
 var remembrance_table = {};
-var ips_logged_in = {};
+var logged_in = {};
 var players;
 function writeMcf() {
     main_computer_file.writes++;
@@ -41,7 +41,7 @@ function writeMcf() {
 }
 exports.writeMcf = writeMcf;
 function write_ips_logged_in() {
-    const payload = JSON.stringify(ips_logged_in, null, 4);
+    const payload = JSON.stringify(logged_in, null, 4);
     fs.writeFileSync('ips_logged_in.json', payload);
 }
 exports.write_ips_logged_in = write_ips_logged_in;
@@ -50,8 +50,10 @@ function writePly(ply) {
     let payload = JSON.stringify(ply, null, 4);
     if (ply.unregistered)
         fs.writeFileSync(unregisteredPath(ply.ip), payload);
-    else
-        fs.writeFileSync('players/' + ply.id + '.json', payload);
+    else {
+        const path = `players/${ply.username}.json`;
+        fs.writeFileSync(path, payload);
+    }
 }
 exports.writePly = writePly;
 function sanitizeIp(ip) {
@@ -75,7 +77,7 @@ function plyTempl() {
     return {
         id: main_computer_file.players,
         ip: 'N/A',
-        name: 'Captain',
+        username: 'Captain',
         password: 'N/A',
         speed: 1,
         unregistered: false,
@@ -91,9 +93,9 @@ exports.plyTempl = plyTempl;
 function getPly(ip) {
     let cleanIp = sanitizeIp(ip);
     let ply;
-    if (ips_logged_in[`${cleanIp}`]) {
+    if (logged_in[`${cleanIp}`]) {
         //console.log('this ip is remembered to be logged in');
-        const username = ips_logged_in[`${cleanIp}`];
+        const username = logged_in[`${cleanIp}`];
         if (remembrance_table[username]) {
             //console.log('we have remembrance this server session');
             ply = remembrance_table[username];
@@ -126,7 +128,7 @@ function init() {
     main_computer_file = JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
     sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
     locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
-    ips_logged_in = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+    logged_in = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
         // console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
@@ -135,7 +137,7 @@ function init() {
         const sendSply = function () {
             sendStuple([['sply'], {
                     id: ply.id,
-                    name: ply.name,
+                    username: ply.username,
                     unregistered: ply.unregistered
                 }]);
         };
@@ -146,13 +148,13 @@ function init() {
                     }]);
             }
             else {
-                sendStuple([['swhere'], {
-                        swhere: {
-                            sectorName: ply.sector,
-                            locationName: ply.location,
-                            sublocation: ply.sublocation
-                        }
-                    }]);
+                sendStuple([['swhere'],
+                    {
+                        sectorName: ply.sector,
+                        locationName: ply.location,
+                        sublocation: ply.sublocation
+                    }
+                ]);
             }
         };
         const transportSublocation = function (where) {
@@ -200,8 +202,8 @@ function init() {
                     if (ply.password == password) {
                         res.writeHead(200);
                         res.end('success');
-                        console.log(`ips_logged_in[${ip}] = ${ply.name}`);
-                        ips_logged_in[`${ip}`] = ply.name;
+                        console.log(`ips_logged_in[${ip}] = ${ply.username}`);
+                        logged_in[`${ip}`] = ply.username;
                         write_ips_logged_in();
                     }
                     else {
@@ -259,7 +261,7 @@ function init() {
                         let ply = plyTempl();
                         ply.unregistered = false;
                         ply.ip = 'N/A';
-                        ply.name = parsed['username'];
+                        ply.username = parsed['username'];
                         ply.password = parsed['password'];
                         res.writeHead(200);
                         res.end(`you're registered as ${username}. now login`);
@@ -309,10 +311,11 @@ function init() {
         }
         else if (req.url == '/logout') {
             console.log('going to log you out');
-            if (ips_logged_in[`${ip}`]) {
-                delete ips_logged_in[`${ip}`];
+            if (logged_in[`${ip}`]) {
+                const username = logged_in[`${ip}`];
+                delete logged_in[`${ip}`];
                 write_ips_logged_in();
-                res.end('logged you out');
+                res.end(`logging out ${username}`);
             }
             else {
                 res.end(`you're not in the logged in table`);

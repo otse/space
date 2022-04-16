@@ -7,26 +7,10 @@ namespace space {
 	pts
 	aabb2
 
-	interface Where {
-		sector?: JSector
-		location?: JLocation
-		sublocation?: string
-	}
 
-	interface Ply {
-		id: number
-		unregistered: boolean
-		where: Where
-	}
+	var sply, swhere;
 
-	var sply;// = { name: 'Captain', unregistered: true }
 
-	export var ply: Ply = {
-		id: 0,
-		unregistered: true,
-		where: {
-		}
-	}
 	export var sectors, locations
 
 	export var currentSector, currentLocation;
@@ -109,10 +93,13 @@ namespace space {
 
 	}
 
-	export function fetchSply() {
-		makeRequest('GET', 'ply').then(function (res: any) {
-			receiveStuple(res);
-		});
+	export function handleSply() {
+		let logo = document.querySelector(".logo .text")!;
+
+		if (sply.unregistered)
+			logo.innerHTML = `space`
+		else
+			logo.innerHTML = `space - ${sply.username}`
 	}
 
 	function showLoginOrRegister() {
@@ -153,6 +140,8 @@ namespace space {
 
 	}
 
+	var sector, location;
+
 	function receiveStuple(res) {
 
 		let stuple: Stuple = JSON.parse(res);
@@ -164,6 +153,7 @@ namespace space {
 
 		if (type == 'sply') {
 			sply = payload;
+			handleSply();
 		}
 
 		else if (type == 'flight') {
@@ -172,10 +162,17 @@ namespace space {
 		}
 
 		else if (type == 'swhere') {
-			const sector = getSectorByName(payload.swhere.sectorName);
-			const location = getLocationByName(payload.swhere.locationName);
+			swhere = payload;
 
-			if (payload.swhere.sublocation == 'Refuel') {
+			console.log(swhere);
+			console.log(swhere.sublocation);
+			
+			sector = getSectorByName(payload.sectorName);
+			location = getLocationByName(payload.locationName);
+
+			if (swhere.sublocation == 'Refuel') {
+				console.log('refueling');
+				
 				layoutRefuel(stuple);
 				//console.log(answer[1]);
 			}
@@ -190,10 +187,7 @@ namespace space {
 		gameBox.classList.toggle('gameBox');
 	}
 
-	function breadcrumbs(where) {
-
-		const sector = getSectorByName(where.sectorName);
-		const location = getLocationByName(where.locationName);
+	function breadcrumbs() {
 
 		let text = '';
 
@@ -201,9 +195,9 @@ namespace space {
 		<p class="smallish">`;
 
 		if (sply.unregistered)
-			text += `[Playing via ip (unregistered).]`;
+			text += `[ Playing via this ip (unregistered). ]`;
 		else
-			text += `[You are player #${sply.id}, ${sply.name}]`;
+			text += `[ Welcome back, ${sply.username} (#${sply.id}) ]`;
 
 		text += `<p>`;
 
@@ -214,10 +208,10 @@ namespace space {
 		`;
 
 
-		if (where.sublocation != 'None') {
+		if (swhere.sublocation != 'None') {
 			text += '<p>'
 			//text +=`/ <span class="sublocation">${where.sublocation}</span>`;
-			text += getSublocationDescription(where.sublocation);
+			text += getSublocationDescription(swhere.sublocation);
 		}
 
 		return text;
@@ -226,12 +220,7 @@ namespace space {
 	function layoutStation(answer: Stuple) {
 		let textHead = document.getElementById("mainDiv")!;
 
-		const swhere = answer[1].swhere;
-
-		const sector = getSectorByName(swhere.sectorName);
-		const location = getLocationByName(swhere.locationName);
-
-		let text = breadcrumbs(swhere);
+		let text = breadcrumbs();
 		text += `<p>`
 		text += `<span class="facilities">`
 
@@ -249,9 +238,10 @@ namespace space {
 	function layoutRefuel(answer: Stuple) {
 		let textHead = document.getElementById("mainDiv")!;
 
-		const swhere = answer[1].swhere;
+		let text = breadcrumbs();
 
-		let text = breadcrumbs(swhere);
+		console.log('layout refuel');
+		
 
 		//text += '<p>'
 
@@ -276,18 +266,17 @@ namespace space {
 	function layoutFlightControls() {
 		let textHead = document.getElementById("mainDiv")!;
 
+		if (!swhere || !sector)
+			return;
+			
 		let text = '<p>';
 		text += '<br>'
 		text += `Other locations within this sector.`;
-		text += `<select name="cars" id = "cars" >`;
-		if (!ply.where.sector)
-			return;
-		console.log(ply.where.sector);
-		return;
-
-		//for (let location of cplayer.where.sector.locations) {
-		text += `<option vvalue="volvo" > ${location} < /option>`
-		//}
+		text += `<select name="flights" id="flights" >`;
+		
+		for (let location of sector.locations) {
+			text += `<option value="volvo">${location}</option>`
+		}
 		text += `</select>
 		<span class="spanButton" onclick="space.submitFlight()">Flight</span>
 		</form>`;
@@ -338,7 +327,7 @@ namespace space {
 
 	export function submitFlight() {
 
-		var e = document.getElementById("cars")! as any;
+		var e = document.getElementById("flights")! as any;
 		var strUser = e.options[e.selectedIndex].text;
 
 		console.log(strUser);
@@ -375,9 +364,11 @@ namespace space {
 
 	export function logout() {
 		makeRequest('GET', 'logout')
-		.then(function (res: any) {
-			alert(res);
-		})
+			.then(function (res: any) {
+				alert(res);
+				sply.unregistered = true;
+				handleSply();
+			})
 	}
 
 	export function xhrLogin() {
