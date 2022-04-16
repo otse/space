@@ -55,7 +55,7 @@ var main_computer_file
 var sectors
 var locations
 var remembrance_table = {}
-var logged_in: {} = {}
+var logins_by_ip: {} = {}
 var players: Ply[]
 
 
@@ -72,7 +72,7 @@ export function writeMcf() {
 }
 
 export function write_ips_logged_in() {
-	const payload = JSON.stringify(logged_in, null, 4);
+	const payload = JSON.stringify(logins_by_ip, null, 4);
 	fs.writeFileSync('ips_logged_in.json', payload);
 }
 
@@ -125,16 +125,27 @@ export function plyTempl() {
 	};
 }
 
+export function locationExists(name) {
+	for (let location of locations)
+		if (location.name == name)
+			return true;
+	return false;
+}
+
+export function serverTick() {
+
+}
+
 export function getPly(ip) {
 
 	let cleanIp = sanitizeIp(ip);
 
 	let ply: Ply;
 
-	if (logged_in[`${cleanIp}`]) {
+	if (logins_by_ip[`${cleanIp}`]) {
 		//console.log('this ip is remembered to be logged in');
 
-		const username = logged_in[`${cleanIp}`];
+		const username = logins_by_ip[`${cleanIp}`];
 
 		if (remembrance_table[username]) {
 			//console.log('we have remembrance this server session');
@@ -171,11 +182,13 @@ export function getPly(ip) {
 
 function init() {
 
+	setInterval(serverTick, 1000);
+
 	main_computer_file = <MainComputerFile>JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
 
 	sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
 	locations = <any>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
-	logged_in = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+	logins_by_ip = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
 
 	//apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
 
@@ -193,6 +206,10 @@ function init() {
 				username: ply.username,
 				unregistered: ply.unregistered
 			}]);
+		}
+
+		const sendSmessage = function (message) {
+			sendStuple([['message'], message]);
 		}
 
 		const sendSwhere = function () {
@@ -271,17 +288,42 @@ function init() {
 
 					remembrance_table[`${username}`] = ply;
 
-					if (ply.password == password) {
-						res.writeHead(200);
-						res.end('success');
-						console.log(`ips_logged_in[${ip}] = ${ply.username}`);
-
-						logged_in[`${ip}`] = ply.username;
-						write_ips_logged_in();
+					let logged_in_elsewhere = false;
+					let ip2;
+					for (ip2 in logins_by_ip) {
+						let username = logins_by_ip[ip2];
+						if (username == ply.username && ip != ip2) {
+							logged_in_elsewhere = true;
+							break;
+						}
 					}
-					else {
+					if (logins_by_ip[`${ip}`] == username) {
+						res.writeHead(400);
+						res.end('already logged in here');
+					}
+					else if (ply.password == password) {
+						res.writeHead(200);
+						let msg = 'logging you in'
+						
+						if (logged_in_elsewhere) {
+							msg += '. you\'ve been logged out of your other device';
+							delete logins_by_ip[ip2];
+						}
+						res.end(msg);
+
+						logins_by_ip[`${ip}`] = ply.username;
+						write_ips_logged_in();
+
+						res.end();
+					}
+					else if (ply.password != password) {
 						res.writeHead(400);
 						res.end('wrong pw');
+					}
+					else
+					{
+						res.writeHead(400);
+						res.end('generic error');
 					}
 				}
 				else {
@@ -402,14 +444,14 @@ function init() {
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
-			if (logged_in[`${ip}`]) {
-				const username = logged_in[`${ip}`];
-				delete logged_in[`${ip}`];
+			if (logins_by_ip[`${ip}`]) {
+				const username = logins_by_ip[`${ip}`];
+				delete logins_by_ip[`${ip}`];
 				write_ips_logged_in();
 				res.end(`logging out ${username}`);
 			}
 			else {
-				res.end(`you're not in the logged in table`);
+				res.end(`not logged in, playing as unregistered`);
 			}
 
 		}
@@ -421,8 +463,16 @@ function init() {
 			val = val.replace(/%20/g, " ");
 
 			console.log(val);
+			if (!locationExists(val)) {
+				sendSmessage("Location doesn't exist");
+			}
+			else {
+				ply.flight = true;
+				ply.flightLocation = val;
+				writePly(ply);
 
-			sendSwhere();
+				sendSwhere();
+			}
 		}
 		else if (req.url == '/returnSublocation') {
 			//console.log('return from sublocation');

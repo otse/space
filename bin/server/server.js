@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPly = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
+exports.getPly = exports.serverTick = exports.locationExists = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -32,7 +32,7 @@ var main_computer_file;
 var sectors;
 var locations;
 var remembrance_table = {};
-var logged_in = {};
+var logins_by_ip = {};
 var players;
 function writeMcf() {
     main_computer_file.writes++;
@@ -41,7 +41,7 @@ function writeMcf() {
 }
 exports.writeMcf = writeMcf;
 function write_ips_logged_in() {
-    const payload = JSON.stringify(logged_in, null, 4);
+    const payload = JSON.stringify(logins_by_ip, null, 4);
     fs.writeFileSync('ips_logged_in.json', payload);
 }
 exports.write_ips_logged_in = write_ips_logged_in;
@@ -90,12 +90,22 @@ function plyTempl() {
     };
 }
 exports.plyTempl = plyTempl;
+function locationExists(name) {
+    for (let location of locations)
+        if (location.name == name)
+            return true;
+    return false;
+}
+exports.locationExists = locationExists;
+function serverTick() {
+}
+exports.serverTick = serverTick;
 function getPly(ip) {
     let cleanIp = sanitizeIp(ip);
     let ply;
-    if (logged_in[`${cleanIp}`]) {
+    if (logins_by_ip[`${cleanIp}`]) {
         //console.log('this ip is remembered to be logged in');
-        const username = logged_in[`${cleanIp}`];
+        const username = logins_by_ip[`${cleanIp}`];
         if (remembrance_table[username]) {
             //console.log('we have remembrance this server session');
             ply = remembrance_table[username];
@@ -125,10 +135,11 @@ function getPly(ip) {
 }
 exports.getPly = getPly;
 function init() {
+    setInterval(serverTick, 1000);
     main_computer_file = JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
     sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
     locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
-    logged_in = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+    logins_by_ip = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
         // console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
@@ -140,6 +151,9 @@ function init() {
                     username: ply.username,
                     unregistered: ply.unregistered
                 }]);
+        };
+        const sendSmessage = function (message) {
+            sendStuple([['message'], message]);
         };
         const sendSwhere = function () {
             if (ply.flight) {
@@ -199,16 +213,38 @@ function init() {
                 if (fs.existsSync(path)) {
                     ply = JSON.parse(fs.readFileSync(path, 'utf8'));
                     remembrance_table[`${username}`] = ply;
-                    if (ply.password == password) {
+                    let logged_in_elsewhere = false;
+                    let ip2;
+                    for (ip2 in logins_by_ip) {
+                        let username = logins_by_ip[ip2];
+                        if (username == ply.username && ip != ip2) {
+                            logged_in_elsewhere = true;
+                            break;
+                        }
+                    }
+                    if (logins_by_ip[`${ip}`] == username) {
+                        res.writeHead(400);
+                        res.end('already logged in here');
+                    }
+                    else if (ply.password == password) {
                         res.writeHead(200);
-                        res.end('success');
-                        console.log(`ips_logged_in[${ip}] = ${ply.username}`);
-                        logged_in[`${ip}`] = ply.username;
+                        let msg = 'logging you in';
+                        if (logged_in_elsewhere) {
+                            msg += '. you\'ve been logged out of your other device';
+                            delete logins_by_ip[ip2];
+                        }
+                        res.end(msg);
+                        logins_by_ip[`${ip}`] = ply.username;
                         write_ips_logged_in();
+                        res.end();
+                    }
+                    else if (ply.password != password) {
+                        res.writeHead(400);
+                        res.end('wrong pw');
                     }
                     else {
                         res.writeHead(400);
-                        res.end('wrong pw');
+                        res.end('generic error');
                     }
                 }
                 else {
@@ -311,14 +347,14 @@ function init() {
         }
         else if (req.url == '/logout') {
             console.log('going to log you out');
-            if (logged_in[`${ip}`]) {
-                const username = logged_in[`${ip}`];
-                delete logged_in[`${ip}`];
+            if (logins_by_ip[`${ip}`]) {
+                const username = logins_by_ip[`${ip}`];
+                delete logins_by_ip[`${ip}`];
                 write_ips_logged_in();
                 res.end(`logging out ${username}`);
             }
             else {
-                res.end(`you're not in the logged in table`);
+                res.end(`not logged in, playing as unregistered`);
             }
         }
         else if (req.url.search('/submitFlight') == 0) {
@@ -327,7 +363,15 @@ function init() {
             val = req.url.split('=')[1];
             val = val.replace(/%20/g, " ");
             console.log(val);
-            sendSwhere();
+            if (!locationExists(val)) {
+                sendSmessage("Location doesn't exist");
+            }
+            else {
+                ply.flight = true;
+                ply.flightLocation = val;
+                writePly(ply);
+                sendSwhere();
+            }
         }
         else if (req.url == '/returnSublocation') {
             //console.log('return from sublocation');
