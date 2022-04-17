@@ -5,7 +5,6 @@ var space;
     // comment
     pts;
     aabb2;
-    var sply, swhere;
     function getLocationByName(name) {
         for (let location of space.locations)
             if (location.name == name)
@@ -17,10 +16,6 @@ var space;
             if (sector.name == name)
                 return sector;
         console.warn("sector doesnt exist");
-    }
-    function getSublocationDescription(sublocation) {
-        if (sublocation == 'Refuel')
-            return 'You are at a refuelling bay.';
     }
     function makeRequest(method, url) {
         return new Promise(function (resolve, reject) {
@@ -73,16 +68,18 @@ var space;
     }
     space.init = init;
     function handleSply() {
+        console.log('handlesply', space.sply);
         let logo = document.querySelector(".logo .text");
-        if (sply.unregistered)
+        space.sector = getSectorByName(space.sply.sector);
+        if (space.sply.unregistered)
             logo.innerHTML = `space`;
         else
-            logo.innerHTML = `space - ${sply.username}`;
+            logo.innerHTML = `space - ${space.sply.username}`;
     }
     space.handleSply = handleSply;
     function showAccountBubbles() {
         let textHead = document.getElementById("mainDiv");
-        let username = sply && sply.username;
+        let username = space.sply && space.sply.username;
         let text = `
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
 		<span class="spanButton" onclick="space.logout()">logout</span>,
@@ -106,45 +103,36 @@ var space;
         })
             .then(function (res) {
             receiveStuple(res);
-            return makeRequest('GET', 'where');
-        })
-            .then(function (res) {
-            receiveStuple(res);
+            //return makeRequest('GET', 'where');
         });
+        //.then(function (res: any) {
+        //	receiveStuple(res);
+        //})
         /*.catch(function (err) {
             console.error('Augh, there was an error!', err.statusText);
         });*/
     }
-    var sector, location;
     function receiveStuple(res) {
         let stuple = JSON.parse(res);
         const type = stuple[0];
         const payload = stuple[1];
         console.log('received stuple type', type);
         if (type == 'sply') {
-            sply = payload;
+            space.sply = payload;
+            space.sector = getSectorByName(payload.sector);
+            space.location = getLocationByName(payload.location);
             handleSply();
+            if (space.sply.flight) {
+                layoutFlight();
+            }
+            else if (space.sply.sublocation == 'Refuel') {
+                layoutRefuel(stuple);
+            }
+            else if (space.location.type == 'Station')
+                layoutStation(stuple);
         }
         else if (type == 'message') {
             layoutMessage(payload);
-        }
-        else if (type == 'flight') {
-            // we are nowhere, in flight
-            layoutFlight(stuple);
-        }
-        else if (type == 'swhere') {
-            swhere = payload;
-            console.log(swhere);
-            console.log(swhere.sublocation);
-            sector = getSectorByName(payload.sectorName);
-            location = getLocationByName(payload.locationName);
-            if (swhere.sublocation == 'Refuel') {
-                console.log('refueling');
-                layoutRefuel(stuple);
-                //console.log(answer[1]);
-            }
-            else if (location.type == 'Station')
-                layoutStation(stuple);
         }
     }
     function BuildLargeTile(tile) {
@@ -156,30 +144,25 @@ var space;
         let text = '';
         text += `
 		<p class="smallish">`;
-        if (sply.unregistered)
+        if (space.sply.unregistered)
             text += `[ Playing via this ip (unregistered). ]`;
         else
-            text += `[ Welcome back, ${sply.username} (#${sply.id}) ]`;
+            text += `[ Logged in as ${space.sply.username} (#${space.sply.id}) ]`;
         text += `<p>`;
-        text += `
-		You are in the <span class="sector">${sector.name}</span>
-		/ <span class="location" style="colors: ${location.color || "inherit"} ">${location.name}
-		(${location.type})</span>
-		`;
-        if (swhere.sublocation != 'None') {
-            text += '<p>';
-            //text +=`/ <span class="sublocation">${where.sublocation}</span>`;
-            text += getSublocationDescription(swhere.sublocation);
-        }
         return text;
     }
     function layoutStation(answer) {
         let textHead = document.getElementById("mainDiv");
         let text = breadcrumbs();
+        text += `
+		You are in the <span class="sector">${space.sector.name}</span>
+		/ <span class="location" style="colors: ${space.location.color || "inherit"} ">${space.location.name}
+		(${space.location.type})</span>
+		`;
         text += `<p>`;
         text += `<span class="facilities">`;
-        if (location.facilities) {
-            if (location.facilities.indexOf("Refuel") > -1)
+        if (space.location.facilities) {
+            if (space.location.facilities.indexOf("Refuel") > -1)
                 text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here.';
         }
         text += `</span>`;
@@ -189,32 +172,36 @@ var space;
     function layoutRefuel(answer) {
         let textHead = document.getElementById("mainDiv");
         let text = breadcrumbs();
-        console.log('layout refuel');
-        //text += '<p>'
+        text += 'You are at a refuelling bay.';
         text += ' <span class="spanButton" onclick="space.returnSublocation()">Back to Station</span>';
         textHead.innerHTML = text;
         //layoutFlightControls();
     }
-    function layoutMessage(msg) {
+    function layoutMessage(message) {
         let textHead = document.getElementById("mainDiv");
-        let text = msg;
+        let text = `<span class="message">${message}</span>`;
         textHead.innerHTML += text;
     }
-    function layoutFlight(answer) {
+    function layoutFlight() {
         let textHead = document.getElementById("mainDiv");
-        let text = '';
-        text += 'boo';
-        textHead.innerHTML += text;
+        let text = breadcrumbs();
+        text += `You\'re flying towards <span class="location" style="colors: ${space.location.color || "inherit"} ">${space.location.name}
+		(${space.location.type})</span>.`;
+        text += '';
+        text += ' Try <span class="spanButton" onclick="space.tryDock()">docking</span>';
+        textHead.innerHTML = text;
+        layoutFlightControls();
     }
     function layoutFlightControls() {
         let textHead = document.getElementById("mainDiv");
-        if (!swhere || !sector)
+        console.log('layout flgith controls');
+        if (!space.sector)
             return;
         let text = '<p>';
         text += '<br>';
         text += `Other locations within this sector.`;
         text += `<select name="flights" id="flights" >`;
-        for (let location of sector.locations) {
+        for (let location of space.sector.locations) {
             text += `<option value="volvo">${location}</option>`;
         }
         text += `</select>
@@ -278,6 +265,14 @@ var space;
         });
     }
     space.submitFlight = submitFlight;
+    function tryDock() {
+        makeRequest('GET', 'dock')
+            .then(function (res) {
+            console.log('asking server if we can dock');
+            receiveStuple(res);
+        });
+    }
+    space.tryDock = tryDock;
     function returnSublocation() {
         makeRequest('GET', 'returnSublocation')
             .then(function (res) {
@@ -298,7 +293,7 @@ var space;
         makeRequest('GET', 'logout')
             .then(function (res) {
             alert(res);
-            sply.unregistered = true;
+            space.sply.unregistered = true;
             handleSply();
         });
     }
@@ -318,11 +313,11 @@ var space;
                 makeRequest('GET', 'ply')
                     .then(function (res) {
                     receiveStuple(res);
-                    return makeRequest('GET', 'where');
-                })
-                    .then(function (res) {
-                    receiveStuple(res);
+                    //return makeRequest('GET', 'where');
                 });
+                //.then(function (res: any) {
+                //	receiveStuple(res);
+                //});
             }
             else if (http.readyState == 4 && http.status == 400) {
                 alert(http.responseText);

@@ -149,27 +149,17 @@ function init() {
             sendStuple([['sply'], {
                     id: ply.id,
                     username: ply.username,
-                    unregistered: ply.unregistered
+                    unregistered: ply.unregistered,
+                    sector: ply.sector,
+                    location: ply.location,
+                    sublocation: ply.sublocation,
+                    position: ply.position,
+                    flight: ply.flight,
+                    flightLocation: ply.flightLocation
                 }]);
         };
         const sendSmessage = function (message) {
             sendStuple([['message'], message]);
-        };
-        const sendSwhere = function () {
-            if (ply.flight) {
-                sendStuple([['flight'], {
-                        position: ply.position
-                    }]);
-            }
-            else {
-                sendStuple([['swhere'],
-                    {
-                        sectorName: ply.sector,
-                        locationName: ply.location,
-                        sublocation: ply.sublocation
-                    }
-                ]);
-            }
         };
         const transportSublocation = function (where) {
             if (where == 'Refuel')
@@ -193,7 +183,7 @@ function init() {
             if (sublocation == 'refuel') {
                 ply.sublocation = 'Refuel';
                 writePly(ply);
-                sendSwhere();
+                sendSply();
             }
             //let arg = input.split(' ');
         }
@@ -216,8 +206,8 @@ function init() {
                     let logged_in_elsewhere = false;
                     let ip2;
                     for (ip2 in logins_by_ip) {
-                        let username = logins_by_ip[ip2];
-                        if (username == ply.username && ip != ip2) {
+                        let username2 = logins_by_ip[ip2];
+                        if (username == username2 && ip != ip2) {
                             logged_in_elsewhere = true;
                             break;
                         }
@@ -337,10 +327,11 @@ function init() {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             sendObject(locations);
         }
-        else if (req.url == '/where') {
+        /*else if (req.url == '/where') {
             console.log('got where');
+
             sendSwhere();
-        }
+        }*/
         else if (req.url == '/ply') {
             console.log('get ply');
             sendSply();
@@ -357,6 +348,12 @@ function init() {
                 res.end(`not logged in, playing as unregistered`);
             }
         }
+        else if (req.url.search('/dock') == 0) {
+            ply.flight = false;
+            writePly(ply);
+            sendSply();
+            //sendStuple([['message'], `Can\'t dock. Not nearby ${ply.flightLocation}.`]);
+        }
         else if (req.url.search('/submitFlight') == 0) {
             console.log('received flight');
             let val;
@@ -370,14 +367,14 @@ function init() {
                 ply.flight = true;
                 ply.flightLocation = val;
                 writePly(ply);
-                sendSwhere();
+                sendSply();
             }
         }
         else if (req.url == '/returnSublocation') {
             //console.log('return from sublocation');
             ply.sublocation = 'None';
             writePly(ply);
-            sendSwhere();
+            sendSply();
         }
         else if (-1 < req.url.indexOf('/app/')) {
             let appId = req.url.split('app/')[1];

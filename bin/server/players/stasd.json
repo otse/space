@@ -5,8 +5,8 @@
     "password": "asdf",
     "speed": 1,
     "unregistered": false,
-    "flight": false,
-    "flightLocation": "",
+    "flight": true,
+    "flightLocation": "Dartwing",
     "position": [
         0,
         0

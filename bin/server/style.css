@@ -65,13 +65,13 @@ input[type="text"]:focus {
 .smallish {
 	font-size: 0.9em;
 	color: #d1d1d1;
-	padding: 4px;
+	padding: 20px;
 }
 
 .content {
 	display: inline-block;
 	margin: 30px;
-	width: 300px;
+	/*width: 300px;*/
 	padding: 10px;
 	color: #ffffff;
 	/* background: rgb(189 189 189 / 50%); */
@@ -94,6 +94,10 @@ span.sector {
 span.location {
 	border-bottom: 1px dotted white;
 	padding: 6px;
+}
+
+span.message {
+	color: orange;
 }
 
 span.facilities {}
