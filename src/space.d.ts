@@ -4,25 +4,16 @@ declare type vec2 = [number, number];
 
 type Stuple = [type: string, payload: any]
 
-interface JSector {
+interface Sector {
 	name: string
 	locations: string[]
 }
 
-interface JLocation {
+interface Location {
 	name: string
 	type: string
-	position: vec2
+	position: vec2,
 	color: string
 	facilities: string[]
-}
-
-interface Locations {
-	writes: number
-	boo: number
-}
-
-interface BriefApp {
-
 }
 

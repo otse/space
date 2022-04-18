@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPly = exports.serverTick = exports.locationExists = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
+exports.getPly = exports.serverTick = exports.getSector = exports.getLocation = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -33,7 +33,7 @@ var sectors;
 var locations;
 var remembrance_table = {};
 var logins_by_ip = {};
-var players;
+var all_plys;
 function writeMcf() {
     main_computer_file.writes++;
     const payload = JSON.stringify(main_computer_file, null, 4);
@@ -83,6 +83,7 @@ function plyTempl() {
         unregistered: false,
         flight: false,
         flightLocation: '',
+        scanning: false,
         position: [0, 0],
         sector: 'Great Suldani Belt',
         location: 'Dartwing',
@@ -90,14 +91,22 @@ function plyTempl() {
     };
 }
 exports.plyTempl = plyTempl;
-function locationExists(name) {
+function getLocation(name) {
     for (let location of locations)
         if (location.name == name)
-            return true;
+            return location;
     return false;
 }
-exports.locationExists = locationExists;
+exports.getLocation = getLocation;
+function getSector(name) {
+    for (let sector of sectors)
+        if (sectors.name == name)
+            return sector;
+    return false;
+}
+exports.getSector = getSector;
 function serverTick() {
+    //for ()
 }
 exports.serverTick = serverTick;
 function getPly(ip) {
@@ -146,17 +155,25 @@ function init() {
         const ip = sanitizeIp(req.socket.remoteAddress);
         let ply = getPly(req.socket.remoteAddress);
         const sendSply = function () {
-            sendStuple([['sply'], {
-                    id: ply.id,
-                    username: ply.username,
-                    unregistered: ply.unregistered,
-                    sector: ply.sector,
-                    location: ply.location,
-                    sublocation: ply.sublocation,
-                    position: ply.position,
-                    flight: ply.flight,
-                    flightLocation: ply.flightLocation
-                }]);
+            let object = {
+                id: ply.id,
+                username: ply.username,
+                unregistered: ply.unregistered,
+                sector: ply.sector,
+                location: ply.location,
+                sublocation: ply.sublocation,
+                position: ply.position,
+                flight: ply.flight,
+                flightLocation: ply.flightLocation,
+            };
+            if (ply.scanning) {
+                console.log('were scanning');
+                object.scanning = true;
+                object.scanStart = ply.scanStart || 0;
+                object.scanEnd = ply.scanEnd || 0;
+                object.scanCompleted = ply.scanCompleted;
+            }
+            sendStuple([['sply'], object]);
         };
         const sendSmessage = function (message) {
             sendStuple([['message'], message]);
@@ -302,6 +319,12 @@ function init() {
             res.end('boo');
             return;
         }
+        if (ply.scanning) {
+            const scanRemaining = ply.scanEnd - Date.now();
+            if (scanRemaining < 0) {
+                ply.scanCompleted = true;
+            }
+        }
         if (false)
             0;
         else if (req.url == '/') {
@@ -348,10 +371,42 @@ function init() {
                 res.end(`not logged in, playing as unregistered`);
             }
         }
-        else if (req.url.search('/dock') == 0) {
-            ply.flight = false;
+        else if (req.url == '/askTick') {
+        }
+        else if (req.url == '/scan') {
+            const location = getLocation(ply.location);
+            if (location.type == 'Junk') {
+                const durationMinutes = 2;
+                ply.scanning = true;
+                ply.scanCompleted = false;
+                ply.scanStart = Date.now();
+                ply.scanEnd = Date.now() + (1000 * 60 * durationMinutes);
+                writePly(ply);
+                sendSply();
+            }
+            else {
+                sendSmessage("Can only scan junk.");
+            }
+        }
+        else if (req.url == '/stopScanning') {
+            const location = getLocation(ply.location);
+            ply.scanning = false;
             writePly(ply);
             sendSply();
+        }
+        else if (req.url == '/completeScan') {
+            //const location = getLocation(ply.location);
+            ply.scanning = false;
+            writePly(ply);
+            sendSply();
+        }
+        else if (req.url == '/dock') {
+            if (ply.flight) {
+                ply.flight = false;
+                ply.location = ply.flightLocation;
+                writePly(ply);
+                sendSply();
+            }
             //sendStuple([['message'], `Can\'t dock. Not nearby ${ply.flightLocation}.`]);
         }
         else if (req.url.search('/submitFlight') == 0) {
@@ -360,7 +415,7 @@ function init() {
             val = req.url.split('=')[1];
             val = val.replace(/%20/g, " ");
             console.log(val);
-            if (!locationExists(val)) {
+            if (!getLocation(val)) {
                 sendSmessage("Location doesn't exist");
             }
             else {

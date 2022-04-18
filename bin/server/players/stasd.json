@@ -5,13 +5,13 @@
     "password": "asdf",
     "speed": 1,
     "unregistered": false,
-    "flight": true,
-    "flightLocation": "Dartwing",
+    "flight": false,
+    "flightLocation": "Generic Collision",
     "position": [
         0,
         0
     ],
     "sector": "Great Suldani Belt",
-    "location": "Dartwing",
+    "location": "Generic Collision",
     "sublocation": "None"
 }

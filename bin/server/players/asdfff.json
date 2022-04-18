@@ -6,12 +6,16 @@
     "speed": 1,
     "unregistered": false,
     "flight": false,
-    "flightLocation": "Dartwing",
+    "flightLocation": "Generic Collision",
     "position": [
         0,
         0
     ],
     "sector": "Great Suldani Belt",
-    "location": "Dartwing",
-    "sublocation": "None"
+    "location": "Generic Collision",
+    "sublocation": "None",
+    "scanning": true,
+    "scanStart": 1650283559075,
+    "scanEnd": 1650283679075,
+    "scanCompleted": false
 }

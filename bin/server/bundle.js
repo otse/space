@@ -107,6 +107,24 @@
                 console.error('Augh, there was an error!', err.statusText);
             });*/
         }
+        function chooseLayout() {
+            if (space.sply.flight) {
+                layoutFlight();
+            }
+            else if (space.sply.sublocation == 'Refuel') {
+                layoutRefuel();
+            }
+            else if (space.sply.scanning) {
+                layoutScanning();
+            }
+            else if (space.location.type == 'Station') {
+                layoutStation();
+            }
+            else if (space.location.type == 'Junk') {
+                layoutJunk();
+            }
+        }
+        space.chooseLayout = chooseLayout;
         function receiveStuple(res) {
             let stuple = JSON.parse(res);
             const type = stuple[0];
@@ -114,17 +132,10 @@
             console.log('received stuple type', type);
             if (type == 'sply') {
                 space.sply = payload;
-                space.sector = getSectorByName(payload.sector);
-                space.location = getLocationByName(payload.location);
+                space.sector = getSectorByName(space.sply.sector);
+                space.location = getLocationByName(space.sply.location);
                 handleSply();
-                if (space.sply.flight) {
-                    layoutFlight();
-                }
-                else if (space.sply.sublocation == 'Refuel') {
-                    layoutRefuel();
-                }
-                else if (space.location.type == 'Station')
-                    layoutStation();
+                chooseLayout();
             }
             else if (type == 'message') {
                 layoutMessage(payload);
@@ -141,7 +152,27 @@
             text += `<p>`;
             return text;
         }
-        function layoutStation(answer) {
+        function addFlightOption() {
+            let textHead = document.getElementById("mainDiv");
+            let text = '';
+            text += `
+		<p>
+		<br />
+		<span class="spanButton" onclick="space.layoutFlightControls()">Flight Menu</span>
+		`;
+            textHead.innerHTML += text;
+        }
+        function addReturnOption() {
+            let text = '';
+            text += `
+		<p>
+		<span class="spanButton" onclick="space.chooseLayout()"><</span>
+		<p>
+		<br />
+		`;
+            return text;
+        }
+        function layoutStation() {
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
             text += `
@@ -157,13 +188,71 @@
             }
             text += `</span>`;
             textHead.innerHTML = text;
-            layoutFlightControls();
+            addFlightOption();
+            //layoutFlightControls();
         }
-        function layoutRefuel(answer) {
+        function layoutJunk() {
+            let textHead = document.getElementById("mainDiv");
+            let text = breadcrumbs();
+            text += `
+		You are in the <span class="sector">${space.sector.name}</span>
+		/ <span class="location" style="colors: ${space.location.color || "inherit"} ">${space.location.name}
+		(${space.location.type})</span>
+		`;
+            text += `<p>`;
+            text += `
+		It's a junk field.
+		You can <span class="spanButton" onclick="space.scanJunk()">scan</span> the debris.
+		`;
+            textHead.innerHTML = text;
+            addFlightOption();
+            //layoutFlightControls();
+        }
+        function layoutRefuel() {
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
             text += 'You are at a refuelling bay.';
             text += ' <span class="spanButton" onclick="space.returnSublocation()">Back to Station</span>';
+            textHead.innerHTML = text;
+            //layoutFlightControls();
+        }
+        function layoutScanning() {
+            let textHead = document.getElementById("mainDiv");
+            let text = breadcrumbs();
+            text += 'You are scanning the junk. This may take a moment.';
+            text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel</span>';
+            console.log(space.sply);
+            if (!space.sply.scanCompleted) {
+                let started = Date.now() - space.sply.scanStart;
+                started /= 1000;
+                if (started < 60.0) {
+                    started = `${started.toFixed(0)} seconds ago`;
+                }
+                else if (started < 60 * 60) {
+                    started = `${Math.floor(started / 60).toFixed(0)} minutes ago`;
+                }
+                text += `<p>Start time: ${started}`;
+                let ending = space.sply.scanEnd - Date.now();
+                ending /= 1000;
+                if (ending < 0)
+                    ending = '[ Completed ]';
+                else if (ending < 60.0) {
+                    ending = `${ending.toFixed(0)} seconds`;
+                }
+                else if (ending < 60 * 60) {
+                    ending = `${Math.ceil(ending / 60).toFixed(0)} minutes`;
+                }
+                text += `<p>Scan complete in ${ending}`;
+                const duration = space.sply.scanEnd - space.sply.scanStart;
+                const time = Date.now() - space.sply.scanStart;
+                const width = time / duration;
+                console.log('width', width);
+                console.log('scanEnd', space.sply.scanEnd, 'scanStart', space.sply.scanStart);
+                text += `<div class="scanBar"><div class="inside" style="width: ${(width * 100).toFixed(0)}%"></div></div>`;
+            }
+            else {
+                text += '<p><br /><span class="spanButton" onclick="space.completeScan()">Complete scan</span>';
+            }
             textHead.innerHTML = text;
             //layoutFlightControls();
         }
@@ -175,30 +264,33 @@
         function layoutFlight() {
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
-            text += `You\'re flying towards <span class="location" style="colors: ${space.location.color || "inherit"} ">${space.location.name}
-		(${space.location.type})</span>.`;
+            const loc = getLocationByName(space.sply.flightLocation);
+            text += `You\'re flying towards <span class="location" style="colors: ${loc.color || "inherit"} ">${loc.name}
+		(${loc.type})</span>.`;
             text += '';
-            text += ' Try <span class="spanButton" onclick="space.tryDock()">docking</span>';
+            text += ' Attempt to <span class="spanButton" onclick="space.tryDock()">dock</span>';
             textHead.innerHTML = text;
-            layoutFlightControls();
+            addFlightOption();
+            //layoutFlightControls();
         }
         function layoutFlightControls() {
             let textHead = document.getElementById("mainDiv");
-            console.log('layout flgith controls');
-            if (!space.sector)
-                return;
-            let text = '<p>';
-            text += '<br>';
-            text += `Other locations within this sector.`;
+            let text = breadcrumbs();
+            text += addReturnOption();
+            text += 'Flight menu';
+            text += '<p>';
+            text += ``;
             text += `<select name="flights" id="flights" >`;
             for (let location of space.sector.locations) {
-                text += `<option value="volvo">${location}</option>`;
+                text += `<option>${location}</option>`;
             }
+            text += `<option>Non-existing option</option>`;
             text += `</select>
 		<span class="spanButton" onclick="space.submitFlight()">Flight</span>
 		</form>`;
-            textHead.innerHTML += text;
+            textHead.innerHTML = text;
         }
+        space.layoutFlightControls = layoutFlightControls;
         function showLogin() {
             let textHead = document.getElementById("mainDiv");
             let text = `
@@ -255,6 +347,27 @@
             });
         }
         space.submitFlight = submitFlight;
+        function scanJunk() {
+            makeRequest('GET', 'scan')
+                .then(function (res) {
+                receiveStuple(res);
+            });
+        }
+        space.scanJunk = scanJunk;
+        function completeScan() {
+            makeRequest('GET', 'completeScan')
+                .then(function (res) {
+                receiveStuple(res);
+            });
+        }
+        space.completeScan = completeScan;
+        function stopScanning() {
+            makeRequest('GET', 'stopScanning')
+                .then(function (res) {
+                receiveStuple(res);
+            });
+        }
+        space.stopScanning = stopScanning;
         function tryDock() {
             makeRequest('GET', 'dock')
                 .then(function (res) {

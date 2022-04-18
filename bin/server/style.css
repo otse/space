@@ -34,6 +34,26 @@ input[type="text"]:focus {
 	outline: 0;
 }
 
+select {
+	font-size: 18px;
+    padding: 5px;
+    border-radius: 0;
+    background: inherit;
+	border: 1px outset #b5b5b5;
+	background: gray;
+    color: white;
+}
+
+option {
+	color: black;
+}
+
+option:hover {
+	color: purple;
+	background: inherit;
+	background-color: yellow;
+}
+
 .mission {
 	margin: 0px;
 	color: #c9c9c9;
@@ -103,7 +123,7 @@ span.message {
 span.facilities {}
 
 span.spanButton {
-	border: 1px inset white;
+    border: 1px inset #d4d4d4;
 	padding: 6px;
 	cursor: pointer;
 }
@@ -113,4 +133,17 @@ span.refuel {
 	border: 1px inset darkgoldenrod;
 	padding: 6px;
 
+}
+
+div.scanBar {
+	height: 20px;
+	width: 300px;
+	background: lightblue;
+}
+
+div.scanBar .inside {
+	display: inline-block;
+    background: blue;
+    height: 18px;
+    margin: 1px;
 }

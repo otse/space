@@ -1,12 +1,13 @@
 {
-    "id": 38,
-    "ip": "ffff127.0.0.1",
+    "id": 40,
+    "ip": "ffff192.168.2.254",
     "username": "Captain",
     "password": "N/A",
     "speed": 1,
     "unregistered": true,
-    "flight": true,
-    "flightLocation": "Generic Collision",
+    "flight": false,
+    "flightLocation": "",
+    "scanning": false,
     "position": [
         0,
         0

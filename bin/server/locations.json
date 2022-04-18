@@ -9,8 +9,8 @@
         ]
     },
     {
-        "name": "Trawler Collision",
-        "position": [2, 10],
-        "type": "Junk"
+        "name": "Generic Collision",
+        "type": "Junk",
+        "position": [2, 10]
     }
 ]
