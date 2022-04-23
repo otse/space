@@ -12,5 +12,10 @@
         "name": "Generic Collision",
         "type": "Junk",
         "position": [2, 10]
+    },
+    {
+        "name": "Ungoverned Space",
+        "type": "Contested",
+        "position": [10, 15]
     }
 ]

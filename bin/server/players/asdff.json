@@ -14,5 +14,8 @@
     "sector": "Great Suldani Belt",
     "location": "Generic Collision",
     "sublocation": "None",
-    "scanning": true
+    "scanning": false,
+    "scanCompleted": true,
+    "scanStart": 1650359821800,
+    "scanEnd": 1650359941800
 }

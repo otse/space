@@ -4,12 +4,16 @@
     "unregistered": true,
     "username": "Captain",
     "flight": false,
-    "flightLocation": "Midsection",
+    "flightLocation": "Generic Collision",
     "position": [
         0,
         0
     ],
     "sector": "Great Suldani Belt",
-    "location": "Dartwing",
-    "sublocation": "None"
+    "location": "Generic Collision",
+    "sublocation": "None",
+    "scanning": false,
+    "scanCompleted": false,
+    "scanStart": 1650627629266,
+    "scanEnd": 1650627749266
 }

@@ -123,9 +123,16 @@
             else if (space.location.type == 'Junk') {
                 layoutJunk();
             }
+            else if (space.location.type == 'Contested') {
+                layoutContested();
+            }
         }
         space.chooseLayout = chooseLayout;
         function receiveStuple(res) {
+            if (res.length == 0) {
+                console.warn('expected a stuple but received nothing');
+                return;
+            }
             let stuple = JSON.parse(res);
             const type = stuple[0];
             const payload = stuple[1];
@@ -140,15 +147,18 @@
             else if (type == 'message') {
                 layoutMessage(payload);
             }
+            else if (type == 'message') {
+                layoutMessage(payload);
+            }
         }
         function breadcrumbs() {
             let text = '';
             text += `
-		<p class="smallish">`;
+		<p class="smallish" style="padding: 20px;">`;
             if (space.sply.unregistered)
-                text += `[ Playing via this ip (unregistered). ]`;
+                text += `Playing unregistered`;
             else
-                text += `[ Logged in as ${space.sply.username} (#${space.sply.id}) ]`;
+                text += `Logged in as ${space.sply.username} #${space.sply.id}`;
             text += `<p>`;
             return text;
         }
@@ -172,14 +182,25 @@
 		`;
             return text;
         }
+        function makeWhereabouts() {
+            let text = '';
+            text += `
+		<div id="whereabouts">
+		
+		<span class="sector">${space.sector.name}</span> ~>
+		<br />
+		
+		<span class="location" style="colors: ${space.location.color || "inherit"} ">
+		${space.location.name}
+		<!--(${space.location.type})--></span>
+		</div>
+		`;
+            return text;
+        }
         function layoutStation() {
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
-            text += `
-		You are in the <span class="sector">${space.sector.name}</span>
-		/ <span class="location" style="colors: ${space.location.color || "inherit"} ">${space.location.name}
-		(${space.location.type})</span>
-		`;
+            text += makeWhereabouts();
             text += `<p>`;
             text += `<span class="facilities">`;
             if (space.location.facilities) {
@@ -194,11 +215,7 @@
         function layoutJunk() {
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
-            text += `
-		You are in the <span class="sector">${space.sector.name}</span>
-		/ <span class="location" style="colors: ${space.location.color || "inherit"} ">${space.location.name}
-		(${space.location.type})</span>
-		`;
+            text += makeWhereabouts();
             text += `<p>`;
             text += `
 		It's a junk field.
@@ -206,6 +223,34 @@
 		`;
             textHead.innerHTML = text;
             addFlightOption();
+            //layoutFlightControls();
+        }
+        function layoutContested() {
+            let textHead = document.getElementById("mainDiv");
+            let text = breadcrumbs();
+            text += makeWhereabouts();
+            text += `<p>`;
+            text += `
+		This regional blob of space is unmonitored by law.
+		<p>
+		You can <span class="spanButton" onclick="space.seeEnemies()">see nearby enemies.</span>
+		`;
+            textHead.innerHTML = text;
+            addFlightOption();
+            //layoutFlightControls();
+        }
+        function layoutEnemies() {
+            let textHead = document.getElementById("mainDiv");
+            let text = '';
+            //text = breadcrumbs();
+            text += addReturnOption();
+            //text += makeWhereabouts();
+            text += `<p>`;
+            text += `
+		These are pirates and exiles that you can engage.
+		`;
+            textHead.innerHTML = text;
+            //addFlightOption();
             //layoutFlightControls();
         }
         function layoutRefuel() {
@@ -219,41 +264,53 @@
         function layoutScanning() {
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
-            text += 'You are scanning the junk. This may take a moment.';
-            text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel</span>';
+            text += `You\'re scanning the junk at ${space.location.name || ''}.`;
+            if (!space.sply.scanCompleted)
+                text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel?</span>';
             console.log(space.sply);
-            if (!space.sply.scanCompleted) {
-                let started = Date.now() - space.sply.scanStart;
-                started /= 1000;
-                if (started < 60.0) {
-                    started = `${started.toFixed(0)} seconds ago`;
-                }
-                else if (started < 60 * 60) {
-                    started = `${Math.floor(started / 60).toFixed(0)} minutes ago`;
-                }
-                text += `<p>Start time: ${started}`;
-                let ending = space.sply.scanEnd - Date.now();
-                ending /= 1000;
-                if (ending < 0)
-                    ending = '[ Completed ]';
-                else if (ending < 60.0) {
-                    ending = `${ending.toFixed(0)} seconds`;
-                }
-                else if (ending < 60 * 60) {
-                    ending = `${Math.ceil(ending / 60).toFixed(0)} minutes`;
-                }
-                text += `<p>Scan complete in ${ending}`;
+            //if (!sply.scanCompleted) {
+            function updateBar() {
+                let now = Date.now();
+                if (now > space.sply.scanEnd)
+                    now = space.sply.scanEnd;
                 const duration = space.sply.scanEnd - space.sply.scanStart;
-                const time = Date.now() - space.sply.scanStart;
+                const time = now - space.sply.scanStart;
                 const width = time / duration;
-                console.log('width', width);
-                console.log('scanEnd', space.sply.scanEnd, 'scanStart', space.sply.scanStart);
-                text += `<div class="scanBar"><div class="inside" style="width: ${(width * 100).toFixed(0)}%"></div></div>`;
+                const minutesPast = Math.floor(time / 1000 / 60).toFixed(0);
+                const minutesRemain = Math.round(duration / 1000 / 60).toFixed(0);
+                const over = space.sply.scanEnd - Date.now();
+                let bar = document.getElementById("barProgress");
+                let text = document.getElementById("barText");
+                if (!bar || !text)
+                    return;
+                bar.style.width = `${(width * 100).toFixed(0)}%`;
+                if (over > 0)
+                    text.innerHTML = `${minutesPast} / ${minutesRemain} minutes`;
+                else
+                    text.innerHTML = '<span onclick="space.completeScan()">[complete]</span>';
             }
-            else {
-                text += '<p><br /><span class="spanButton" onclick="space.completeScan()">Complete scan</span>';
-            }
+            text += `
+		<div class="bar">
+		<div id="barProgress"></div>
+		<span id="barText"></span>
+		</div>`;
+            //if (sply.scanCompleted)
+            //	text += '<p><br /><span class="spanButton" onclick="space.completeScan()">See scan results</span>';
             textHead.innerHTML = text;
+            updateBar();
+            const t = setInterval(function () {
+                if (space.sply.scanning) {
+                    const time = space.sply.scanEnd - Date.now();
+                    if (time <= 0) {
+                        clearInterval(t);
+                        console.log('clear the interval');
+                    }
+                    updateBar();
+                }
+                else {
+                    clearInterval(t);
+                }
+            }, 1000);
             //layoutFlightControls();
         }
         function layoutMessage(message) {
@@ -265,10 +322,10 @@
             let textHead = document.getElementById("mainDiv");
             let text = breadcrumbs();
             const loc = getLocationByName(space.sply.flightLocation);
-            text += `You\'re flying towards <span class="location" style="colors: ${loc.color || "inherit"} ">${loc.name}
+            text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
             text += '';
-            text += ' Attempt to <span class="spanButton" onclick="space.tryDock()">dock</span>';
+            text += ' Attempt to <span class="spanButton" onclick="space.tryDock()">arrive / dock</span>';
             textHead.innerHTML = text;
             addFlightOption();
             //layoutFlightControls();
@@ -297,13 +354,16 @@
 		<form action="login" method="post">
 		<label for="username">Username</label><br />
 		<input id="username" type="text" placeholder="" name="username" required><br /><br />
-	
+		
 		<label for="psw">Password</label><br />
 		<input id="password" type="password" placeholder="" name="psw" required><br /><br />
-	
+		
 		<button type="button" onclick="space.xhrLogin()">Login</button>
-
-		</form>`;
+		
+		</form>
+		<p>
+		<span class="smallish">You will remain logged in until you logout.</span>
+		`;
             textHead.innerHTML = text;
         }
         space.showLogin = showLogin;
@@ -368,6 +428,14 @@
             });
         }
         space.stopScanning = stopScanning;
+        function seeEnemies() {
+            makeRequest('GET', 'seeEnemies')
+                .then(function (res) {
+                receiveStuple(res);
+                layoutEnemies();
+            });
+        }
+        space.seeEnemies = seeEnemies;
         function tryDock() {
             makeRequest('GET', 'dock')
                 .then(function (res) {
@@ -398,6 +466,7 @@
                 alert(res);
                 space.sply.unregistered = true;
                 handleSply();
+                //chooseLayout();
             });
         }
         space.logout = logout;

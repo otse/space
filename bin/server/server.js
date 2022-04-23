@@ -74,12 +74,13 @@ var unregisteredPlys = {};
 function plyTempl() {
     main_computer_file.players++;
     writeMcf();
-    return {
+    let ply = {
         id: main_computer_file.players,
         ip: 'N/A',
         username: 'Captain',
         password: 'N/A',
         speed: 1,
+        health: 100,
         unregistered: false,
         flight: false,
         flightLocation: '',
@@ -87,8 +88,9 @@ function plyTempl() {
         position: [0, 0],
         sector: 'Great Suldani Belt',
         location: 'Dartwing',
-        sublocation: 'None',
+        sublocation: 'None'
     };
+    return ply;
 }
 exports.plyTempl = plyTempl;
 function getLocation(name) {
@@ -149,6 +151,7 @@ function init() {
     sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
     locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
     logins_by_ip = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+    //createLocationPersistence();
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
         // console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
@@ -172,6 +175,9 @@ function init() {
                 object.scanStart = ply.scanStart || 0;
                 object.scanEnd = ply.scanEnd || 0;
                 object.scanCompleted = ply.scanCompleted;
+            }
+            if (ply.engaging) {
+                object.engaging = true;
             }
             sendStuple([['sply'], object]);
         };
@@ -325,16 +331,19 @@ function init() {
                 ply.scanCompleted = true;
             }
         }
-        if (false)
-            0;
-        else if (req.url == '/') {
+        if (req.url == '/') {
             let page = fs.readFileSync('page.html');
             res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
             sendGeneric(page);
         }
         else if (req.url == '/style.css') {
-            let client = fs.readFileSync('style.css');
+            let style = fs.readFileSync('style.css');
             res.writeHead(200, { CONTENT_TYPE: "text/css" });
+            sendGeneric(style);
+        }
+        else if (req.url == '/stars.png') {
+            let client = fs.readFileSync('stars.');
+            res.writeHead(200, { CONTENT_TYPE: "image/png" });
             sendGeneric(client);
         }
         else if (req.url == '/bundle.js') {
@@ -372,6 +381,15 @@ function init() {
             }
         }
         else if (req.url == '/askTick') {
+        }
+        else if (req.url == '/engagePirate') {
+            ply.engaging = true;
+            sendSply();
+        }
+        else if (req.url == '/seeEnemies') {
+            //ply.engaging = true;
+            let object = [];
+            sendStuple([['senemies'], object]);
         }
         else if (req.url == '/scan') {
             const location = getLocation(ply.location);

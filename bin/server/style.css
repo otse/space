@@ -1,7 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&family=Roboto+Mono&display=swap');
+
 body {
 	background: #303d4a;
+	background: #353f48;
+	bbackground: #1b1f23;
 	font-family: Arial, Helvetica, sans-serif;
-	color: white;
+	font-family: 'Poppins', sans-serif;
+	color: #dddddd;
 	font-size: 16px;
 	margin: 0;
 	/*background: url(https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/3f31ae15-62c2-4f52-83e5-195b146252fb/dcwan4m-e5c57816-bb54-4845-8513-09b0ce9c1c78.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzNmMzFhZTE1LTYyYzItNGY1Mi04M2U1LTE5NWIxNDYyNTJmYlwvZGN3YW40bS1lNWM1NzgxNi1iYjU0LTQ4NDUtODUxMy0wOWIwY2U5YzFjNzgucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.zgdTc-T8vhjdQBU-e9236rzMbDxoJnHnJ73R8hyi3fY);*/
@@ -36,12 +41,12 @@ input[type="text"]:focus {
 
 select {
 	font-size: 18px;
-    padding: 5px;
-    border-radius: 0;
-    background: inherit;
+	padding: 5px;
+	border-radius: 0;
+	background: inherit;
 	border: 1px outset #b5b5b5;
 	background: gray;
-    color: white;
+	color: white;
 }
 
 option {
@@ -85,7 +90,6 @@ option:hover {
 .smallish {
 	font-size: 0.9em;
 	color: #d1d1d1;
-	padding: 20px;
 }
 
 .content {
@@ -93,7 +97,7 @@ option:hover {
 	margin: 30px;
 	/*width: 300px;*/
 	padding: 10px;
-	color: #ffffff;
+	ffont-size: 18px;
 	/* background: rgb(189 189 189 / 50%); */
 }
 
@@ -103,19 +107,6 @@ option:hover {
 	color: #ffffff;
 }
 
-span.sector {
-	bborder-bottom: 1px dashed white;
-	ffont-style: italic;
-	background: #665938;
-	border: 1px inset darkgoldenrod;
-	padding: 6px;
-}
-
-span.location {
-	border-bottom: 1px dotted white;
-	padding: 6px;
-}
-
 span.message {
 	color: orange;
 }
@@ -123,7 +114,7 @@ span.message {
 span.facilities {}
 
 span.spanButton {
-    border: 1px inset #d4d4d4;
+	border: 1px inset #d4d4d4;
 	padding: 6px;
 	cursor: pointer;
 }
@@ -132,18 +123,67 @@ span.refuel {
 	font-weight: bold;
 	border: 1px inset darkgoldenrod;
 	padding: 6px;
-
 }
 
-div.scanBar {
+.bar {
+	position: relative;
 	height: 20px;
 	width: 300px;
-	background: lightblue;
+	background: rgb(0 0 0 / 50%);
+	padding: 10px 0;
+	border-radius: 3px;
+	/* outline: 4px solid #6e6e6e80; */
 }
 
-div.scanBar .inside {
+.bar>div {
 	display: inline-block;
-    background: blue;
-    height: 18px;
-    margin: 1px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	border-radius: inherit;
+	background: #457695;
+	background: linear-gradient(90deg, rgb(100 91 135) 0%, rgb(54 120 142) 100%);
+	height: inherit;
+	padding: inherit;
+}
+
+.bar>span {
+	display: inline-block;
+	position: absolute;
+	left: 0;
+	font-family: 'Roboto Mono', monospace;
+	font-size: 14px;
+	/* height: inherit; */
+	width: inherit;
+	text-align: center;
+	color: #dadada;
+	color: #e6e6e6;
+	text-shadow: 0px 0px 3px #ffffff;
+}
+
+.bar>span>span {
+	cursor: pointer;
+}
+
+#whereabouts {
+	font-family: 'Roboto Mono', monospace;
+	font-size: 14px;
+	color: lightgray;
+	padding: 10px;
+	border-radius: 4px;
+	background-color: black;
+	background-image: url(https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9701e8b0-8750-409e-9ac3-27c9776ffb08/d832a6f-a0941468-5a25-4850-851a-7dd79ae20856.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzk3MDFlOGIwLTg3NTAtNDA5ZS05YWMzLTI3Yzk3NzZmZmIwOFwvZDgzMmE2Zi1hMDk0MTQ2OC01YTI1LTQ4NTAtODUxYS03ZGQ3OWFlMjA4NTYuanBnIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.qbp8RUQxndAfAkX5ouoJDy8iQE7zZVuBuXu40wGOI-s);
+}
+
+#whereabouts > span {
+	display: inline-block;
+	padding: 5px;
+	font-style: italic;
+}
+
+span.sector {
+	border-radius: 1px;
+}
+
+span.location {
 }

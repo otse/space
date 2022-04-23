@@ -41,14 +41,16 @@ interface Ply {
 	username: string
 	password: string
 	ip: string
+	health: number
 	unregistered: boolean
 	speed: number
 	flight: boolean
 	flightLocation: string
-	scanning: boolean
-	scanStart: number
-	scanEnd: number
-	scanCompleted: boolean
+	scanning?: boolean
+	scanStart?: number
+	scanEnd?: number
+	scanCompleted?: boolean
+	engaging?: boolean
 	position
 	sector
 	location
@@ -113,12 +115,13 @@ var unregisteredPlys = {};
 export function plyTempl() {
 	main_computer_file.players++;
 	writeMcf();
-	return <Ply>{
+	let ply: Ply = {
 		id: main_computer_file.players,
 		ip: 'N/A',
 		username: 'Captain',
 		password: 'N/A',
 		speed: 1,
+		health: 100,
 		unregistered: false,
 		flight: false,
 		flightLocation: '',
@@ -126,8 +129,9 @@ export function plyTempl() {
 		position: [0, 0],
 		sector: 'Great Suldani Belt',
 		location: 'Dartwing',
-		sublocation: 'None',
+		sublocation: 'None'
 	};
+	return ply;
 }
 
 export function getLocation(name) {
@@ -192,6 +196,8 @@ export function getPly(ip) {
 	return ply;
 }
 
+
+
 function init() {
 
 	setInterval(serverTick, 1000);
@@ -201,6 +207,8 @@ function init() {
 	sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
 	locations = <any>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
 	logins_by_ip = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+
+	//createLocationPersistence();
 
 	//apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
 
@@ -232,6 +240,10 @@ function init() {
 				object.scanStart = ply.scanStart || 0;
 				object.scanEnd = ply.scanEnd || 0;
 				object.scanCompleted = ply.scanCompleted;
+			}
+
+			if (ply.engaging) {
+				object.engaging = true;
 			}
 
 			sendStuple([['sply'], object]);
@@ -419,7 +431,7 @@ function init() {
 		}
 
 		if (ply.scanning) {
-			const scanRemaining = ply.scanEnd - Date.now();
+			const scanRemaining = ply.scanEnd! - Date.now();
 			
 			if (scanRemaining < 0) {
 				ply.scanCompleted = true;
@@ -427,15 +439,19 @@ function init() {
 			
 		}
 
-		if (false) 0;
-		else if (req.url == '/') {
+		if (req.url == '/') {
 			let page = fs.readFileSync('page.html');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
 			sendGeneric(page);
 		}
 		else if (req.url == '/style.css') {
-			let client = fs.readFileSync('style.css');
+			let style = fs.readFileSync('style.css');
 			res.writeHead(200, { CONTENT_TYPE: "text/css" });
+			sendGeneric(style);
+		}
+		else if (req.url == '/stars.png') {
+			let client = fs.readFileSync('stars.');
+			res.writeHead(200, { CONTENT_TYPE: "image/png" });
 			sendGeneric(client);
 		}
 		else if (req.url == '/bundle.js') {
@@ -476,6 +492,17 @@ function init() {
 		}
 		else if (req.url == '/askTick') {
 
+		}
+		else if (req.url == '/engagePirate') {
+			ply.engaging = true;
+			sendSply();
+
+		}
+		else if (req.url == '/seeEnemies') {
+			//ply.engaging = true;
+			let object = [];
+
+			sendStuple([['senemies'], object]);
 		}
 		else if (req.url == '/scan') {
 			const location = getLocation(ply.location);
