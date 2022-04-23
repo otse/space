@@ -87,6 +87,9 @@ option:hover {
 	cursor: pointer;
 }
 
+.reminder {
+
+}
 .smallish {
 	font-size: 0.9em;
 	color: #d1d1d1;
@@ -129,7 +132,7 @@ span.refuel {
 	position: relative;
 	height: 20px;
 	width: 300px;
-	background: rgb(0 0 0 / 50%);
+	background: rgb(30 30 30 / 50%);
 	padding: 10px 0;
 	border-radius: 3px;
 	/* outline: 4px solid #6e6e6e80; */
@@ -156,9 +159,9 @@ span.refuel {
 	/* height: inherit; */
 	width: inherit;
 	text-align: center;
-	color: #dadada;
-	color: #e6e6e6;
-	text-shadow: 0px 0px 3px #ffffff;
+	ccolor: #dadada;
+	ccolor: #e6e6e6;
+	ttext-shadow: 0px 0px 3px #ffffff;
 }
 
 .bar>span>span {
@@ -186,4 +189,49 @@ span.sector {
 }
 
 span.location {
+}
+
+div.enemies {
+	bbackground: gray;
+	bborder: 1px solid dimgray;
+	padding: 10px;
+}
+
+div.enemies thead tr {
+	bbox-shadow: 0 0 3px #1e1e1e;
+}
+
+div.enemies thead td {
+	padding: 5px;
+	color: #a0a0a0;
+}
+
+div.enemies tbody td {
+	padding: 0 5px;
+	text-align: center;
+}
+
+div.enemies tr.selected {
+	ffont-weight: bold;
+	font-style: italic;
+	text-decoration: underline;
+	bbox-shadow: 0 0 3px black;
+}
+
+div.enemies tr.selected td {
+	padding: 10px 0;
+}
+
+div.enemies tbody tr:hover {
+	cursor: pointer;
+	color: #787878;
+}
+
+
+div.enemies > div:nth-child(even){
+	bbackground: #5e5e5e6b;
+}
+
+div.enemies > div:nth-child(odd) {
+	
 }

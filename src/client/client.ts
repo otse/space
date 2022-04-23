@@ -8,7 +8,7 @@ namespace space {
 	aabb2
 
 
-	export var sply;
+	export var sply, senemies;
 
 	export var sector, location;
 
@@ -95,18 +95,23 @@ namespace space {
 
 		sector = getSectorByName(sply.sector);
 
-		if (sply.unregistered)
-			logo.innerHTML = `space`
-		else
-			logo.innerHTML = `space - ${sply.username}`
+		//if (sply.unregistered)
+		//	logo.innerHTML = `space`
+		//else
+		//	logo.innerHTML = `space - ${sply.username}`
 	}
 
+	var showingAccountBubbles = false;
 	function showAccountBubbles() {
+		showingAccountBubbles = true;
 		let textHead = document.getElementById("mainDiv")!;
 
 		let username = sply && sply.username;
+		let text = '';
 
-		let text = `
+		text += addReturnOption();
+
+		text += `
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
 		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
@@ -192,8 +197,8 @@ namespace space {
 			layoutMessage(payload);
 		}
 
-		else if (type == 'message') {
-			layoutMessage(payload);
+		else if (type == 'senemies') {
+			senemies = payload;
 		}
 	}
 
@@ -203,17 +208,26 @@ namespace space {
 		gameBox.classList.toggle('gameBox');
 	}
 
-	function breadcrumbs() {
+	function usernameReminder() {
 
 		let text = '';
 
 		text += `
-		<p class="smallish" style="padding: 20px;">`;
+		<p class="smallish reminder">`;
 
 		if (sply.unregistered)
-			text += `Playing unregistered`;
+			text += `
+			Playing unregistered
+			<!--<span class="material-icons" style="font-size: 18px">
+			no_accounts
+			</span>-->`;
 		else
-			text += `Logged in as ${sply.username} #${sply.id}`;
+			text += `
+			Logged in as ${sply.username} <!-- #${sply.id} -->
+			<!--<span class="material-icons" style="font-size: 18px">
+			how_to_reg
+			</span>-->
+			`;
 
 		text += `<p>`;
 
@@ -258,7 +272,7 @@ namespace space {
 		<br />
 		
 		<span class="location" style="colors: ${location.color || "inherit"} ">
-		${location.name}
+		&nbsp;${location.name}
 		<!--(${location.type})--></span>
 		</div>
 		`;
@@ -268,7 +282,7 @@ namespace space {
 	function layoutStation() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		text += makeWhereabouts();
 
@@ -291,7 +305,7 @@ namespace space {
 	function layoutJunk() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		text += makeWhereabouts();
 
@@ -314,7 +328,7 @@ namespace space {
 	function layoutContested() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		text += makeWhereabouts();
 
@@ -337,7 +351,7 @@ namespace space {
 		let textHead = document.getElementById("mainDiv")!;
 
 		let text = '';
-		
+
 		//text = breadcrumbs();
 		text += addReturnOption();
 
@@ -347,9 +361,58 @@ namespace space {
 
 		text += `
 		These are pirates and exiles that you can engage.
+		<p>
+		<div class="enemies">
+		<table>
+		<thead>
+		<tr>
+		<td>name</td>
+		<td>health</td>
+		<td>damage</td>
+		</tr>
+		</thead>
+		<tbody id="list">
 		`;
 
+		for (let enemy of senemies) {
+			text += `
+			<tr>
+			<td>${enemy.name}</td>
+			<td>%${enemy.health}</td>
+			<td>${enemy.damage}</td>
+			</tr>
+			`
+			//
+		}
+
+		text += `
+		</tbody>
+		</table>
+		</div>
+		`
+
 		textHead.innerHTML = text;
+
+		let list = document.getElementById("list")!;
+
+		console.log(list.childElementCount);
+
+		let active;
+		for (let i = 0; i < list.children.length; i++) {
+			let child = list.children[i] as HTMLElement;
+			child.onclick = function () {
+				let dom = this as HTMLElement;
+				console.log('woo', this);
+				if (active != this) {
+					if (active) {
+						active.classList.remove('selected')
+					}
+					dom.classList.add('selected')
+					active = this;
+				}
+			}
+			console.log(child);
+		}
 
 		//addFlightOption();
 
@@ -359,7 +422,7 @@ namespace space {
 	function layoutRefuel() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		text += 'You are at a refuelling bay.';
 
@@ -373,7 +436,7 @@ namespace space {
 	function layoutScanning() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		text += `You\'re scanning the junk at ${location.name || ''}.`;
 
@@ -407,7 +470,7 @@ namespace space {
 			if (over > 0)
 				text.innerHTML = `${minutesPast} / ${minutesRemain} minutes`;
 			else
-				text.innerHTML = '<span onclick="space.completeScan()">[complete]</span>';
+				text.innerHTML = '<span onclick="space.completeScan()">Ok</span>';
 
 		}
 
@@ -457,7 +520,7 @@ namespace space {
 	function layoutFlight() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		const loc = getLocationByName(sply.flightLocation);
 
@@ -479,14 +542,15 @@ namespace space {
 	export function layoutFlightControls() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = breadcrumbs();
+		let text = usernameReminder();
 
 		text += addReturnOption();
 
-		text += 'Flight menu'
-		text += '<p>'
-		text += ``;
-		text += `<select name="flights" id="flights" >`;
+		text += `
+		Flight menu
+		<p>
+		${sector.name} ~>
+		<select name="flights" id="flights" >`;
 
 		for (let location of sector.locations) {
 			text += `<option>${location}</option>`

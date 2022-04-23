@@ -1,0 +1,29 @@
+{
+    "player_count": 0,
+    "enemies": [
+        {
+            "id": 0,
+            "name": "Bounty",
+            "health": 100,
+            "damage": 5
+        },
+        {
+            "id": 1,
+            "name": "Bounty",
+            "health": 100,
+            "damage": 5
+        },
+        {
+            "id": 2,
+            "name": "Bounty",
+            "health": 100,
+            "damage": 5
+        },
+        {
+            "id": 3,
+            "name": "Raider",
+            "health": 100,
+            "damage": 5
+        }
+    ]
+}

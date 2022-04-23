@@ -1,12 +1,14 @@
 {
-    "id": 38,
-    "ip": "ffff127.0.0.1",
+    "id": 42,
+    "ip": "ffff167.94.138.47",
     "username": "Captain",
     "password": "N/A",
     "speed": 1,
+    "health": 100,
     "unregistered": true,
     "flight": false,
-    "flightLocation": "Dartwing",
+    "flightLocation": "",
+    "scanning": false,
     "position": [
         0,
         0

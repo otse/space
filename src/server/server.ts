@@ -1,4 +1,5 @@
 import { write } from "fs";
+import { locations } from "./locations";
 
 var http = require('http');
 var https = require('https');
@@ -59,7 +60,6 @@ interface Ply {
 
 var main_computer_file
 var sectors
-var locations
 var remembrance_table = {}
 var logins_by_ip: {} = {}
 var all_plys: Ply[]
@@ -134,13 +134,6 @@ export function plyTempl() {
 	return ply;
 }
 
-export function getLocation(name) {
-	for (let location of locations)
-		if (location.name == name)
-			return location;
-	return false;
-}
-
 export function getSector(name) {
 	for (let sector of sectors)
 		if (sectors.name == name)
@@ -180,7 +173,7 @@ export function getPly(ip) {
 	}
 	else if (unregisteredPlys[`${cleanIp}`]) {
 		ply = unregisteredPlys[`${cleanIp}`];
-		console.log('got ply safely from unregistered table');
+		//console.log('got ply safely from unregistered table');
 	}
 	else {
 		if (fs.existsSync(unregisteredPath(cleanIp)))
@@ -204,8 +197,9 @@ function init() {
 
 	main_computer_file = <MainComputerFile>JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
 
+	locations.init();
+
 	sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
-	locations = <any>JSON.parse(fs.readFileSync('locations.json', 'utf8'));
 	logins_by_ip = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
 
 	//createLocationPersistence();
@@ -465,7 +459,7 @@ function init() {
 		}
 		else if (req.url == '/locations.json') {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			sendObject(locations);
+			sendObject(locations.file);
 		}
 		/*else if (req.url == '/where') {
 			console.log('got where');
@@ -499,13 +493,22 @@ function init() {
 
 		}
 		else if (req.url == '/seeEnemies') {
-			//ply.engaging = true;
-			let object = [];
+			console.log('seeEnemies');
+			
+			const location = locations.instance(ply.location)!;
 
-			sendStuple([['senemies'], object]);
+			//ply.engaging = true;
+
+			const cast = location as locations.contested_location_instance;
+			
+			const enemies = cast.get_enemies();
+			
+			//locations.locations
+
+			sendStuple([['senemies'], enemies]);
 		}
 		else if (req.url == '/scan') {
-			const location = getLocation(ply.location);
+			const location = locations.get(ply.location)!;
 
 			if (location.type == 'Junk')
 			{
@@ -523,13 +526,13 @@ function init() {
 			}
 		}
 		else if (req.url == '/stopScanning') {
-			const location = getLocation(ply.location);
+			const location = locations.get(ply.location);
 			ply.scanning = false;
 			writePly(ply);
 			sendSply();
 		}
 		else if (req.url == '/completeScan') {
-			//const location = getLocation(ply.location);
+			//const location = locations.get(ply.location);
 			ply.scanning = false;
 			writePly(ply);
 			sendSply();
@@ -553,7 +556,7 @@ function init() {
 			val = val.replace(/%20/g, " ");
 
 			console.log(val);
-			if (!getLocation(val)) {
+			if (!locations.get(val)) {
 				sendSmessage("Location doesn't exist");
 			}
 			else {

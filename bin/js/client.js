@@ -71,16 +71,20 @@ var space;
         console.log('handlesply', space.sply);
         let logo = document.querySelector(".logo .text");
         space.sector = getSectorByName(space.sply.sector);
-        if (space.sply.unregistered)
-            logo.innerHTML = `space`;
-        else
-            logo.innerHTML = `space - ${space.sply.username}`;
+        //if (sply.unregistered)
+        //	logo.innerHTML = `space`
+        //else
+        //	logo.innerHTML = `space - ${sply.username}`
     }
     space.handleSply = handleSply;
+    var showingAccountBubbles = false;
     function showAccountBubbles() {
+        showingAccountBubbles = true;
         let textHead = document.getElementById("mainDiv");
         let username = space.sply && space.sply.username;
-        let text = `
+        let text = '';
+        text += addReturnOption();
+        text += `
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
 		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
@@ -152,8 +156,8 @@ var space;
         else if (type == 'message') {
             layoutMessage(payload);
         }
-        else if (type == 'message') {
-            layoutMessage(payload);
+        else if (type == 'senemies') {
+            space.senemies = payload;
         }
     }
     function BuildLargeTile(tile) {
@@ -161,14 +165,23 @@ var space;
         let gameBox = document.createElement('div');
         gameBox.classList.toggle('gameBox');
     }
-    function breadcrumbs() {
+    function usernameReminder() {
         let text = '';
         text += `
-		<p class="smallish" style="padding: 20px;">`;
+		<p class="smallish reminder">`;
         if (space.sply.unregistered)
-            text += `Playing unregistered`;
+            text += `
+			Playing unregistered
+			<!--<span class="material-icons" style="font-size: 18px">
+			no_accounts
+			</span>-->`;
         else
-            text += `Logged in as ${space.sply.username} #${space.sply.id}`;
+            text += `
+			Logged in as ${space.sply.username} <!-- #${space.sply.id} -->
+			<!--<span class="material-icons" style="font-size: 18px">
+			how_to_reg
+			</span>-->
+			`;
         text += `<p>`;
         return text;
     }
@@ -201,7 +214,7 @@ var space;
 		<br />
 		
 		<span class="location" style="colors: ${space.location.color || "inherit"} ">
-		${space.location.name}
+		&nbsp;${space.location.name}
 		<!--(${space.location.type})--></span>
 		</div>
 		`;
@@ -209,7 +222,7 @@ var space;
     }
     function layoutStation() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         text += makeWhereabouts();
         text += `<p>`;
         text += `<span class="facilities">`;
@@ -224,7 +237,7 @@ var space;
     }
     function layoutJunk() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         text += makeWhereabouts();
         text += `<p>`;
         text += `
@@ -237,7 +250,7 @@ var space;
     }
     function layoutContested() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         text += makeWhereabouts();
         text += `<p>`;
         text += `
@@ -258,14 +271,58 @@ var space;
         text += `<p>`;
         text += `
 		These are pirates and exiles that you can engage.
+		<p>
+		<div class="enemies">
+		<table>
+		<thead>
+		<tr>
+		<td>name</td>
+		<td>health</td>
+		<td>damage</td>
+		</tr>
+		</thead>
+		<tbody id="list">
+		`;
+        for (let enemy of space.senemies) {
+            text += `
+			<tr>
+			<td>${enemy.name}</td>
+			<td>%${enemy.health}</td>
+			<td>${enemy.damage}</td>
+			</tr>
+			`;
+            //
+        }
+        text += `
+		</tbody>
+		</table>
+		</div>
 		`;
         textHead.innerHTML = text;
+        let list = document.getElementById("list");
+        console.log(list.childElementCount);
+        let active;
+        for (let i = 0; i < list.children.length; i++) {
+            let child = list.children[i];
+            child.onclick = function () {
+                let dom = this;
+                console.log('woo', this);
+                if (active != this) {
+                    if (active) {
+                        active.classList.remove('selected');
+                    }
+                    dom.classList.add('selected');
+                    active = this;
+                }
+            };
+            console.log(child);
+        }
         //addFlightOption();
         //layoutFlightControls();
     }
     function layoutRefuel() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         text += 'You are at a refuelling bay.';
         text += ' <span class="spanButton" onclick="space.returnSublocation()">Back to Station</span>';
         textHead.innerHTML = text;
@@ -273,7 +330,7 @@ var space;
     }
     function layoutScanning() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         text += `You\'re scanning the junk at ${space.location.name || ''}.`;
         if (!space.sply.scanCompleted)
             text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel?</span>';
@@ -297,7 +354,7 @@ var space;
             if (over > 0)
                 text.innerHTML = `${minutesPast} / ${minutesRemain} minutes`;
             else
-                text.innerHTML = '<span onclick="space.completeScan()">[complete]</span>';
+                text.innerHTML = '<span onclick="space.completeScan()">Ok</span>';
         }
         text += `
 		<div class="bar">
@@ -333,7 +390,7 @@ var space;
     }
     function layoutFlight() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         const loc = getLocationByName(space.sply.flightLocation);
         text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
@@ -345,12 +402,13 @@ var space;
     }
     function layoutFlightControls() {
         let textHead = document.getElementById("mainDiv");
-        let text = breadcrumbs();
+        let text = usernameReminder();
         text += addReturnOption();
-        text += 'Flight menu';
-        text += '<p>';
-        text += ``;
-        text += `<select name="flights" id="flights" >`;
+        text += `
+		Flight menu
+		<p>
+		${space.sector.name} ~>
+		<select name="flights" id="flights" >`;
         for (let location of space.sector.locations) {
             text += `<option>${location}</option>`;
         }

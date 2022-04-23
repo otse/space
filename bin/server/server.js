@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPly = exports.serverTick = exports.getSector = exports.getLocation = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
+exports.getPly = exports.serverTick = exports.getSector = exports.plyTempl = exports.plyPath = exports.unregisteredPath = exports.sanitizeIp = exports.writePly = exports.write_ips_logged_in = exports.writeMcf = void 0;
+const locations_1 = require("./locations");
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -30,7 +31,6 @@ process.on('SIGINT', exitHandler.bind(null, { exit: true }));
 const indent = ``;
 var main_computer_file;
 var sectors;
-var locations;
 var remembrance_table = {};
 var logins_by_ip = {};
 var all_plys;
@@ -93,13 +93,6 @@ function plyTempl() {
     return ply;
 }
 exports.plyTempl = plyTempl;
-function getLocation(name) {
-    for (let location of locations)
-        if (location.name == name)
-            return location;
-    return false;
-}
-exports.getLocation = getLocation;
 function getSector(name) {
     for (let sector of sectors)
         if (sectors.name == name)
@@ -130,7 +123,7 @@ function getPly(ip) {
     }
     else if (unregisteredPlys[`${cleanIp}`]) {
         ply = unregisteredPlys[`${cleanIp}`];
-        console.log('got ply safely from unregistered table');
+        //console.log('got ply safely from unregistered table');
     }
     else {
         if (fs.existsSync(unregisteredPath(cleanIp)))
@@ -148,8 +141,8 @@ exports.getPly = getPly;
 function init() {
     setInterval(serverTick, 1000);
     main_computer_file = JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
+    locations_1.locations.init();
     sectors = JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
-    locations = JSON.parse(fs.readFileSync('locations.json', 'utf8'));
     logins_by_ip = JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
     //createLocationPersistence();
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
@@ -357,7 +350,7 @@ function init() {
         }
         else if (req.url == '/locations.json') {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-            sendObject(locations);
+            sendObject(locations_1.locations.file);
         }
         /*else if (req.url == '/where') {
             console.log('got where');
@@ -387,12 +380,16 @@ function init() {
             sendSply();
         }
         else if (req.url == '/seeEnemies') {
+            console.log('seeEnemies');
+            const location = locations_1.locations.instance(ply.location);
             //ply.engaging = true;
-            let object = [];
-            sendStuple([['senemies'], object]);
+            const cast = location;
+            const enemies = cast.get_enemies();
+            //locations.locations
+            sendStuple([['senemies'], enemies]);
         }
         else if (req.url == '/scan') {
-            const location = getLocation(ply.location);
+            const location = locations_1.locations.get(ply.location);
             if (location.type == 'Junk') {
                 const durationMinutes = 2;
                 ply.scanning = true;
@@ -407,13 +404,13 @@ function init() {
             }
         }
         else if (req.url == '/stopScanning') {
-            const location = getLocation(ply.location);
+            const location = locations_1.locations.get(ply.location);
             ply.scanning = false;
             writePly(ply);
             sendSply();
         }
         else if (req.url == '/completeScan') {
-            //const location = getLocation(ply.location);
+            //const location = locations.get(ply.location);
             ply.scanning = false;
             writePly(ply);
             sendSply();
@@ -433,7 +430,7 @@ function init() {
             val = req.url.split('=')[1];
             val = val.replace(/%20/g, " ");
             console.log(val);
-            if (!getLocation(val)) {
+            if (!locations_1.locations.get(val)) {
                 sendSmessage("Location doesn't exist");
             }
             else {
