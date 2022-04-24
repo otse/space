@@ -17,3 +17,4 @@ interface Location {
 	facilities: string[]
 }
 
+type enemy_ships = 'Frigate' | 'Scout' | 'Dragonfly'

@@ -19,6 +19,13 @@ body {
 	--spread: 4px;
 }
 
+canvas {
+	position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+}
+
 input {
 	ffont-family: monospace;
 	color: white;
@@ -208,18 +215,22 @@ div.enemies thead td {
 
 div.enemies tbody td {
 	padding: 0 5px;
-	text-align: center;
+	ttext-align: center;
 }
 
 div.enemies tr.selected {
 	ffont-weight: bold;
-	font-style: italic;
-	text-decoration: underline;
+	ffont-style: italic;
+	ttext-decoration: underline;
 	bbox-shadow: 0 0 3px black;
 }
 
+div.enemies tr.selected td.sel:before {
+	content: '>'
+}
+
 div.enemies tr.selected td {
-	padding: 10px 0;
+	ppadding: 10px 0;
 }
 
 div.enemies tbody tr:hover {

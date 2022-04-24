@@ -12,23 +12,43 @@
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	
+	<script src="https://threejs.org/build/three.min.js"></script>
+
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script type="text/javascript" src="bundle.js"></script>
 
 	<!-- https://google.github.io/material-design-icons/ --> 
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-	
+	<style>
+	.stats {
+			z-index: 2;
+			width: 300px;
+			position: absolute;
+			top: 0;
+			right: 0;
+			font-family: monospace;
+			text-align: right;
+			padding: 5px;
+			font-size: 11px;
+			color: white;
+			background: transparent !important;
+		}
+	</style>
+
 	<title>Space</title>
 
 	<script>
 		document.addEventListener("DOMContentLoaded", function (event) {
-			space.init();
+			//space.init();
+			App.boot('ug');
 		});
 	</script>
 </head>
 
 <body unselectable="on" class="unselectable">
+
+	<div class="stats">loading... :)</div>
 
 	<div class="mission">
 		<span id="menu_button" class="material-icons" style="font-size: 24px;">

@@ -1,12 +1,13 @@
+import { rename } from "fs";
 import aabb2 from "./aabb2";
 import pts from "./pts";
+import ren from "./renderer";
 
-namespace space {
+namespace client {
 
 	// comment
 	pts
 	aabb2
-
 
 	export var sply, senemies;
 
@@ -67,7 +68,13 @@ namespace space {
 		}
 	}
 
+	export function tick() {
+
+	}
+
 	export function init() {
+
+		ren.init();
 
 		let menu_button = document.getElementById("menu_button")!;
 
@@ -366,6 +373,7 @@ namespace space {
 		<table>
 		<thead>
 		<tr>
+		<td></td>
 		<td>name</td>
 		<td>health</td>
 		<td>damage</td>
@@ -377,6 +385,7 @@ namespace space {
 		for (let enemy of senemies) {
 			text += `
 			<tr>
+			<td class="sel">&nbsp;</td>
 			<td>${enemy.name}</td>
 			<td>%${enemy.health}</td>
 			<td>${enemy.damage}</td>
@@ -775,4 +784,6 @@ function cls() {
 
 }
 
-(window as any).space = space;
+export default client;
+
+(window as any).client = client;

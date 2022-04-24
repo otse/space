@@ -3,6 +3,7 @@
     "@types/node": "^17.0.23"
   },
   "dependencies": {
-    "google-auth-library": "^7.14.1"
+    "google-auth-library": "^7.14.1",
+    "three": "^0.139.2"
   }
 }

@@ -1,18 +1,19 @@
 import aabb2 from "./aabb2";
 import pts from "./pts";
-var space;
-(function (space) {
+import ren from "./renderer";
+var client;
+(function (client) {
     // comment
     pts;
     aabb2;
     function getLocationByName(name) {
-        for (let location of space.locations)
+        for (let location of client.locations)
             if (location.name == name)
                 return location;
         console.warn("location doesnt exist");
     }
     function getSectorByName(name) {
-        for (let sector of space.sectors)
+        for (let sector of client.sectors)
             if (sector.name == name)
                 return sector;
         console.warn("sector doesnt exist");
@@ -51,7 +52,11 @@ var space;
             document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
         }
     }
+    function tick() {
+    }
+    client.tick = tick;
     function init() {
+        ren.init();
         let menu_button = document.getElementById("menu_button");
         menu_button.onclick = function () {
             showAccountBubbles();
@@ -66,22 +71,22 @@ var space;
         }
         getInitTrios();
     }
-    space.init = init;
+    client.init = init;
     function handleSply() {
-        console.log('handlesply', space.sply);
+        console.log('handlesply', client.sply);
         let logo = document.querySelector(".logo .text");
-        space.sector = getSectorByName(space.sply.sector);
+        client.sector = getSectorByName(client.sply.sector);
         //if (sply.unregistered)
         //	logo.innerHTML = `space`
         //else
         //	logo.innerHTML = `space - ${sply.username}`
     }
-    space.handleSply = handleSply;
+    client.handleSply = handleSply;
     var showingAccountBubbles = false;
     function showAccountBubbles() {
         showingAccountBubbles = true;
         let textHead = document.getElementById("mainDiv");
-        let username = space.sply && space.sply.username;
+        let username = client.sply && client.sply.username;
         let text = '';
         text += addReturnOption();
         text += `
@@ -97,12 +102,12 @@ var space;
         makeRequest('GET', 'sectors.json')
             .then(function (res) {
             console.log('got sectors');
-            space.sectors = JSON.parse(res);
+            client.sectors = JSON.parse(res);
             return makeRequest('GET', 'locations.json');
         })
             .then(function (res) {
             console.log('got locations');
-            space.locations = JSON.parse(res);
+            client.locations = JSON.parse(res);
             return makeRequest('GET', 'ply');
         })
             .then(function (res) {
@@ -117,26 +122,26 @@ var space;
         });*/
     }
     function chooseLayout() {
-        if (space.sply.flight) {
+        if (client.sply.flight) {
             layoutFlight();
         }
-        else if (space.sply.sublocation == 'Refuel') {
+        else if (client.sply.sublocation == 'Refuel') {
             layoutRefuel();
         }
-        else if (space.sply.scanning) {
+        else if (client.sply.scanning) {
             layoutScanning();
         }
-        else if (space.location.type == 'Station') {
+        else if (client.location.type == 'Station') {
             layoutStation();
         }
-        else if (space.location.type == 'Junk') {
+        else if (client.location.type == 'Junk') {
             layoutJunk();
         }
-        else if (space.location.type == 'Contested') {
+        else if (client.location.type == 'Contested') {
             layoutContested();
         }
     }
-    space.chooseLayout = chooseLayout;
+    client.chooseLayout = chooseLayout;
     function receiveStuple(res) {
         if (res.length == 0) {
             console.warn('expected a stuple but received nothing');
@@ -147,9 +152,9 @@ var space;
         const payload = stuple[1];
         console.log('received stuple type', type);
         if (type == 'sply') {
-            space.sply = payload;
-            space.sector = getSectorByName(space.sply.sector);
-            space.location = getLocationByName(space.sply.location);
+            client.sply = payload;
+            client.sector = getSectorByName(client.sply.sector);
+            client.location = getLocationByName(client.sply.location);
             handleSply();
             chooseLayout();
         }
@@ -157,7 +162,7 @@ var space;
             layoutMessage(payload);
         }
         else if (type == 'senemies') {
-            space.senemies = payload;
+            client.senemies = payload;
         }
     }
     function BuildLargeTile(tile) {
@@ -169,7 +174,7 @@ var space;
         let text = '';
         text += `
 		<p class="smallish reminder">`;
-        if (space.sply.unregistered)
+        if (client.sply.unregistered)
             text += `
 			Playing unregistered
 			<!--<span class="material-icons" style="font-size: 18px">
@@ -177,7 +182,7 @@ var space;
 			</span>-->`;
         else
             text += `
-			Logged in as ${space.sply.username} <!-- #${space.sply.id} -->
+			Logged in as ${client.sply.username} <!-- #${client.sply.id} -->
 			<!--<span class="material-icons" style="font-size: 18px">
 			how_to_reg
 			</span>-->
@@ -210,12 +215,12 @@ var space;
         text += `
 		<div id="whereabouts">
 		
-		<span class="sector">${space.sector.name}</span> ~>
+		<span class="sector">${client.sector.name}</span> ~>
 		<br />
 		
-		<span class="location" style="colors: ${space.location.color || "inherit"} ">
-		&nbsp;${space.location.name}
-		<!--(${space.location.type})--></span>
+		<span class="location" style="colors: ${client.location.color || "inherit"} ">
+		&nbsp;${client.location.name}
+		<!--(${client.location.type})--></span>
 		</div>
 		`;
         return text;
@@ -226,8 +231,8 @@ var space;
         text += makeWhereabouts();
         text += `<p>`;
         text += `<span class="facilities">`;
-        if (space.location.facilities) {
-            if (space.location.facilities.indexOf("Refuel") > -1)
+        if (client.location.facilities) {
+            if (client.location.facilities.indexOf("Refuel") > -1)
                 text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here.';
         }
         text += `</span>`;
@@ -276,6 +281,7 @@ var space;
 		<table>
 		<thead>
 		<tr>
+		<td></td>
 		<td>name</td>
 		<td>health</td>
 		<td>damage</td>
@@ -283,9 +289,10 @@ var space;
 		</thead>
 		<tbody id="list">
 		`;
-        for (let enemy of space.senemies) {
+        for (let enemy of client.senemies) {
             text += `
 			<tr>
+			<td class="sel">&nbsp;</td>
 			<td>${enemy.name}</td>
 			<td>%${enemy.health}</td>
 			<td>${enemy.damage}</td>
@@ -331,21 +338,21 @@ var space;
     function layoutScanning() {
         let textHead = document.getElementById("mainDiv");
         let text = usernameReminder();
-        text += `You\'re scanning the junk at ${space.location.name || ''}.`;
-        if (!space.sply.scanCompleted)
+        text += `You\'re scanning the junk at ${client.location.name || ''}.`;
+        if (!client.sply.scanCompleted)
             text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel?</span>';
-        console.log(space.sply);
+        console.log(client.sply);
         //if (!sply.scanCompleted) {
         function updateBar() {
             let now = Date.now();
-            if (now > space.sply.scanEnd)
-                now = space.sply.scanEnd;
-            const duration = space.sply.scanEnd - space.sply.scanStart;
-            const time = now - space.sply.scanStart;
+            if (now > client.sply.scanEnd)
+                now = client.sply.scanEnd;
+            const duration = client.sply.scanEnd - client.sply.scanStart;
+            const time = now - client.sply.scanStart;
             const width = time / duration;
             const minutesPast = Math.floor(time / 1000 / 60).toFixed(0);
             const minutesRemain = Math.round(duration / 1000 / 60).toFixed(0);
-            const over = space.sply.scanEnd - Date.now();
+            const over = client.sply.scanEnd - Date.now();
             let bar = document.getElementById("barProgress");
             let text = document.getElementById("barText");
             if (!bar || !text)
@@ -366,8 +373,8 @@ var space;
         textHead.innerHTML = text;
         updateBar();
         const t = setInterval(function () {
-            if (space.sply.scanning) {
-                const time = space.sply.scanEnd - Date.now();
+            if (client.sply.scanning) {
+                const time = client.sply.scanEnd - Date.now();
                 if (time <= 0) {
                     clearInterval(t);
                     console.log('clear the interval');
@@ -391,7 +398,7 @@ var space;
     function layoutFlight() {
         let textHead = document.getElementById("mainDiv");
         let text = usernameReminder();
-        const loc = getLocationByName(space.sply.flightLocation);
+        const loc = getLocationByName(client.sply.flightLocation);
         text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
         text += '';
@@ -407,9 +414,9 @@ var space;
         text += `
 		Flight menu
 		<p>
-		${space.sector.name} ~>
+		${client.sector.name} ~>
 		<select name="flights" id="flights" >`;
-        for (let location of space.sector.locations) {
+        for (let location of client.sector.locations) {
             text += `<option>${location}</option>`;
         }
         text += `<option>Non-existing option</option>`;
@@ -418,7 +425,7 @@ var space;
 		</form>`;
         textHead.innerHTML = text;
     }
-    space.layoutFlightControls = layoutFlightControls;
+    client.layoutFlightControls = layoutFlightControls;
     function showLogin() {
         let textHead = document.getElementById("mainDiv");
         let text = `
@@ -437,7 +444,7 @@ var space;
 		`;
         textHead.innerHTML = text;
     }
-    space.showLogin = showLogin;
+    client.showLogin = showLogin;
     function showRegister() {
         let textHead = document.getElementById("mainDiv");
         let text = `
@@ -466,7 +473,7 @@ var space;
 		</form>`;
         textHead.innerHTML = text;
     }
-    space.showRegister = showRegister;
+    client.showRegister = showRegister;
     function submitFlight() {
         var e = document.getElementById("flights");
         var strUser = e.options[e.selectedIndex].text;
@@ -477,28 +484,28 @@ var space;
             receiveStuple(res);
         });
     }
-    space.submitFlight = submitFlight;
+    client.submitFlight = submitFlight;
     function scanJunk() {
         makeRequest('GET', 'scan')
             .then(function (res) {
             receiveStuple(res);
         });
     }
-    space.scanJunk = scanJunk;
+    client.scanJunk = scanJunk;
     function completeScan() {
         makeRequest('GET', 'completeScan')
             .then(function (res) {
             receiveStuple(res);
         });
     }
-    space.completeScan = completeScan;
+    client.completeScan = completeScan;
     function stopScanning() {
         makeRequest('GET', 'stopScanning')
             .then(function (res) {
             receiveStuple(res);
         });
     }
-    space.stopScanning = stopScanning;
+    client.stopScanning = stopScanning;
     function seeEnemies() {
         makeRequest('GET', 'seeEnemies')
             .then(function (res) {
@@ -506,7 +513,7 @@ var space;
             layoutEnemies();
         });
     }
-    space.seeEnemies = seeEnemies;
+    client.seeEnemies = seeEnemies;
     function tryDock() {
         makeRequest('GET', 'dock')
             .then(function (res) {
@@ -514,7 +521,7 @@ var space;
             receiveStuple(res);
         });
     }
-    space.tryDock = tryDock;
+    client.tryDock = tryDock;
     function returnSublocation() {
         makeRequest('GET', 'returnSublocation')
             .then(function (res) {
@@ -522,7 +529,7 @@ var space;
             receiveStuple(res);
         });
     }
-    space.returnSublocation = returnSublocation;
+    client.returnSublocation = returnSublocation;
     function transportSublocation(facility) {
         makeRequest('GET', 'knock&sublocation=refuel')
             .then(function (res) {
@@ -530,17 +537,17 @@ var space;
             receiveStuple(res);
         });
     }
-    space.transportSublocation = transportSublocation;
+    client.transportSublocation = transportSublocation;
     function logout() {
         makeRequest('GET', 'logout')
             .then(function (res) {
             alert(res);
-            space.sply.unregistered = true;
+            client.sply.unregistered = true;
             handleSply();
             //chooseLayout();
         });
     }
-    space.logout = logout;
+    client.logout = logout;
     function xhrLogin() {
         let username = document.getElementById("username").value;
         let password = document.getElementById("password").value;
@@ -568,7 +575,7 @@ var space;
         };
         http.send(params);
     }
-    space.xhrLogin = xhrLogin;
+    client.xhrLogin = xhrLogin;
     function xhrRegister() {
         let username = document.getElementById("username").value;
         let password = document.getElementById("password").value;
@@ -592,8 +599,9 @@ var space;
         };
         http.send(params);
     }
-    space.xhrRegister = xhrRegister;
-})(space || (space = {}));
+    client.xhrRegister = xhrRegister;
+})(client || (client = {}));
 function cls() {
 }
-window.space = space;
+export default client;
+window.client = client;

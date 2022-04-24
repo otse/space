@@ -433,6 +433,9 @@ function init() {
 			
 		}
 
+		console.log(req.url);
+		
+
 		if (req.url == '/') {
 			let page = fs.readFileSync('page.html');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
@@ -443,8 +446,13 @@ function init() {
 			res.writeHead(200, { CONTENT_TYPE: "text/css" });
 			sendGeneric(style);
 		}
-		else if (req.url == '/stars.png') {
-			let client = fs.readFileSync('stars.');
+		else if (req.url.search('/tex/pngwing.com.png') == 0) {			
+			let client = fs.readFileSync('tex/pngwing.com.png');
+			res.writeHead(200, { CONTENT_TYPE: "image/png" });
+			sendGeneric(client);
+		}
+		else if (req.url.search('/tex/test100.png') == 0) {
+			let client = fs.readFileSync('tex/test100.png');
 			res.writeHead(200, { CONTENT_TYPE: "image/png" });
 			sendGeneric(client);
 		}

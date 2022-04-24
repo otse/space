@@ -103,7 +103,8 @@ export namespace locations {
 		id: number
 		name: string
 		health: number
-		damage: number
+		damage: number,
+		ship: string
 	}
 
 	export class contested_location_instance extends location_instance {
@@ -135,7 +136,8 @@ export namespace locations {
 				id: this.get_id(),
 				name: this.get_random_name(),
 				health: 100,
-				damage: 5
+				damage: 5,
+				ship: 'Frigate'
 			}
 		}
 		make_enemies() {
