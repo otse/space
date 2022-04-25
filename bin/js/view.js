@@ -17,7 +17,7 @@ export class view {
         this.mrpos = [0, 0];
         this.begin = [0, 0];
         this.before = [0, 0];
-        this.show = true;
+        this.show = false;
         new lod.galaxy(10);
         this.rpos = lod.project(this.wpos);
     }
@@ -46,7 +46,8 @@ export class view {
     pan() {
     }
     float() {
-        let float = [1, 1];
+        const factor = 1.5;
+        let float = [factor, factor];
         float = pts.mult(float, ren.delta);
         this.rpos = pts.add(this.rpos, float);
     }

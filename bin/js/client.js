@@ -214,7 +214,7 @@ var client;
         let text = '';
         text += `
 		<div id="whereabouts">
-		
+		<div></div>
 		<span class="sector">${client.sector.name}</span> ~>
 		<br />
 		

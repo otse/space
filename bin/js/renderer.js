@@ -1,4 +1,4 @@
-import { default as THREE, OrthographicCamera, Clock, Scene, WebGLRenderer, TextureLoader, Color, Group, AmbientLight } from 'three';
+import { default as THREE, OrthographicCamera, Clock, Scene, WebGLRenderer, TextureLoader, Group, AmbientLight } from 'three';
 import app from './app';
 import pts from './pts';
 var ren;
@@ -24,7 +24,7 @@ var ren;
     function init() {
         ren.clock = new Clock();
         ren.scene = new Scene();
-        ren.scene.background = new Color('#333');
+        //scene.background = new Color('#333');
         ren.group = new Group;
         ren.scene.add(ren.group);
         ren.ambientLight = new AmbientLight(0xffffff);

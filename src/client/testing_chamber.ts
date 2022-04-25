@@ -51,7 +51,7 @@ namespace testing_chamber {
 			for (let x = 0; x < 20; x++) {
 				let square = Square.make();
 				square.wpos = [x, y];
-				lod.add(square);
+				//lod.add(square);
 			}
 		}
 
@@ -62,7 +62,7 @@ namespace testing_chamber {
 	}
 
 	export class Asteroid extends lod.obj {
-		static slowness = 20;
+		static slowness = 40;
 		rate: number
 		float: vec2
 		constructor() {

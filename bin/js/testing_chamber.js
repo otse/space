@@ -40,7 +40,7 @@ var testing_chamber;
             for (let x = 0; x < 20; x++) {
                 let square = Square.make();
                 square.wpos = [x, y];
-                lod.add(square);
+                //lod.add(square);
             }
         }
         testing_chamber.started = true;
@@ -72,7 +72,7 @@ var testing_chamber;
             (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
         }
     }
-    Asteroid.slowness = 20;
+    Asteroid.slowness = 40;
     testing_chamber.Asteroid = Asteroid;
     class Square extends lod.obj {
         static make() {

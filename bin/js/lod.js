@@ -40,7 +40,7 @@ var lod;
 (function (lod) {
     const chunk_coloration = false;
     const grid_crawl_makes_sectors = true;
-    lod.SectorSpan = 6;
+    lod.SectorSpan = 8;
     function register() {
         // hooks.create('sectorCreate')
         // hooks.create('sectorShow')
@@ -65,7 +65,7 @@ var lod;
         constructor(span) {
             this.arrays = [];
             lod.ggalaxy = this;
-            new grid(2, 2);
+            new grid(3, 3);
         }
         update(wpos) {
             lod.ggrid.big = this.big(wpos);

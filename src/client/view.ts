@@ -50,7 +50,8 @@ export class view {
 	pan() {
 	}
 	float() {
-		let float: vec2 = [1, 1];
+		const factor = 1.5;
+		let float: vec2 = [factor, factor];
 		float = pts.mult(float, ren.delta);
 		this.rpos = pts.add(this.rpos, float);
 	}
@@ -101,7 +102,7 @@ export class view {
 		add = pts.floor(add);
 		this.rpos = pts.add(this.rpos, add);
 	}
-	show = true
+	show = false
 	stats() {
 		if (app.key('h') == 1)
 			this.show = !this.show;

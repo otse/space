@@ -172,9 +172,8 @@ var space = (function (THREE) {
 
     // inspired by gmod lua !
     class hooks {
-        constructor() {
-            this.list = [];
-        }
+        //static readonly table: { [name: string]: func[] } = {}
+        //list: func[] = []
         static register(name, f) {
             if (!hooks[name])
                 hooks[name] = [];
@@ -225,7 +224,7 @@ var space = (function (THREE) {
     }
     var lod;
     (function (lod) {
-        lod.SectorSpan = 6;
+        lod.SectorSpan = 8;
         function register() {
             // hooks.create('sectorCreate')
             // hooks.create('sectorShow')
@@ -250,7 +249,7 @@ var space = (function (THREE) {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(2, 2);
+                new grid(3, 3);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -665,7 +664,7 @@ var space = (function (THREE) {
                 for (let x = 0; x < 20; x++) {
                     let square = Square.make();
                     square.wpos = [x, y];
-                    lod$1.add(square);
+                    //lod.add(square);
                 }
             }
             testing_chamber.started = true;
@@ -697,7 +696,7 @@ var space = (function (THREE) {
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
             }
         }
-        Asteroid.slowness = 20;
+        Asteroid.slowness = 40;
         testing_chamber.Asteroid = Asteroid;
         class Square extends lod$1.obj {
             static make() {
@@ -740,7 +739,7 @@ var space = (function (THREE) {
             this.mrpos = [0, 0];
             this.begin = [0, 0];
             this.before = [0, 0];
-            this.show = true;
+            this.show = false;
             new lod$1.galaxy(10);
             this.rpos = lod$1.project(this.wpos);
         }
@@ -769,7 +768,8 @@ var space = (function (THREE) {
         pan() {
         }
         float() {
-            let float = [1, 1];
+            const factor = 1.5;
+            let float = [factor, factor];
             float = pts.mult(float, ren$1.delta);
             this.rpos = pts.add(this.rpos, float);
         }
@@ -997,7 +997,7 @@ var space = (function (THREE) {
         function init() {
             ren.clock = new THREE.Clock();
             ren.scene = new THREE.Scene();
-            ren.scene.background = new THREE.Color('#333');
+            //scene.background = new Color('#333');
             ren.group = new THREE.Group;
             ren.scene.add(ren.group);
             ren.ambientLight = new THREE.AmbientLight(0xffffff);
@@ -1257,7 +1257,7 @@ var space = (function (THREE) {
             let text = '';
             text += `
 		<div id="whereabouts">
-		
+		<div></div>
 		<span class="sector">${client.sector.name}</span> ~>
 		<br />
 		

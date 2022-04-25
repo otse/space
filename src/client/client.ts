@@ -274,7 +274,7 @@ namespace client {
 		let text = '';
 		text += `
 		<div id="whereabouts">
-		
+		<div></div>
 		<span class="sector">${sector.name}</span> ~>
 		<br />
 		

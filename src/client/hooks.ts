@@ -4,8 +4,8 @@
 type func = (any) => boolean
 
 export class hooks<T = never> {
-	static readonly hooks: { [name: string]: func[] }
-	list: func[] = []
+	//static readonly table: { [name: string]: func[] } = {}
+	//list: func[] = []
 	static register(name: string, f: func) {
 		if (!hooks[name])
 			hooks[name] = [];

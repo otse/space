@@ -34,7 +34,7 @@ namespace ren {
 	export function init() {
 		clock = new Clock()
 		scene = new Scene();
-		scene.background = new Color('#333');
+		//scene.background = new Color('#333');
 
 		group = new Group;
 		scene.add(group);
