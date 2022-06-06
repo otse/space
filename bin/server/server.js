@@ -392,6 +392,7 @@ function init() {
             const cast = location;
             const enemies = cast.get_enemies();
             //locations.locations
+            ply.position = [Math.random() * 10, Math.random() * 10];
             sendStuple([['senemies'], enemies]);
         }
         else if (req.url == '/scan') {

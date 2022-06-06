@@ -38,8 +38,8 @@ class toggle {
 }
 var lod;
 (function (lod) {
-    const chunk_coloration = false;
-    const grid_crawl_makes_sectors = true;
+    lod.chunk_coloration = false;
+    lod.grid_crawl_makes_sectors = true;
     lod.SectorSpan = 8;
     function register() {
         // hooks.create('sectorCreate')
@@ -98,7 +98,7 @@ var lod;
             this.big = big;
             this.galaxy = galaxy;
             this.objs = [];
-            if (chunk_coloration)
+            if (lod.chunk_coloration)
                 this.color = (['red', 'blue', 'yellow', 'orange'])[Math.floor(Math.random() * 4)];
             let min = pts.mult(this.big, lod.SectorSpan);
             min = pts.add(min, [-1, -1]);
@@ -196,7 +196,7 @@ var lod;
             for (let y = -this.spread; y < this.spread + 1; y++) {
                 for (let x = -this.spread; x < this.spread + 1; x++) {
                     let pos = pts.add(this.big, [x, y]);
-                    let sector = grid_crawl_makes_sectors ? lod.ggalaxy.at(pos) : lod.ggalaxy.lookup(pos);
+                    let sector = lod.grid_crawl_makes_sectors ? lod.ggalaxy.at(pos) : lod.ggalaxy.lookup(pos);
                     if (!sector)
                         continue;
                     if (!sector.isActive()) {

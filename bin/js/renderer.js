@@ -22,6 +22,7 @@ var ren;
     }
     ren.update = update;
     function init() {
+        console.log('ren init');
         ren.clock = new Clock();
         ren.scene = new Scene();
         //scene.background = new Color('#333');
@@ -36,6 +37,7 @@ var ren;
         ren.renderer.setSize(100, 100);
         ren.renderer.autoClear = true;
         ren.renderer.setClearColor(0xffffff, 0);
+        window.addEventListener('resize', onWindowResize, false);
         document.body.appendChild(ren.renderer.domElement);
         onWindowResize();
         window.ren = ren;

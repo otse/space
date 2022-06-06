@@ -513,6 +513,8 @@ function init() {
 			
 			//locations.locations
 
+			ply.position = [Math.random() * 10, Math.random() * 10]
+
 			sendStuple([['senemies'], enemies]);
 		}
 		else if (req.url == '/scan') {

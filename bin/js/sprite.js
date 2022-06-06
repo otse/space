@@ -1,4 +1,4 @@
-import { Color, Mesh, PlaneBufferGeometry, MeshBasicMaterial, Matrix3 } from "three";
+import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Matrix3 } from "three";
 import lod, { numbers } from "./lod";
 import pts from "./pts";
 import ren from "./renderer";
@@ -59,17 +59,13 @@ export class sprite extends lod.shape {
         this.retransform();
         this.geometry = new PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
         let color;
-        if (this.vars.binded.sector.color) {
-            color = new Color(this.vars.binded.sector.color);
+        if (lod.chunk_coloration) {
+            color = this.vars.binded.sector.color;
         }
-        //else {
-        //	const c = this.vars.color || [255, 255, 255, 255];
-        //	color = new Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
-        //}
         this.material = SpriteMaterial({
             map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
             transparent: true,
-            color: color,
+            color: color || '#ffffff',
             opacity: this.vars.opacity
             //wireframe: true
         }, {

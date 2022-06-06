@@ -1,6 +1,6 @@
 import aabb2 from "./aabb2";
+import app from "./app";
 import pts from "./pts";
-import ren from "./renderer";
 var client;
 (function (client) {
     // comment
@@ -56,7 +56,7 @@ var client;
     }
     client.tick = tick;
     function init() {
-        ren.init();
+        app.mouse();
         let menu_button = document.getElementById("menu_button");
         menu_button.onclick = function () {
             showAccountBubbles();
@@ -88,6 +88,7 @@ var client;
         let textHead = document.getElementById("mainDiv");
         let username = client.sply && client.sply.username;
         let text = '';
+        text += usernameReminder();
         text += addReturnOption();
         text += `
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
@@ -177,15 +178,15 @@ var client;
         if (client.sply.unregistered)
             text += `
 			Playing unregistered
-			<!--<span class="material-icons" style="font-size: 18px">
+			<span class="material-icons" style="font-size: 18px">
 			no_accounts
-			</span>-->`;
+			</span>`;
         else
             text += `
 			Logged in as ${client.sply.username} <!-- #${client.sply.id} -->
-			<!--<span class="material-icons" style="font-size: 18px">
+			<span class="material-icons" style="font-size: 18px">
 			how_to_reg
-			</span>-->
+			</span>
 			`;
         text += `<p>`;
         return text;
@@ -205,6 +206,35 @@ var client;
         text += `
 		<p>
 		<span class="spanButton" onclick="space.chooseLayout()"><</span>
+		<p>
+		`;
+        return text;
+    }
+    var activeTab = 'action';
+    function addTabs() {
+        let text = '';
+        text += `
+		<p>
+		<div class="tabbar">
+		<span class="tabbutton" onclick="space.chooseTabOne()">action</span>
+		<span class="tabbutton" onclick="space.chooseTabOne()">ship</span>
+		</div>
+		<div class="tabcontent">
+		<p>
+		`;
+        return text;
+    }
+    function endTabs() {
+        return "</div>";
+    }
+    function addLocationMeter() {
+        let text = '';
+        let position = `<span class="positionArray">
+		<span>${client.sply.position[0].toFixed(1)}</span>,
+		<span>${client.sply.position[1].toFixed(1)}</span>
+		</span>`;
+        text += `
+		<div class="positionMeter">position: ${position} km in ${client.sply.location}</div>
 		<p>
 		<br />
 		`;
@@ -257,6 +287,7 @@ var client;
         let textHead = document.getElementById("mainDiv");
         let text = usernameReminder();
         text += makeWhereabouts();
+        text += addLocationMeter();
         text += `<p>`;
         text += `
 		This regional blob of space is unmonitored by law.
@@ -270,8 +301,18 @@ var client;
     function layoutEnemies() {
         let textHead = document.getElementById("mainDiv");
         let text = '';
-        //text = breadcrumbs();
+        text += usernameReminder();
         text += addReturnOption();
+        text += addLocationMeter();
+        /*let t;
+        t = setInterval(() => {
+            makeRequest('GET', 'ply')
+            .then(function (res: any) {
+                //receiveStuple(res);
+                console.log('got');
+                
+            })
+        }, 2000);*/
         //text += makeWhereabouts();
         text += `<p>`;
         text += `
@@ -282,20 +323,28 @@ var client;
 		<thead>
 		<tr>
 		<td></td>
-		<td>name</td>
-		<td>health</td>
-		<td>damage</td>
+		<td>type</td>
+		<!--<td>hp</td>
+		<!--<td>dmg</td>-->
+		<td>pos</td>
+		<td>dist</td>
 		</tr>
 		</thead>
 		<tbody id="list">
 		`;
         for (let enemy of client.senemies) {
+            let position = [
+                enemy.position[0].toFixed(1),
+                enemy.position[1].toFixed(1)
+            ];
             text += `
 			<tr>
 			<td class="sel">&nbsp;</td>
 			<td>${enemy.name}</td>
-			<td>%${enemy.health}</td>
-			<td>${enemy.damage}</td>
+			<!--<td>%${enemy.health}</td>
+			<td>${enemy.damage}</td>-->
+			<td>${position[0]}, ${position[1]}</td>
+			<td>${pts.dist(client.sply.position, enemy.position).toFixed(1)} km</td>
 			</tr>
 			`;
             //
@@ -398,13 +447,20 @@ var client;
     function layoutFlight() {
         let textHead = document.getElementById("mainDiv");
         let text = usernameReminder();
+        //text += addTabs();
         const loc = getLocationByName(client.sply.flightLocation);
         text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
+        /*text += `
+        <div class="bar">
+        <div id="barProgress"></div>
+        <span id="barText">x</span>
+        </div>`*/
         text += '';
         text += ' Attempt to <span class="spanButton" onclick="space.tryDock()">arrive / dock</span>';
         textHead.innerHTML = text;
         addFlightOption();
+        //text += endTabs();
         //layoutFlightControls();
     }
     function layoutFlightControls() {
@@ -451,20 +507,22 @@ var client;
 		<form action="register" method="post">
 
 		<label for="username">Username</label><br />
-		<input class="wrong" type="text" placeholder="" name="username" id="username" minlength="4" maxlength="15"  required pattern="[a-zA-Z0-9]+">
+		<input class="wrong" type="text" name="username" id="username" minlength="4" maxlength="15"  required pattern="[a-zA-Z0-9]+">
 		<br /><br />
 	
 		<label for="password">Password</label><br />
-		<input class="wrong" type="password" placeholder="" name="password" id="password" minlength="4" maxlength="20" required>
+		<input class="wrong" type="password" autocomplete="new-password" name="password" id="password" minlength="4" maxlength="20" required>
 		<br /><br />
 	
 		<label for="password-repeat">Repeat Password</label><br />
-		<input class="wrong" type="password" placeholder="" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required>
+		<input class="wrong" type="password" autocomplete="new-password" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required>
 		<br /><br />
 		
 		<label for="keep-ship" title="Start fresh or keep your play-via-ip, unregistered ship">
 		<input type="checkbox" checked="checked" name="remember" id="keep-ship"> Keep current progress
 		</label>
+		<p>
+		recommended you use your browsers password manager and generator
 		<br />
 		<br />
 

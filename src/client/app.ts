@@ -41,6 +41,8 @@ namespace app {
 		return [...pos];
 	}
 	export function boot(version: string) {
+		console.log('boot');
+		
 		salt = version;
 		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
 		function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1) return false }
@@ -80,7 +82,6 @@ namespace app {
 		space.tick();
 		ren.render();
 		wheel = 0;
-
 		process_keys();
 		process_mouse_buttons();
 	}

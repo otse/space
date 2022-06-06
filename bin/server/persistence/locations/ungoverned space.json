@@ -3,27 +3,47 @@
     "enemies": [
         {
             "id": 0,
-            "name": "Bounty",
+            "name": "Raider",
+            "position": [
+                7.4346212214135265,
+                5.766072543666834
+            ],
             "health": 100,
-            "damage": 5
+            "damage": 5,
+            "ship": "Frigate"
         },
         {
             "id": 1,
-            "name": "Bounty",
+            "name": "Pirate",
+            "position": [
+                6.74213117914425,
+                0.7414675345874233
+            ],
             "health": 100,
-            "damage": 5
+            "damage": 5,
+            "ship": "Frigate"
         },
         {
             "id": 2,
-            "name": "Bounty",
+            "name": "Raider",
+            "position": [
+                6.925715949416191,
+                0.793355226062129
+            ],
             "health": 100,
-            "damage": 5
+            "damage": 5,
+            "ship": "Frigate"
         },
         {
             "id": 3,
-            "name": "Raider",
+            "name": "Bounty",
+            "position": [
+                4.18302013569958,
+                5.525810751928086
+            ],
             "health": 100,
-            "damage": 5
+            "damage": 5,
+            "ship": "Frigate"
         }
     ]
 }

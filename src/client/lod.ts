@@ -40,9 +40,8 @@ class toggle {
 
 namespace lod {
 
-	const chunk_coloration = false;
-
-	const grid_crawl_makes_sectors = true;
+	export const chunk_coloration = false;
+	export const grid_crawl_makes_sectors = true;
 
 	export var ggalaxy: galaxy;
 	export var ggrid: grid;
@@ -102,8 +101,8 @@ namespace lod {
 	}
 
 	export class sector extends toggle {
-		color;
-		group: Group;
+		color: string
+		group: Group
 		readonly small: aabb2;
 		private readonly objs: obj[] = [];
 		constructor(

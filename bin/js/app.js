@@ -48,6 +48,7 @@ var app;
     }
     app.mouse = mouse;
     function boot(version) {
+        console.log('boot');
         app.salt = version;
         function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
         function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)

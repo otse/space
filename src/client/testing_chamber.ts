@@ -15,7 +15,7 @@ namespace testing_chamber {
 		console.log('placing squares on game area that should take up 1:1 pixels on screen...');
 		console.log('...regardless of your os or browsers dpi setting');
 
-		document.title = 'testing chamber';
+		// document.title = 'testing chamber';
 
 		space.gview.zoom = 1;
 		space.gview.wpos = [0, 0];
@@ -108,8 +108,8 @@ namespace testing_chamber {
 		}
 		tick() {
 			let shape = this.shape as sprite;
-			if (this.mousedSquare(space.gview.mrpos))
-				shape.mesh.material.color.set('white');
+			//if (this.mousedSquare(space.gview.mrpos))
+			//	shape.mesh.material.color.set('white');
 			//else
 			//	shape.material.color.set('white');
 		}

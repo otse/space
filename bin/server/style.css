@@ -22,9 +22,25 @@ body {
 
 canvas {
 	position: absolute;
-    left: 0;
-    top: 0;
-    z-index: -1;
+	left: 0;
+	top: 0;
+	z-index: -1;
+}
+
+.tabbar {
+	margin: 10px;
+}
+
+.tabbar .tabbutton {
+    display: inline-block;
+    background: #1b2f3a;
+    padding: 5px 25px;
+    border-radius: 5px 5px 0 0;
+    border: 1px inset #696969;
+}
+
+.tabcontent {
+	
 }
 
 input {
@@ -95,9 +111,8 @@ option:hover {
 	cursor: pointer;
 }
 
-.reminder {
+.reminder {}
 
-}
 .smallish {
 	font-size: 0.9em;
 	color: #d1d1d1;
@@ -186,18 +201,33 @@ span.refuel {
 	background-image: url(https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9701e8b0-8750-409e-9ac3-27c9776ffb08/d832a6f-a0941468-5a25-4850-851a-7dd79ae20856.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzk3MDFlOGIwLTg3NTAtNDA5ZS05YWMzLTI3Yzk3NzZmZmIwOFwvZDgzMmE2Zi1hMDk0MTQ2OC01YTI1LTQ4NTAtODUxYS03ZGQ3OWFlMjA4NTYuanBnIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.qbp8RUQxndAfAkX5ouoJDy8iQE7zZVuBuXu40wGOI-s);
 }
 
-#whereabouts > span {
+#whereabouts>span {
 	display: inline-block;
 	padding: 5px;
 	font-style: italic;
+}
+
+.positionMeter {
+	font-family: 'Roboto Mono', monospace;
+	font-size: 14px;
+	color: lightgray;
+	padding: 10px;
+	border-radius: 4px;
+	background-color: #1d3240;
+}
+
+.positionMeter .positionArray {
+}
+
+.positionMeter .positionArray > span {
+	color: #a1b18f;
 }
 
 span.sector {
 	border-radius: 1px;
 }
 
-span.location {
-}
+span.location {}
 
 div.enemies {
 	bbackground: gray;
@@ -205,18 +235,33 @@ div.enemies {
 	padding: 10px;
 }
 
+div.enemies table {
+	border-collapse: collapse;
+}
+
 div.enemies thead tr {
 	bbox-shadow: 0 0 3px #1e1e1e;
+	border-bottom: 1px solid gray;
+	color: gray;
 }
 
 div.enemies thead td {
-	padding: 5px;
-	color: #a0a0a0;
+	padding: 0 5px;
+	bborder-right: 1px solid gray;
+}
+
+div.enemies tbody tr:nth-child(odd) {
+	bbackground: #393939;
+}
+
+div.enemies tbody tr:nth-child(even) {
+	bbackground: #303030;
 }
 
 div.enemies tbody td {
-	padding: 0 5px;
+	padding: 5 5px;
 	ttext-align: center;
+	bborder-bottom: 1px solid gray;
 }
 
 div.enemies tr.selected {
@@ -237,13 +282,4 @@ div.enemies tr.selected td {
 div.enemies tbody tr:hover {
 	cursor: pointer;
 	color: #787878;
-}
-
-
-div.enemies > div:nth-child(even){
-	bbackground: #5e5e5e6b;
-}
-
-div.enemies > div:nth-child(odd) {
-	
 }

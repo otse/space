@@ -109,6 +109,7 @@ var locations;
             return {
                 id: this.get_id(),
                 name: this.get_random_name(),
+                position: [Math.random() * 10, Math.random() * 10],
                 health: 100,
                 damage: 5,
                 ship: 'Frigate'

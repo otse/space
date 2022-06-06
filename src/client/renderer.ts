@@ -32,6 +32,8 @@ namespace ren {
 	}
 
 	export function init() {
+		console.log('ren init');
+		
 		clock = new Clock()
 		scene = new Scene();
 		//scene.background = new Color('#333');
@@ -50,6 +52,8 @@ namespace ren {
 		renderer.setSize(100, 100);
 		renderer.autoClear = true;
 		renderer.setClearColor(0xffffff, 0);
+
+		window.addEventListener('resize', onWindowResize, false);
 
 		document.body.appendChild(renderer.domElement);
 
@@ -79,6 +83,7 @@ namespace ren {
 
 		camera = ortographic_camera(screenCorrected[0], screenCorrected[1]);
 		camera.updateProjectionMatrix();
+		
 		renderer.setSize(screen[0], screen[1]);
 	}
 

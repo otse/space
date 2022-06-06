@@ -19,6 +19,9 @@ var space = (function (THREE) {
             const pr = (b) => b != undefined ? `, ${b}` : '';
             return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
         }
+        static fixed(a) {
+            return [a[0]];
+        }
         static func(bb, callback) {
             let y = bb.min[1];
             for (; y <= bb.max[1]; y++) {
@@ -116,11 +119,11 @@ var space = (function (THREE) {
             return -Math.atan2(a[0] - b[0], a[1] - b[1]);
         }
         // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
-        //static dist(a: vec2, b: vec2): number {
-        //	let dx = b[0] - a[0];
-        //	let dy = b[1] - a[1];
-        //	return Math.sqrt(dx * dx + dy * dy);
-        //}
+        static dist(a, b) {
+            let dx = b[0] - a[0];
+            let dy = b[1] - a[1];
+            return Math.sqrt(dx * dx + dy * dy);
+        }
         static distsimple(a, b) {
             let c = pts.abs(pts.subtract(a, b));
             return Math.max(c[0], c[1]);
@@ -169,6 +172,98 @@ var space = (function (THREE) {
         }
     }
     aabb2.TEST = TEST;
+
+    var ren;
+    (function (ren) {
+        ren.DPI_UPSCALED_RT = true;
+        ren.ndpi = 1;
+        ren.delta = 0;
+        ren.screen = [0, 0];
+        ren.screenCorrected = [0, 0];
+        function render() {
+            ren.renderer.setRenderTarget(null);
+            ren.renderer.clear();
+            ren.renderer.render(ren.scene, ren.camera);
+        }
+        ren.render = render;
+        function update() {
+            ren.delta = ren.clock.getDelta();
+            if (ren.delta > 2)
+                ren.delta = 0.016;
+            ren.delta *= 60.0;
+        }
+        ren.update = update;
+        function init() {
+            console.log('ren init');
+            ren.clock = new THREE.Clock();
+            ren.scene = new THREE.Scene();
+            //scene.background = new Color('#333');
+            ren.group = new THREE.Group;
+            ren.scene.add(ren.group);
+            ren.ambientLight = new THREE.AmbientLight(0xffffff);
+            ren.scene.add(ren.ambientLight);
+            if (ren.DPI_UPSCALED_RT)
+                ren.ndpi = window.devicePixelRatio;
+            ren.renderer = new THREE.WebGLRenderer({ antialias: false });
+            ren.renderer.setPixelRatio(ren.ndpi);
+            ren.renderer.setSize(100, 100);
+            ren.renderer.autoClear = true;
+            ren.renderer.setClearColor(0xffffff, 0);
+            window.addEventListener('resize', onWindowResize, false);
+            document.body.appendChild(ren.renderer.domElement);
+            onWindowResize();
+            window.ren = ren;
+        }
+        ren.init = init;
+        function onWindowResize() {
+            ren.screen = [window.innerWidth, window.innerHeight];
+            //screen = pts.divide(screen, 2);
+            ren.screen = pts.floor(ren.screen);
+            //screen = pts.even(screen, -1);
+            //screen = [800, 600];
+            ren.screenCorrected = pts.clone(ren.screen);
+            if (ren.DPI_UPSCALED_RT) {
+                //screen = pts.floor(screen);
+                ren.screenCorrected = pts.mult(ren.screen, ren.ndpi);
+                ren.screenCorrected = pts.floor(ren.screenCorrected);
+                ren.screenCorrected = pts.even(ren.screenCorrected, -1);
+            }
+            console.log(`
+		window inner ${pts.to_string(ren.screen)}\n
+		      new is ${pts.to_string(ren.screenCorrected)}`);
+            ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.camera.updateProjectionMatrix();
+            ren.renderer.setSize(ren.screen[0], ren.screen[1]);
+        }
+        function ortographic_camera(w, h) {
+            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10000, 10000);
+            camera.updateProjectionMatrix();
+            return camera;
+        }
+        ren.ortographic_camera = ortographic_camera;
+        let mem = [];
+        function load_texture(file, mode = 1, cb, key) {
+            if (mem[key || file])
+                return mem[key || file];
+            let texture = new THREE.TextureLoader().load(file + `?v=${app$1.salt}`, cb);
+            texture.generateMipmaps = false;
+            texture.center.set(0, 1);
+            texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
+            if (mode) {
+                texture.magFilter = THREE__default["default"].LinearFilter;
+                texture.minFilter = THREE__default["default"].LinearFilter;
+            }
+            else {
+                texture.magFilter = THREE__default["default"].NearestFilter;
+                texture.minFilter = THREE__default["default"].NearestFilter;
+            }
+            mem[key || file] = texture;
+            return texture;
+        }
+        ren.load_texture = load_texture;
+    })(ren || (ren = {}));
+    var ren$1 = ren;
 
     // inspired by gmod lua !
     class hooks {
@@ -224,6 +319,8 @@ var space = (function (THREE) {
     }
     var lod;
     (function (lod) {
+        lod.chunk_coloration = false;
+        lod.grid_crawl_makes_sectors = true;
         lod.SectorSpan = 8;
         function register() {
             // hooks.create('sectorCreate')
@@ -282,6 +379,8 @@ var space = (function (THREE) {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
+                if (lod.chunk_coloration)
+                    this.color = (['red', 'blue', 'yellow', 'orange'])[Math.floor(Math.random() * 4)];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 min = pts.add(min, [-1, -1]);
                 let max = pts.add(min, [lod.SectorSpan, lod.SectorSpan]);
@@ -378,7 +477,7 @@ var space = (function (THREE) {
                 for (let y = -this.spread; y < this.spread + 1; y++) {
                     for (let x = -this.spread; x < this.spread + 1; x++) {
                         let pos = pts.add(this.big, [x, y]);
-                        let sector = lod.ggalaxy.at(pos) ;
+                        let sector = lod.grid_crawl_makes_sectors ? lod.ggalaxy.at(pos) : lod.ggalaxy.lookup(pos);
                         if (!sector)
                             continue;
                         if (!sector.isActive()) {
@@ -583,17 +682,13 @@ var space = (function (THREE) {
             this.retransform();
             this.geometry = new THREE.PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
             let color;
-            if (this.vars.binded.sector.color) {
-                color = new THREE.Color(this.vars.binded.sector.color);
+            if (lod$1.chunk_coloration) {
+                color = this.vars.binded.sector.color;
             }
-            //else {
-            //	const c = this.vars.color || [255, 255, 255, 255];
-            //	color = new Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
-            //}
             this.material = SpriteMaterial({
                 map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
                 transparent: true,
-                color: color,
+                color: color || '#ffffff',
                 opacity: this.vars.opacity
                 //wireframe: true
             }, {
@@ -635,7 +730,7 @@ var space = (function (THREE) {
             console.log(' start testing chamber ');
             console.log('placing squares on game area that should take up 1:1 pixels on screen...');
             console.log('...regardless of your os or browsers dpi setting');
-            document.title = 'testing chamber';
+            // document.title = 'testing chamber';
             space$1.gview.zoom = 1;
             space$1.gview.wpos = [0, 0];
             space$1.gview.rpos = lod$1.unproject([0, 0]);
@@ -715,9 +810,9 @@ var space = (function (THREE) {
                 });
             }
             tick() {
-                let shape = this.shape;
-                if (this.mousedSquare(space$1.gview.mrpos))
-                    shape.mesh.material.color.set('white');
+                this.shape;
+                //if (this.mousedSquare(space.gview.mrpos))
+                //	shape.mesh.material.color.set('white');
                 //else
                 //	shape.material.color.set('white');
             }
@@ -920,6 +1015,7 @@ var space = (function (THREE) {
         }
         app.mouse = mouse;
         function boot(version) {
+            console.log('boot');
             app.salt = version;
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
             function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
@@ -974,96 +1070,6 @@ var space = (function (THREE) {
     window['App'] = app;
     var app$1 = app;
 
-    var ren;
-    (function (ren) {
-        ren.DPI_UPSCALED_RT = true;
-        ren.ndpi = 1;
-        ren.delta = 0;
-        ren.screen = [0, 0];
-        ren.screenCorrected = [0, 0];
-        function render() {
-            ren.renderer.setRenderTarget(null);
-            ren.renderer.clear();
-            ren.renderer.render(ren.scene, ren.camera);
-        }
-        ren.render = render;
-        function update() {
-            ren.delta = ren.clock.getDelta();
-            if (ren.delta > 2)
-                ren.delta = 0.016;
-            ren.delta *= 60.0;
-        }
-        ren.update = update;
-        function init() {
-            ren.clock = new THREE.Clock();
-            ren.scene = new THREE.Scene();
-            //scene.background = new Color('#333');
-            ren.group = new THREE.Group;
-            ren.scene.add(ren.group);
-            ren.ambientLight = new THREE.AmbientLight(0xffffff);
-            ren.scene.add(ren.ambientLight);
-            if (ren.DPI_UPSCALED_RT)
-                ren.ndpi = window.devicePixelRatio;
-            ren.renderer = new THREE.WebGLRenderer({ antialias: false });
-            ren.renderer.setPixelRatio(ren.ndpi);
-            ren.renderer.setSize(100, 100);
-            ren.renderer.autoClear = true;
-            ren.renderer.setClearColor(0xffffff, 0);
-            document.body.appendChild(ren.renderer.domElement);
-            onWindowResize();
-            window.ren = ren;
-        }
-        ren.init = init;
-        function onWindowResize() {
-            ren.screen = [window.innerWidth, window.innerHeight];
-            //screen = pts.divide(screen, 2);
-            ren.screen = pts.floor(ren.screen);
-            //screen = pts.even(screen, -1);
-            //screen = [800, 600];
-            ren.screenCorrected = pts.clone(ren.screen);
-            if (ren.DPI_UPSCALED_RT) {
-                //screen = pts.floor(screen);
-                ren.screenCorrected = pts.mult(ren.screen, ren.ndpi);
-                ren.screenCorrected = pts.floor(ren.screenCorrected);
-                ren.screenCorrected = pts.even(ren.screenCorrected, -1);
-            }
-            console.log(`
-		window inner ${pts.to_string(ren.screen)}\n
-		      new is ${pts.to_string(ren.screenCorrected)}`);
-            ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.camera.updateProjectionMatrix();
-            ren.renderer.setSize(ren.screen[0], ren.screen[1]);
-        }
-        function ortographic_camera(w, h) {
-            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10000, 10000);
-            camera.updateProjectionMatrix();
-            return camera;
-        }
-        ren.ortographic_camera = ortographic_camera;
-        let mem = [];
-        function load_texture(file, mode = 1, cb, key) {
-            if (mem[key || file])
-                return mem[key || file];
-            let texture = new THREE.TextureLoader().load(file + `?v=${app$1.salt}`, cb);
-            texture.generateMipmaps = false;
-            texture.center.set(0, 1);
-            texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
-            if (mode) {
-                texture.magFilter = THREE__default["default"].LinearFilter;
-                texture.minFilter = THREE__default["default"].LinearFilter;
-            }
-            else {
-                texture.magFilter = THREE__default["default"].NearestFilter;
-                texture.minFilter = THREE__default["default"].NearestFilter;
-            }
-            mem[key || file] = texture;
-            return texture;
-        }
-        ren.load_texture = load_texture;
-    })(ren || (ren = {}));
-    var ren$1 = ren;
-
     var client;
     (function (client) {
         function getLocationByName(name) {
@@ -1106,7 +1112,7 @@ var space = (function (THREE) {
         }
         client.tick = tick;
         function init() {
-            ren$1.init();
+            app$1.mouse();
             let menu_button = document.getElementById("menu_button");
             menu_button.onclick = function () {
                 showAccountBubbles();
@@ -1136,6 +1142,7 @@ var space = (function (THREE) {
             let textHead = document.getElementById("mainDiv");
             client.sply && client.sply.username;
             let text = '';
+            text += usernameReminder();
             text += addReturnOption();
             text += `
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
@@ -1220,15 +1227,15 @@ var space = (function (THREE) {
             if (client.sply.unregistered)
                 text += `
 			Playing unregistered
-			<!--<span class="material-icons" style="font-size: 18px">
+			<span class="material-icons" style="font-size: 18px">
 			no_accounts
-			</span>-->`;
+			</span>`;
             else
                 text += `
 			Logged in as ${client.sply.username} <!-- #${client.sply.id} -->
-			<!--<span class="material-icons" style="font-size: 18px">
+			<span class="material-icons" style="font-size: 18px">
 			how_to_reg
-			</span>-->
+			</span>
 			`;
             text += `<p>`;
             return text;
@@ -1248,6 +1255,18 @@ var space = (function (THREE) {
             text += `
 		<p>
 		<span class="spanButton" onclick="space.chooseLayout()"><</span>
+		<p>
+		`;
+            return text;
+        }
+        function addLocationMeter() {
+            let text = '';
+            let position = `<span class="positionArray">
+		<span>${client.sply.position[0].toFixed(1)}</span>,
+		<span>${client.sply.position[1].toFixed(1)}</span>
+		</span>`;
+            text += `
+		<div class="positionMeter">position: ${position} km in ${client.sply.location}</div>
 		<p>
 		<br />
 		`;
@@ -1300,6 +1319,7 @@ var space = (function (THREE) {
             let textHead = document.getElementById("mainDiv");
             let text = usernameReminder();
             text += makeWhereabouts();
+            text += addLocationMeter();
             text += `<p>`;
             text += `
 		This regional blob of space is unmonitored by law.
@@ -1313,8 +1333,18 @@ var space = (function (THREE) {
         function layoutEnemies() {
             let textHead = document.getElementById("mainDiv");
             let text = '';
-            //text = breadcrumbs();
+            text += usernameReminder();
             text += addReturnOption();
+            text += addLocationMeter();
+            /*let t;
+            t = setInterval(() => {
+                makeRequest('GET', 'ply')
+                .then(function (res: any) {
+                    //receiveStuple(res);
+                    console.log('got');
+                    
+                })
+            }, 2000);*/
             //text += makeWhereabouts();
             text += `<p>`;
             text += `
@@ -1325,20 +1355,28 @@ var space = (function (THREE) {
 		<thead>
 		<tr>
 		<td></td>
-		<td>name</td>
-		<td>health</td>
-		<td>damage</td>
+		<td>type</td>
+		<!--<td>hp</td>
+		<!--<td>dmg</td>-->
+		<td>pos</td>
+		<td>dist</td>
 		</tr>
 		</thead>
 		<tbody id="list">
 		`;
             for (let enemy of client.senemies) {
+                let position = [
+                    enemy.position[0].toFixed(1),
+                    enemy.position[1].toFixed(1)
+                ];
                 text += `
 			<tr>
 			<td class="sel">&nbsp;</td>
 			<td>${enemy.name}</td>
-			<td>%${enemy.health}</td>
-			<td>${enemy.damage}</td>
+			<!--<td>%${enemy.health}</td>
+			<td>${enemy.damage}</td>-->
+			<td>${position[0]}, ${position[1]}</td>
+			<td>${pts.dist(client.sply.position, enemy.position).toFixed(1)} km</td>
 			</tr>
 			`;
                 //
@@ -1438,13 +1476,20 @@ var space = (function (THREE) {
         function layoutFlight() {
             let textHead = document.getElementById("mainDiv");
             let text = usernameReminder();
+            //text += addTabs();
             const loc = getLocationByName(client.sply.flightLocation);
             text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
+            /*text += `
+            <div class="bar">
+            <div id="barProgress"></div>
+            <span id="barText">x</span>
+            </div>`*/
             text += '';
             text += ' Attempt to <span class="spanButton" onclick="space.tryDock()">arrive / dock</span>';
             textHead.innerHTML = text;
             addFlightOption();
+            //text += endTabs();
             //layoutFlightControls();
         }
         function layoutFlightControls() {
@@ -1491,20 +1536,22 @@ var space = (function (THREE) {
 		<form action="register" method="post">
 
 		<label for="username">Username</label><br />
-		<input class="wrong" type="text" placeholder="" name="username" id="username" minlength="4" maxlength="15"  required pattern="[a-zA-Z0-9]+">
+		<input class="wrong" type="text" name="username" id="username" minlength="4" maxlength="15"  required pattern="[a-zA-Z0-9]+">
 		<br /><br />
 	
 		<label for="password">Password</label><br />
-		<input class="wrong" type="password" placeholder="" name="password" id="password" minlength="4" maxlength="20" required>
+		<input class="wrong" type="password" autocomplete="new-password" name="password" id="password" minlength="4" maxlength="20" required>
 		<br /><br />
 	
 		<label for="password-repeat">Repeat Password</label><br />
-		<input class="wrong" type="password" placeholder="" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required>
+		<input class="wrong" type="password" autocomplete="new-password" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required>
 		<br /><br />
 		
 		<label for="keep-ship" title="Start fresh or keep your play-via-ip, unregistered ship">
 		<input type="checkbox" checked="checked" name="remember" id="keep-ship"> Keep current progress
 		</label>
+		<p>
+		recommended you use your browsers password manager and generator
 		<br />
 		<br />
 

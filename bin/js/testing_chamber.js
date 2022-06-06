@@ -11,7 +11,7 @@ var testing_chamber;
         console.log(' start testing chamber ');
         console.log('placing squares on game area that should take up 1:1 pixels on screen...');
         console.log('...regardless of your os or browsers dpi setting');
-        document.title = 'testing chamber';
+        // document.title = 'testing chamber';
         space.gview.zoom = 1;
         space.gview.wpos = [0, 0];
         space.gview.rpos = lod.unproject([0, 0]);
@@ -92,8 +92,8 @@ var testing_chamber;
         }
         tick() {
             let shape = this.shape;
-            if (this.mousedSquare(space.gview.mrpos))
-                shape.mesh.material.color.set('white');
+            //if (this.mousedSquare(space.gview.mrpos))
+            //	shape.mesh.material.color.set('white');
             //else
             //	shape.material.color.set('white');
         }

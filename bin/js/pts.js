@@ -13,6 +13,9 @@ class pts {
         const pr = (b) => b != undefined ? `, ${b}` : '';
         return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
     }
+    static fixed(a) {
+        return [a[0]];
+    }
     static func(bb, callback) {
         let y = bb.min[1];
         for (; y <= bb.max[1]; y++) {
@@ -110,11 +113,11 @@ class pts {
         return -Math.atan2(a[0] - b[0], a[1] - b[1]);
     }
     // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
-    //static dist(a: vec2, b: vec2): number {
-    //	let dx = b[0] - a[0];
-    //	let dy = b[1] - a[1];
-    //	return Math.sqrt(dx * dx + dy * dy);
-    //}
+    static dist(a, b) {
+        let dx = b[0] - a[0];
+        let dy = b[1] - a[1];
+        return Math.sqrt(dx * dx + dy * dy);
+    }
     static distsimple(a, b) {
         let c = pts.abs(pts.subtract(a, b));
         return Math.max(c[0], c[1]);
