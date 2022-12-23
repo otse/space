@@ -15,23 +15,16 @@ const TEXT_HTML = 'text/html';
 const TEXT_JAVASCRIPT = 'application/javascript';
 const APPLICATION_JSON = 'application/json';
 
-const logo = `
-S(t)ream
-`;
-
 const header = `
 <wut>
 `;
 
-function exitHandler(options, exitCode) {
-	console.log('exitHandler');
-
-	if (options.cleanup) console.log('clean');
-	if (exitCode || exitCode === 0) console.log(exitCode);
-	if (options.exit) process.exit();
+function exit(options, exitCode) {
+	console.log('exit', exitCode);
+	process.exit();
 }
 
-process.on('SIGINT', exitHandler.bind(null, { exit: true }));
+process.on('SIGINT', exit);
 
 const indent = ``
 
@@ -39,9 +32,9 @@ type appId = number;
 
 interface Ply {
 	id: number
+	ip: string
 	username: string
 	password: string
-	ip: string
 	health: number
 	unregistered: boolean
 	speed: number
@@ -58,65 +51,72 @@ interface Ply {
 	sublocation
 }
 
-var main_computer_file
-var sectors
-var remembrance_table = {}
-var logins_by_ip: {} = {}
+var sessions = {};
+var logins = {};
+
+var lost_minor_planet;
+var regions;
+
+var unregs = {};
 var all_plys: Ply[]
 
-
-interface MainComputerFile {
+interface LostMinorPlanet {
 	players: number
 	writes: number
 	boo: number
 }
 
-export function writeMcf() {
-	main_computer_file.writes++;
-	const payload = JSON.stringify(main_computer_file, null, 4);
-	fs.writeFileSync('mcf.json', payload);
+export function object_to_file(path, object) {
+	const stringified = JSON.stringify(object, null, 4);
+	fs.writeFileSync(path, stringified);
+	return 1;
 }
 
-export function write_ips_logged_in() {
-	const payload = JSON.stringify(logins_by_ip, null, 4);
-	fs.writeFileSync('ips_logged_in.json', payload);
+export function object_from_file(path) {
+	return JSON.parse(fs.readFileSync(path, 'utf8'));
 }
 
-export function writePly(ply: Ply) {
+export function object_exists(path) {
+	return fs.existsSync(path);
+}
+
+export function write_lost_minor_planet() {
+	lost_minor_planet.writes++;
+	object_to_file('lost minor planet.json', lost_minor_planet);
+}
+
+export function write_logins() {
+	object_to_file('logins.json', logins);
+}
+
+export function write_ply(ply: Ply) {
 	console.log('writing ply ', ply.id);
 
-	let payload = JSON.stringify(ply, null, 4);
-
 	if (ply.unregistered)
-		fs.writeFileSync(unregisteredPath(ply.ip), payload);
-	else {
-		const path = `players/${ply.username}.json`;
-
-		fs.writeFileSync(path, payload);
-	}
+		object_to_file(unreg_path(ply.ip), ply);
+	else
+		object_to_file(reg_path(ply.username), ply);
 }
 
-export function sanitizeIp(ip: string) {
+export function sanitize_ip(ip: string) {
 	ip = ip.replace('::', '');
 	ip = ip.replace(':', '');
 	return ip;
 }
 
-export function unregisteredPath(ip) {
+export function unreg_path(ip) {
 	return `players/ip/${ip}.json`;
 }
 
-export function plyPath(username) {
+export function reg_path(username) {
 	return `players/${username}.json`;
 }
 
-var unregisteredPlys = {};
-
-export function plyTempl() {
-	main_computer_file.players++;
-	writeMcf();
+export function new_ply() {
+	lost_minor_planet.players++;
+	write_lost_minor_planet();
 	let ply: Ply = {
-		id: main_computer_file.players,
+		id: lost_minor_planet.players,
 		ip: 'N/A',
 		username: 'Captain',
 		password: 'N/A',
@@ -134,73 +134,68 @@ export function plyTempl() {
 	return ply;
 }
 
-export function getSector(name) {
-	for (let sector of sectors)
-		if (sectors.name == name)
-			return sector;
-	return false;
+export function get_region(name) {
+	for (let region of regions)
+		if (regions.name == name)
+			return region;
 }
 
-export function serverTick() {
-	//for ()
+export function tick() {
+
 }
 
-export function getPly(ip) {
+export function get_ply(ip) {
 
-	let cleanIp = sanitizeIp(ip);
+	let cleanIp = sanitize_ip(ip);
 
 	let ply: Ply;
 
-	if (logins_by_ip[`${cleanIp}`]) {
+	if (logins[`${cleanIp}`]) {
 		//console.log('this ip is remembered to be logged in');
 
-		const username = logins_by_ip[`${cleanIp}`];
+		const username = logins[`${cleanIp}`];
 
-		if (remembrance_table[username]) {
+		if (sessions[username]) {
 			//console.log('we have remembrance this server session');
 
-			ply = remembrance_table[username];
+			ply = sessions[username];
 		}
 		else {
 			console.log('we dont have a remembrance this server session');
 
-			const path = `players/${username}.json`;
+			ply = object_from_file(reg_path(username));
 
-			ply = JSON.parse(fs.readFileSync(path, 'utf8'));
-
-			remembrance_table[username] = ply;
+			sessions[username] = ply;
 		}
 	}
-	else if (unregisteredPlys[`${cleanIp}`]) {
-		ply = unregisteredPlys[`${cleanIp}`];
+	else if (unregs[`${cleanIp}`]) {
+		ply = unregs[`${cleanIp}`];
 		//console.log('got ply safely from unregistered table');
 	}
 	else {
-		if (fs.existsSync(unregisteredPath(cleanIp)))
-			ply = unregisteredPlys[`${cleanIp}`] = JSON.parse(fs.readFileSync(unregisteredPath(cleanIp), 'utf8'));
+		if (object_exists(unreg_path(cleanIp)))
+			ply = unregs[`${cleanIp}`] = object_from_file(unreg_path(cleanIp));
 		else {
-			ply = plyTempl();
+			ply = new_ply();
 			ply.unregistered = true;
 			ply.ip = cleanIp;
 
-			fs.writeFileSync(unregisteredPath(cleanIp), JSON.stringify(ply, null, 4));
+			object_to_file(unreg_path(cleanIp), ply);
 		}
 	}
 	return ply;
 }
 
-
-
 function init() {
 
-	setInterval(serverTick, 1000);
+	setInterval(tick, 1000);
 
-	main_computer_file = <MainComputerFile>JSON.parse(fs.readFileSync('mcf.json', 'utf8'));
+	lost_minor_planet = object_from_file('lost minor planet.json');
 
 	locations.init();
 
-	sectors = <any>JSON.parse(fs.readFileSync('sectors.json', 'utf8'));
-	logins_by_ip = <any>JSON.parse(fs.readFileSync('ips_logged_in.json', 'utf8'));
+	regions = object_from_file('regions.json');
+	logins = object_from_file('logins.json');
 
 	//createLocationPersistence();
 
@@ -210,11 +205,11 @@ function init() {
 
 		// console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
 
-		const ip = sanitizeIp(req.socket.remoteAddress);
+		const ip = sanitize_ip(req.socket.remoteAddress);
 
-		let ply = getPly(req.socket.remoteAddress);
-		
-		const sendSply = function () {
+		let ply = get_ply(req.socket.remoteAddress);
+
+		const send_sply = function () {
 			let object: any = {
 				id: ply.id,
 				username: ply.username,
@@ -226,10 +221,10 @@ function init() {
 				flight: ply.flight,
 				flightLocation: ply.flightLocation,
 			};
-			
+
 			if (ply.scanning) {
 				console.log('were scanning');
-				
+
 				object.scanning = true;
 				object.scanStart = ply.scanStart || 0;
 				object.scanEnd = ply.scanEnd || 0;
@@ -252,19 +247,14 @@ function init() {
 				console.log('requesting refuel sublocation');
 		}
 
-		const sendGeneric = function (str: string) {
-			res.write(str);
-			res.end();
-		}
-
 		const sendObject = function (anything: object) {
 			let str = JSON.stringify(anything);
-			sendGeneric(str);
+			res.end(str);
 		}
 
 		const sendStuple = function (anything: object) {
 			let str = JSON.stringify(anything);
-			sendGeneric(str);
+			res.end(str);
 		}
 
 		function receivedKnock(inputs: any) {
@@ -273,8 +263,8 @@ function init() {
 			const sublocation = inputs.sublocation;
 			if (sublocation == 'refuel') {
 				ply.sublocation = 'Refuel';
-				writePly(ply);
-				sendSply();
+				write_ply(ply);
+				send_sply();
 			}
 
 			//let arg = input.split(' ');
@@ -298,39 +288,39 @@ function init() {
 				// if (parsed['username'] == 'asdf')
 				//	console.log('this is not your windows frend');
 
-				const path = `players/${username}.json`;
+				const path = reg_path(username);
 
-				if (fs.existsSync(path)) {
+				if (object_exists(path)) {
 
-					ply = JSON.parse(fs.readFileSync(path, 'utf8'));
+					ply = object_from_file(path);
 
-					remembrance_table[`${username}`] = ply;
+					sessions[username] = ply;
 
 					let logged_in_elsewhere = false;
 					let ip2;
-					for (ip2 in logins_by_ip) {
-						let username2 = logins_by_ip[ip2];
+					for (ip2 in logins) {
+						let username2 = logins[ip2];
 						if (username == username2 && ip != ip2) {
 							logged_in_elsewhere = true;
 							break;
 						}
 					}
-					if (logins_by_ip[`${ip}`] == username) {
+					if (logins[`${ip}`] == username) {
 						res.writeHead(400);
 						res.end('already logged in here');
 					}
 					else if (ply.password == password) {
 						res.writeHead(200);
-						let msg = 'logging you in'
+						let msg = 'logging you in';
 
 						if (logged_in_elsewhere) {
 							msg += '. you\'ve been logged out of your other device';
-							delete logins_by_ip[ip2];
+							delete logins[ip2];
 						}
 						res.end(msg);
 
-						logins_by_ip[`${ip}`] = ply.username;
-						write_ips_logged_in();
+						logins[`${ip}`] = ply.username;
+						write_logins();
 
 						res.end();
 					}
@@ -395,14 +385,14 @@ function init() {
 					const username = parsed.username;
 					const password = parsed.password;
 
-					const path = `players/${username}.json`;
+					const path = reg_path(username);
 
 					if (fs.existsSync(path)) {
 						res.writeHead(400);
 						res.end(`a player already exists with username ${username}. try logging in`);
 					}
 					else {
-						let ply = plyTempl();
+						let ply = new_ply();
 						ply.unregistered = false;
 						ply.ip = 'N/A';
 						ply.username = parsed['username'];
@@ -412,7 +402,7 @@ function init() {
 						res.end(`you're registered as ${username}. now login`);
 
 						const payload = JSON.stringify(ply, null, 4);
-						fs.writeFileSync(`players/${username}.json`, payload);
+						fs.writeFileSync(reg_path(username), payload);
 					}
 				}
 			});
@@ -426,48 +416,46 @@ function init() {
 
 		if (ply.scanning) {
 			const scanRemaining = ply.scanEnd! - Date.now();
-			
+
 			if (scanRemaining < 0) {
 				ply.scanCompleted = true;
 			}
-			
+
 		}
 
 		console.log(req.url);
-		
+
 
 		if (req.url == '/') {
 			let page = fs.readFileSync('page.html');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
-			sendGeneric(page);
+			res.end(page);
+			//sendGeneric(page);
 		}
 		else if (req.url == '/style.css') {
 			let style = fs.readFileSync('style.css');
 			res.writeHead(200, { CONTENT_TYPE: "text/css" });
-			sendGeneric(style);
+			res.end(style);
 		}
-		else if (req.url.search('/tex/wall.png') == 0) {			
-			let client = fs.readFileSync('tex/wall.png');
-			res.writeHead(200, { CONTENT_TYPE: "image/png" });
-			sendGeneric(client);
-		}
-		else if (req.url.search('/tex/hull.png') == 0) {			
-			let client = fs.readFileSync('tex/hull.png');
-			res.writeHead(200, { CONTENT_TYPE: "image/png" });
-			sendGeneric(client);
+		else if (req.url == '/outer%20space.css') {
+			let style = fs.readFileSync('outer space.css');
+			res.writeHead(200, { CONTENT_TYPE: "text/css" });
+			res.end(style);
 		}
 		else if (req.url == '/bundle.js') {
 			let client = fs.readFileSync('bundle.js');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
-			sendGeneric(client);
+			res.end(client);
 		}
-		else if (req.url == '/sectors.json') {
+		else if (req.url == '/regions.json') {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			sendObject(sectors);
+			let str = JSON.stringify(regions);
+			res.end(str);
 		}
 		else if (req.url == '/locations.json') {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			sendObject(locations.file);
+			let str = JSON.stringify(locations.file);
+			res.end(str);
 		}
 		/*else if (req.url == '/where') {
 			console.log('got where');
@@ -477,14 +465,14 @@ function init() {
 		else if (req.url == '/ply') {
 			console.log('get ply');
 
-			sendSply();
+			send_sply();
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
-			if (logins_by_ip[`${ip}`]) {
-				const username = logins_by_ip[`${ip}`];
-				delete logins_by_ip[`${ip}`];
-				write_ips_logged_in();
+			if (logins[`${ip}`]) {
+				const username = logins[`${ip}`];
+				delete logins[`${ip}`];
+				write_logins();
 				res.end(`logging out ${username}`);
 			}
 			else {
@@ -497,20 +485,20 @@ function init() {
 		}
 		else if (req.url == '/engagePirate') {
 			ply.engaging = true;
-			sendSply();
+			send_sply();
 
 		}
 		else if (req.url == '/seeEnemies') {
 			console.log('seeEnemies');
-			
+
 			const location = locations.instance(ply.location)!;
 
 			//ply.engaging = true;
 
 			const cast = location as locations.contested_location_instance;
-			
+
 			const enemies = cast.get_enemies();
-			
+
 			//locations.locations
 
 			ply.position = [Math.random() * 10, Math.random() * 10]
@@ -520,32 +508,30 @@ function init() {
 		else if (req.url == '/scan') {
 			const location = locations.get(ply.location)!;
 
-			if (location.type == 'Junk')
-			{
+			if (location.type == 'Junk') {
 				const durationMinutes = 2;
 				ply.scanning = true;
 				ply.scanCompleted = false;
 				ply.scanStart = Date.now();
 				ply.scanEnd = Date.now() + (1000 * 60 * durationMinutes);
-				writePly(ply);
-				sendSply();
+				write_ply(ply);
+				send_sply();
 			}
-			else
-			{
+			else {
 				sendSmessage("Can only scan junk.");
 			}
 		}
 		else if (req.url == '/stopScanning') {
 			const location = locations.get(ply.location);
 			ply.scanning = false;
-			writePly(ply);
-			sendSply();
+			write_ply(ply);
+			send_sply();
 		}
 		else if (req.url == '/completeScan') {
 			//const location = locations.get(ply.location);
 			ply.scanning = false;
-			writePly(ply);
-			sendSply();
+			write_ply(ply);
+			send_sply();
 		}
 		else if (req.url == '/dock') {
 
@@ -553,8 +539,8 @@ function init() {
 				ply.flight = false;
 				ply.location = ply.flightLocation;
 
-				writePly(ply);
-				sendSply();
+				write_ply(ply);
+				send_sply();
 			}
 			//sendStuple([['message'], `Can\'t dock. Not nearby ${ply.flightLocation}.`]);
 		}
@@ -573,23 +559,21 @@ function init() {
 				ply.flight = true;
 				ply.flightLocation = val;
 
-				writePly(ply);
+				write_ply(ply);
 
-				sendSply();
+				send_sply();
 			}
 		}
 		else if (req.url == '/returnSublocation') {
 			//console.log('return from sublocation');
 			ply.sublocation = 'None';
-
-			writePly(ply);
-
-			sendSply();
+			write_ply(ply);
+			send_sply();
 		}
 		else if (-1 < req.url.indexOf('/app/')) {
 			let appId = req.url.split('app/')[1];
 			console.log('ask app/', appId);
-			sendGeneric('woo app: ' + appId);
+			res.end('woo app: ' + appId);
 		}
 		else if (-1 < req.url.indexOf('/getobject/')) {
 			let appId = req.url.split('getobject/')[1];
@@ -613,12 +597,4 @@ function init() {
 
 }
 
-function loop() {
-
-
-	//console.log('wo');
-}
-
 init();
-
-setInterval(loop, 1000);

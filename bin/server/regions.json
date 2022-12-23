@@ -1,6 +1,8 @@
 [
 	{
 		"name": "Great Suldani Belt",
+		"size": 10,
+		"center": [5, 5],
 		"locations": [
 			"Dartwing",
 			"Generic Collision",

@@ -1,7 +1,7 @@
 //import { rename } from "fs";
 import aabb2 from "./aabb2";
 import app from "./app";
-import map from "./map";
+import outer_space from "./outer space";
 import pts from "./pts";
 
 
@@ -15,25 +15,25 @@ namespace client {
 
 	export var sector, location;
 
-	export var sectors, locations
+	export var regions, locations
 
 	export var currentSector, currentLocation;
 
-	function getLocationByName(name) {
+	function get_location_by_name(name) {
 		for (let location of locations)
 			if (location.name == name)
 				return location;
 		console.warn("location doesnt exist");
 	}
 
-	function getSectorByName(name) {
-		for (let sector of sectors)
-			if (sector.name == name)
-				return sector;
-		console.warn("sector doesnt exist");
+	function get_region_by_name(name) {
+		for (let region of regions)
+			if (region.name == name)
+				return region;
+		console.warn("region doesnt exist");
 	}
 
-	function makeRequest(method, url) {
+	function make_request(method, url) {
 		return new Promise(function (resolve, reject) {
 			var xhr = new XMLHttpRequest();
 			xhr.open(method, url);
@@ -72,11 +72,13 @@ namespace client {
 
 	export function tick() {
 
+		outer_space.tick();
+		
 	}
 
 	export function init() {
 
-		map.init();
+		outer_space.init();
 
 		app.mouse();
 
@@ -96,7 +98,7 @@ namespace client {
 			console.log('logged_in');
 		}
 
-		getInitTrios();
+		ask_initial();
 
 	}
 
@@ -105,7 +107,7 @@ namespace client {
 
 		let logo = document.querySelector(".logo .text")!;
 
-		sector = getSectorByName(sply.sector);
+		sector = get_region_by_name(sply.sector);
 
 		//if (sply.unregistered)
 		//	logo.innerHTML = `space`
@@ -121,7 +123,7 @@ namespace client {
 		let username = sply && sply.username;
 		let text = '';
 
-		text += usernameReminder();
+		text += username_header();
 		text += addReturnOption();
 
 		text += `
@@ -134,29 +136,14 @@ namespace client {
 		textHead.innerHTML = text;
 	}
 
-	function getInitTrios() {
-		makeRequest('GET', 'sectors.json')
-			.then(function (res: any) {
-				console.log('got sectors');
-				sectors = JSON.parse(res);
-				return makeRequest('GET', 'locations.json');
-			})
-			.then(function (res: any) {
-				console.log('got locations');
-				locations = JSON.parse(res);
-				return makeRequest('GET', 'ply');
-			})
-			.then(function (res: any) {
-				receiveStuple(res);
-				//return makeRequest('GET', 'where');
-			})
-		//.then(function (res: any) {
-		//	receiveStuple(res);
-		//})
-		/*.catch(function (err) {
-			console.error('Augh, there was an error!', err.statusText);
-		});*/
+	async function ask_initial() {
+		const one = <string>await make_request('GET', 'regions.json');
+		const two = <string>await make_request('GET', 'locations.json');
+		const three = <string>await make_request('GET', 'ply');
 
+		regions = JSON.parse(one);
+		locations = JSON.parse(two);
+		receiveStuple(three);
 	}
 
 	export function chooseLayout() {
@@ -198,8 +185,8 @@ namespace client {
 		if (type == 'sply') {
 			sply = payload;
 
-			sector = getSectorByName(sply.sector);
-			location = getLocationByName(sply.location);
+			sector = get_region_by_name(sply.sector);
+			location = get_location_by_name(sply.location);
 
 			handleSply();
 
@@ -221,7 +208,7 @@ namespace client {
 		gameBox.classList.toggle('gameBox');
 	}
 
-	function usernameReminder() {
+	function username_header() {
 
 		let text = '';
 
@@ -230,7 +217,7 @@ namespace client {
 
 		if (sply.unregistered)
 			text += `
-			Playing unregistered
+			Playing unregistered (by ip)
 			<span class="material-icons" style="font-size: 18px">
 			no_accounts
 			</span>`;
@@ -334,7 +321,7 @@ namespace client {
 	function layoutStation() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		//text += drawSpaceship();
 
@@ -359,7 +346,7 @@ namespace client {
 	function layoutJunk() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		text += makeWhereabouts();
 
@@ -381,7 +368,7 @@ namespace client {
 	function layoutContested() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		text += makeWhereabouts();
 
@@ -407,7 +394,7 @@ namespace client {
 
 		let text = '';
 
-		text += usernameReminder();
+		text += username_header();
 
 		text += addReturnOption();
 
@@ -500,7 +487,7 @@ namespace client {
 	function layoutRefuel() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		text += 'You are at a refuelling bay.';
 
@@ -514,7 +501,7 @@ namespace client {
 	function layoutScanning() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		text += `You\'re scanning the junk at ${location.name || ''}.`;
 
@@ -598,11 +585,11 @@ namespace client {
 	function layoutFlight() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		//text += addTabs();
 
-		const loc = getLocationByName(sply.flightLocation);
+		const loc = get_location_by_name(sply.flightLocation);
 
 		text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
@@ -630,7 +617,7 @@ namespace client {
 	export function layoutFlightControls() {
 		let textHead = document.getElementById("mainDiv")!;
 
-		let text = usernameReminder();
+		let text = username_header();
 
 		text += addReturnOption();
 
@@ -696,7 +683,7 @@ namespace client {
 		<input type="checkbox" checked="checked" name="remember" id="keep-ship"> Keep current progress
 		</label>
 		<p>
-		recommended you use your browsers password manager and generator
+		you can link your mail later
 		<br />
 		<br />
 
@@ -715,7 +702,7 @@ namespace client {
 		console.log(strUser);
 
 
-		makeRequest('GET', 'submitFlight=' + strUser)
+		make_request('GET', 'submitFlight=' + strUser)
 			.then(function (res: any) {
 				console.log('submitted flight');
 				receiveStuple(res);
@@ -724,7 +711,7 @@ namespace client {
 
 	export function scanJunk() {
 
-		makeRequest('GET', 'scan')
+		make_request('GET', 'scan')
 			.then(function (res: any) {
 				receiveStuple(res);
 			});
@@ -732,7 +719,7 @@ namespace client {
 
 	export function completeScan() {
 
-		makeRequest('GET', 'completeScan')
+		make_request('GET', 'completeScan')
 			.then(function (res: any) {
 				receiveStuple(res);
 			});
@@ -740,7 +727,7 @@ namespace client {
 
 	export function stopScanning() {
 
-		makeRequest('GET', 'stopScanning')
+		make_request('GET', 'stopScanning')
 			.then(function (res: any) {
 				receiveStuple(res);
 			});
@@ -748,7 +735,7 @@ namespace client {
 
 	export function seeEnemies() {
 
-		makeRequest('GET', 'seeEnemies')
+		make_request('GET', 'seeEnemies')
 			.then(function (res: any) {
 				receiveStuple(res);
 				layoutEnemies();
@@ -757,7 +744,7 @@ namespace client {
 
 	export function tryDock() {
 
-		makeRequest('GET', 'dock')
+		make_request('GET', 'dock')
 			.then(function (res: any) {
 				console.log('asking server if we can dock');
 				receiveStuple(res);
@@ -766,7 +753,7 @@ namespace client {
 
 	export function returnSublocation() {
 
-		makeRequest('GET', 'returnSublocation')
+		make_request('GET', 'returnSublocation')
 			.then(function (res: any) {
 				console.log('returned from sublocation');
 
@@ -777,7 +764,7 @@ namespace client {
 
 	export function transportSublocation(facility) {
 
-		makeRequest('GET', 'knock&sublocation=refuel')
+		make_request('GET', 'knock&sublocation=refuel')
 			.then(function (res: any) {
 				console.log('returned from sublocation');
 
@@ -787,7 +774,7 @@ namespace client {
 	}
 
 	export function logout() {
-		makeRequest('GET', 'logout')
+		make_request('GET', 'logout')
 			.then(function (res: any) {
 				alert(res);
 				sply.unregistered = true;
@@ -813,7 +800,7 @@ namespace client {
 			if (http.readyState == 4 && http.status == 200) {
 				alert(http.responseText);
 
-				makeRequest('GET', 'ply')
+				make_request('GET', 'ply')
 					.then(function (res: any) {
 						receiveStuple(res);
 						//return makeRequest('GET', 'where');
@@ -832,14 +819,13 @@ namespace client {
 	export function xhrRegister() {
 		let username = (<any>document.getElementById("username")!).value;
 		let password = (<any>document.getElementById("password"))!.value;
-		let password_repeat = (<any>document.getElementById("password-repeat"))!.value;
+		let password_repeat = (<any>document.getElementById("passwodr-repeat"))!.value;
 		let keep_ship = (<any>document.getElementById("keep-ship"))!.checked;
 
 		console.log(keep_ship);
 
-
 		var http = new XMLHttpRequest();
-		var url = 'register';
+		const url = 'register';
 		var params = `username=${username}&password=${password}&password-repeat=${password_repeat}&keep-ship=${keep_ship}`;
 
 		http.open('POST', url, true);

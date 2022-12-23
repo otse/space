@@ -1,4 +1,3 @@
-import space from "./space";
 import client from "./client";
 var app;
 (function (app) {
@@ -62,7 +61,6 @@ var app;
         document.onwheel = onwheel;
         window.onerror = onerror;
         client.init();
-        space.init();
         loop(0);
     }
     app.boot = boot;
@@ -84,7 +82,6 @@ var app;
     function loop(timestamp) {
         requestAnimationFrame(loop);
         client.tick();
-        space.tick();
         app.wheel = 0;
         process_keys();
         process_mouse_buttons();

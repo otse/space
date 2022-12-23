@@ -4,13 +4,13 @@
     "unregistered": true,
     "username": "Captain",
     "flight": false,
-    "flightLocation": "Ungoverned Space",
+    "flightLocation": "Dartwing",
     "position": [
         0,
         0
     ],
     "sector": "Great Suldani Belt",
-    "location": "Ungoverned Space",
+    "location": "Dartwing",
     "sublocation": "None",
     "scanning": false,
     "scanCompleted": false,

@@ -1,26 +1,35 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 //import { rename } from "fs";
 import aabb2 from "./aabb2";
 import app from "./app";
-import map from "./map";
+import outer_space from "./outer space";
 import pts from "./pts";
 var client;
 (function (client) {
     // comment
     pts;
     aabb2;
-    function getLocationByName(name) {
+    function get_location_by_name(name) {
         for (let location of client.locations)
             if (location.name == name)
                 return location;
         console.warn("location doesnt exist");
     }
-    function getSectorByName(name) {
-        for (let sector of client.sectors)
-            if (sector.name == name)
-                return sector;
-        console.warn("sector doesnt exist");
+    function get_region_by_name(name) {
+        for (let region of client.regions)
+            if (region.name == name)
+                return region;
+        console.warn("region doesnt exist");
     }
-    function makeRequest(method, url) {
+    function make_request(method, url) {
         return new Promise(function (resolve, reject) {
             var xhr = new XMLHttpRequest();
             xhr.open(method, url);
@@ -55,10 +64,11 @@ var client;
         }
     }
     function tick() {
+        outer_space.tick();
     }
     client.tick = tick;
     function init() {
-        map.init();
+        outer_space.init();
         app.mouse();
         let menuButton = document.getElementById("menu_button");
         menuButton.onclick = function () {
@@ -72,13 +82,13 @@ var client;
         else {
             console.log('logged_in');
         }
-        getInitTrios();
+        ask_initial();
     }
     client.init = init;
     function handleSply() {
         console.log('handlesply', client.sply);
         let logo = document.querySelector(".logo .text");
-        client.sector = getSectorByName(client.sply.sector);
+        client.sector = get_region_by_name(client.sply.sector);
         //if (sply.unregistered)
         //	logo.innerHTML = `space`
         //else
@@ -91,7 +101,7 @@ var client;
         let textHead = document.getElementById("mainDiv");
         let username = client.sply && client.sply.username;
         let text = '';
-        text += usernameReminder();
+        text += username_header();
         text += addReturnOption();
         text += `
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
@@ -102,28 +112,15 @@ var client;
 		`;
         textHead.innerHTML = text;
     }
-    function getInitTrios() {
-        makeRequest('GET', 'sectors.json')
-            .then(function (res) {
-            console.log('got sectors');
-            client.sectors = JSON.parse(res);
-            return makeRequest('GET', 'locations.json');
-        })
-            .then(function (res) {
-            console.log('got locations');
-            client.locations = JSON.parse(res);
-            return makeRequest('GET', 'ply');
-        })
-            .then(function (res) {
-            receiveStuple(res);
-            //return makeRequest('GET', 'where');
+    function ask_initial() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const one = yield make_request('GET', 'regions.json');
+            const two = yield make_request('GET', 'locations.json');
+            const three = yield make_request('GET', 'ply');
+            client.regions = JSON.parse(one);
+            client.locations = JSON.parse(two);
+            receiveStuple(three);
         });
-        //.then(function (res: any) {
-        //	receiveStuple(res);
-        //})
-        /*.catch(function (err) {
-            console.error('Augh, there was an error!', err.statusText);
-        });*/
     }
     function chooseLayout() {
         if (client.sply.flight) {
@@ -157,8 +154,8 @@ var client;
         console.log('received stuple type', type);
         if (type == 'sply') {
             client.sply = payload;
-            client.sector = getSectorByName(client.sply.sector);
-            client.location = getLocationByName(client.sply.location);
+            client.sector = get_region_by_name(client.sply.sector);
+            client.location = get_location_by_name(client.sply.location);
             handleSply();
             chooseLayout();
         }
@@ -174,13 +171,13 @@ var client;
         let gameBox = document.createElement('div');
         gameBox.classList.toggle('gameBox');
     }
-    function usernameReminder() {
+    function username_header() {
         let text = '';
         text += `
 		<p class="smallish reminder">`;
         if (client.sply.unregistered)
             text += `
-			Playing unregistered
+			Playing unregistered (by ip)
 			<span class="material-icons" style="font-size: 18px">
 			no_accounts
 			</span>`;
@@ -260,7 +257,7 @@ var client;
     }
     function layoutStation() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         //text += drawSpaceship();
         text += makeWhereabouts();
         text += `<p>`;
@@ -276,7 +273,7 @@ var client;
     }
     function layoutJunk() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         text += makeWhereabouts();
         text += `<p>`;
         text += `
@@ -289,7 +286,7 @@ var client;
     }
     function layoutContested() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         text += makeWhereabouts();
         text += addLocationMeter();
         text += `<p>`;
@@ -305,7 +302,7 @@ var client;
     function layoutEnemies() {
         let textHead = document.getElementById("mainDiv");
         let text = '';
-        text += usernameReminder();
+        text += username_header();
         text += addReturnOption();
         text += addLocationMeter();
         /*let t;
@@ -382,7 +379,7 @@ var client;
     }
     function layoutRefuel() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         text += 'You are at a refuelling bay.';
         text += ' <span class="spanButton" onclick="space.returnSublocation()">Back to Station</span>';
         textHead.innerHTML = text;
@@ -390,7 +387,7 @@ var client;
     }
     function layoutScanning() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         text += `You\'re scanning the junk at ${client.location.name || ''}.`;
         if (!client.sply.scanCompleted)
             text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel?</span>';
@@ -450,9 +447,9 @@ var client;
     }
     function layoutFlight() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         //text += addTabs();
-        const loc = getLocationByName(client.sply.flightLocation);
+        const loc = get_location_by_name(client.sply.flightLocation);
         text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
         /*text += `
@@ -469,7 +466,7 @@ var client;
     }
     function layoutFlightControls() {
         let textHead = document.getElementById("mainDiv");
-        let text = usernameReminder();
+        let text = username_header();
         text += addReturnOption();
         text += `
 		Flight menu
@@ -526,7 +523,7 @@ var client;
 		<input type="checkbox" checked="checked" name="remember" id="keep-ship"> Keep current progress
 		</label>
 		<p>
-		recommended you use your browsers password manager and generator
+		you can link your mail later
 		<br />
 		<br />
 
@@ -540,7 +537,7 @@ var client;
         var e = document.getElementById("flights");
         var strUser = e.options[e.selectedIndex].text;
         console.log(strUser);
-        makeRequest('GET', 'submitFlight=' + strUser)
+        make_request('GET', 'submitFlight=' + strUser)
             .then(function (res) {
             console.log('submitted flight');
             receiveStuple(res);
@@ -548,28 +545,28 @@ var client;
     }
     client.submitFlight = submitFlight;
     function scanJunk() {
-        makeRequest('GET', 'scan')
+        make_request('GET', 'scan')
             .then(function (res) {
             receiveStuple(res);
         });
     }
     client.scanJunk = scanJunk;
     function completeScan() {
-        makeRequest('GET', 'completeScan')
+        make_request('GET', 'completeScan')
             .then(function (res) {
             receiveStuple(res);
         });
     }
     client.completeScan = completeScan;
     function stopScanning() {
-        makeRequest('GET', 'stopScanning')
+        make_request('GET', 'stopScanning')
             .then(function (res) {
             receiveStuple(res);
         });
     }
     client.stopScanning = stopScanning;
     function seeEnemies() {
-        makeRequest('GET', 'seeEnemies')
+        make_request('GET', 'seeEnemies')
             .then(function (res) {
             receiveStuple(res);
             layoutEnemies();
@@ -577,7 +574,7 @@ var client;
     }
     client.seeEnemies = seeEnemies;
     function tryDock() {
-        makeRequest('GET', 'dock')
+        make_request('GET', 'dock')
             .then(function (res) {
             console.log('asking server if we can dock');
             receiveStuple(res);
@@ -585,7 +582,7 @@ var client;
     }
     client.tryDock = tryDock;
     function returnSublocation() {
-        makeRequest('GET', 'returnSublocation')
+        make_request('GET', 'returnSublocation')
             .then(function (res) {
             console.log('returned from sublocation');
             receiveStuple(res);
@@ -593,7 +590,7 @@ var client;
     }
     client.returnSublocation = returnSublocation;
     function transportSublocation(facility) {
-        makeRequest('GET', 'knock&sublocation=refuel')
+        make_request('GET', 'knock&sublocation=refuel')
             .then(function (res) {
             console.log('returned from sublocation');
             receiveStuple(res);
@@ -601,7 +598,7 @@ var client;
     }
     client.transportSublocation = transportSublocation;
     function logout() {
-        makeRequest('GET', 'logout')
+        make_request('GET', 'logout')
             .then(function (res) {
             alert(res);
             client.sply.unregistered = true;
@@ -622,7 +619,7 @@ var client;
         http.onreadystatechange = function () {
             if (http.readyState == 4 && http.status == 200) {
                 alert(http.responseText);
-                makeRequest('GET', 'ply')
+                make_request('GET', 'ply')
                     .then(function (res) {
                     receiveStuple(res);
                     //return makeRequest('GET', 'where');
@@ -641,11 +638,11 @@ var client;
     function xhrRegister() {
         let username = document.getElementById("username").value;
         let password = document.getElementById("password").value;
-        let password_repeat = document.getElementById("password-repeat").value;
+        let password_repeat = document.getElementById("passwodr-repeat").value;
         let keep_ship = document.getElementById("keep-ship").checked;
         console.log(keep_ship);
         var http = new XMLHttpRequest();
-        var url = 'register';
+        const url = 'register';
         var params = `username=${username}&password=${password}&password-repeat=${password_repeat}&keep-ship=${keep_ship}`;
         http.open('POST', url, true);
         //Send the proper header information along with the request

@@ -6,12 +6,16 @@
     "speed": 1,
     "unregistered": false,
     "flight": false,
-    "flightLocation": "",
+    "flightLocation": "Dartwing",
     "position": [
-        0,
-        0
+        0.655139087787493,
+        7.907245381160209
     ],
     "sector": "Great Suldani Belt",
     "location": "Dartwing",
-    "sublocation": "Refuel"
+    "sublocation": "None",
+    "scanning": false,
+    "scanCompleted": false,
+    "scanStart": 1671809542764,
+    "scanEnd": 1671809662764
 }

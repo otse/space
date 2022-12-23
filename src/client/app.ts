@@ -1,4 +1,3 @@
-import space from "./space";
 import client from "./client";
 
 namespace app {
@@ -55,7 +54,6 @@ namespace app {
 		document.onwheel = onwheel;
 		window.onerror = onerror;
 		client.init();
-		space.init();
 		loop(0);
 	}
 	function process_keys() {
@@ -76,7 +74,6 @@ namespace app {
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
 		client.tick();
-		space.tick();
 		wheel = 0;
 		process_keys();
 		process_mouse_buttons();

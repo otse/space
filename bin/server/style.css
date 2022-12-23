@@ -27,37 +27,6 @@ canvas {
 	z-index: -1;
 }
 
-#renderer {
-	z-index: -1;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-}
-
-#renderer .float {
-	font-family: courier;
-	font-size: 14px;
-	position: absolute;
-	color: lightgray;
-}
-
-#renderer .float span:nth-child(2) {
-	padding: 0 3;
-	border-radius: 2px;
-	border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-#renderer .float span:nth-child(1) {
-	float: left;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 8px 8px 8px 0;
-    border-color: transparent #878787 transparent transparent;
-}
-
 .tabbar {
 	margin: 10px;
 }
