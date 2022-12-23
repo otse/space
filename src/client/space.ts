@@ -5,15 +5,19 @@ import outer_space from "./outer space";
 import pts from "./pts";
 
 
-namespace client {
+namespace space {
 
-	// comment
-	pts
-	aabb2
+	export function sample(a) {
+		return a[Math.floor(Math.random() * a.length)];
+	}
+
+	export function clamp(val, min, max) {
+		return val > max ? max : val < min ? min : val;
+	}
 
 	export var sply, senemies;
 
-	export var sector, location;
+	export var region, location;
 
 	export var regions, locations
 
@@ -23,14 +27,13 @@ namespace client {
 		for (let location of locations)
 			if (location.name == name)
 				return location;
-		console.warn("location doesnt exist");
+		console.warn(`location ${location} doesnt exist`);
 	}
 
 	function get_region_by_name(name) {
 		for (let region of regions)
 			if (region.name == name)
 				return region;
-		console.warn("region doesnt exist");
 	}
 
 	function make_request(method, url) {
@@ -73,10 +76,10 @@ namespace client {
 	export function tick() {
 
 		outer_space.tick();
-		
+
 	}
 
-	export function init() {
+	export async function init() {
 
 		outer_space.init();
 
@@ -98,16 +101,18 @@ namespace client {
 			console.log('logged_in');
 		}
 
-		ask_initial();
+		await ask_initial();
+
+		outer_space.statics();
 
 	}
 
-	export function handleSply() {
-		console.log('handlesply', sply);
+	export function handle_sply() {
+		console.log('handle-sply', sply);
 
 		let logo = document.querySelector(".logo .text")!;
 
-		sector = get_region_by_name(sply.sector);
+		region = get_region_by_name(sply.sector);
 
 		//if (sply.unregistered)
 		//	logo.innerHTML = `space`
@@ -143,7 +148,9 @@ namespace client {
 
 		regions = JSON.parse(one);
 		locations = JSON.parse(two);
-		receiveStuple(three);
+		receive_stuple(three);
+
+		console.log('asked initials');
 	}
 
 	export function chooseLayout() {
@@ -156,19 +163,24 @@ namespace client {
 		else if (sply.scanning) {
 			layoutScanning();
 		}
-		else if (location.type == 'Station') {
-			layoutStation();
-		}
-		else if (location.type == 'Junk') {
-			layoutJunk();
-		}
-		else if (location.type == 'Contested') {
+		else if (location) {
+			if (location.type == 'Station') {
+				layoutStation();
+			}
+			else if (location.type == 'Junk') {
+				layoutJunk();
+			}
+			else if (location.type == 'Contested') {
+			}
 			layoutContested();
+		}
+		else {
+			layout_default();
 		}
 	}
 
 
-	function receiveStuple(res) {
+	function receive_stuple(res) {
 
 		if (res.length == 0) {
 			console.warn('expected a stuple but received nothing');
@@ -183,12 +195,14 @@ namespace client {
 		console.log('received stuple type', type);
 
 		if (type == 'sply') {
+			console.log('sply!');
+
 			sply = payload;
 
-			sector = get_region_by_name(sply.sector);
+			region = get_region_by_name(sply.sector);
 			location = get_location_by_name(sply.location);
 
-			handleSply();
+			handle_sply();
 
 			chooseLayout();
 		}
@@ -215,7 +229,10 @@ namespace client {
 		text += `
 		<p class="smallish reminder">`;
 
-		if (sply.unregistered)
+		if (sply)
+			console.log('sply is', sply);
+
+		if (sply.unreg)
 			text += `
 			Playing unregistered (by ip)
 			<span class="material-icons" style="font-size: 18px">
@@ -245,8 +262,7 @@ namespace client {
 		<span class="spanButton" onclick="space.layoutFlightControls()">Flight Menu</span>
 		`;
 
-		textHead.innerHTML += text;
-
+		return text;
 	}
 
 	function addReturnOption() {
@@ -303,19 +319,36 @@ namespace client {
 	}
 
 	function makeWhereabouts() {
+		for (let region of regions) {
+			let dist = pts.dist([1, 0], region.center);
+			if (dist < region.radius)
+			{
+				console.log(`were in region ${region.name} dist ${dist}`);
+				
+			}
+		}
 		let text = '';
 		text += `
 		<div id="whereabouts">
 		
-		<span class="sector">${sector.name}</span> ~>
+		<span class="sector">belt</span> ~>
 		<br />
 		
-		<span class="location" style="colors: ${location.color || "inherit"} ">
-		&nbsp;${location.name}
-		<!--(${location.type})--></span>
+		<span class="location" style="colors: inherit} ">
+		&nbsp;boop
+		<!--(crash)--></span>
 		</div>
 		`;
+
 		return text;
+	}
+
+	function layout_default() {
+		let textHead = document.getElementById("mainDiv")!;
+		let text = username_header();
+		text += makeWhereabouts();
+		text += addFlightOption();
+		textHead.innerHTML = text;
 	}
 
 	function layoutStation() {
@@ -617,23 +650,27 @@ namespace client {
 	export function layoutFlightControls() {
 		let textHead = document.getElementById("mainDiv")!;
 
+		console.log('wot up');
+
 		let text = username_header();
 
 		text += addReturnOption();
 
-		text += `
+		if (region) {
+			text += `
 		Flight menu
 		<p>
-		${sector.name} ~>
+		${region.name} ~>
 		<select name="flights" id="flights" >`;
 
-		for (let location of sector.locations) {
-			text += `<option>${location}</option>`
-		}
-		text += `<option>Non-existing option</option>`
-		text += `</select>
+			for (let location of region.locations) {
+				text += `<option>${location}</option>`
+			}
+			text += `<option>Non-existing option</option>`
+			text += `</select>
 		<span class="spanButton" onclick="space.submitFlight()">Flight</span>
 		</form>`;
+		}
 
 		textHead.innerHTML = text;
 
@@ -705,7 +742,7 @@ namespace client {
 		make_request('GET', 'submitFlight=' + strUser)
 			.then(function (res: any) {
 				console.log('submitted flight');
-				receiveStuple(res);
+				receive_stuple(res);
 			});
 	}
 
@@ -713,7 +750,7 @@ namespace client {
 
 		make_request('GET', 'scan')
 			.then(function (res: any) {
-				receiveStuple(res);
+				receive_stuple(res);
 			});
 	}
 
@@ -721,7 +758,7 @@ namespace client {
 
 		make_request('GET', 'completeScan')
 			.then(function (res: any) {
-				receiveStuple(res);
+				receive_stuple(res);
 			});
 	}
 
@@ -729,7 +766,7 @@ namespace client {
 
 		make_request('GET', 'stopScanning')
 			.then(function (res: any) {
-				receiveStuple(res);
+				receive_stuple(res);
 			});
 	}
 
@@ -737,7 +774,7 @@ namespace client {
 
 		make_request('GET', 'seeEnemies')
 			.then(function (res: any) {
-				receiveStuple(res);
+				receive_stuple(res);
 				layoutEnemies();
 			});
 	}
@@ -747,7 +784,7 @@ namespace client {
 		make_request('GET', 'dock')
 			.then(function (res: any) {
 				console.log('asking server if we can dock');
-				receiveStuple(res);
+				receive_stuple(res);
 			});
 	}
 
@@ -757,7 +794,7 @@ namespace client {
 			.then(function (res: any) {
 				console.log('returned from sublocation');
 
-				receiveStuple(res);
+				receive_stuple(res);
 
 			});
 	}
@@ -768,19 +805,17 @@ namespace client {
 			.then(function (res: any) {
 				console.log('returned from sublocation');
 
-				receiveStuple(res);
+				receive_stuple(res);
 
 			});
 	}
 
-	export function logout() {
-		make_request('GET', 'logout')
-			.then(function (res: any) {
-				alert(res);
-				sply.unregistered = true;
-				handleSply();
-				//chooseLayout();
-			})
+	export async function logout() {
+		const res = await make_request('GET', 'logout')
+		alert(res);
+		sply.unreg = true;
+		handle_sply();
+
 	}
 
 	export function xhrLogin() {
@@ -802,7 +837,7 @@ namespace client {
 
 				make_request('GET', 'ply')
 					.then(function (res: any) {
-						receiveStuple(res);
+						receive_stuple(res);
 						//return makeRequest('GET', 'where');
 					})
 				//.then(function (res: any) {
@@ -816,10 +851,10 @@ namespace client {
 		http.send(params);
 	}
 
-	export function xhrRegister() {
+	export function xhr_register() {
 		let username = (<any>document.getElementById("username")!).value;
 		let password = (<any>document.getElementById("password"))!.value;
-		let password_repeat = (<any>document.getElementById("passwodr-repeat"))!.value;
+		let password_repeat = (<any>document.getElementById("password-repeat"))!.value;
 		let keep_ship = (<any>document.getElementById("keep-ship"))!.checked;
 
 		console.log(keep_ship);
@@ -851,6 +886,6 @@ function cls() {
 
 }
 
-export default client;
+export default space;
 
-(window as any).client = client;
+(window as any).space = space;

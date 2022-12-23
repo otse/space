@@ -33,10 +33,12 @@ type appId = number;
 interface Ply {
 	id: number
 	ip: string
+	unreg: boolean
 	username: string
 	password: string
+	pos: vec2
+	goto: vec2
 	health: number
-	unregistered: boolean
 	speed: number
 	flight: boolean
 	flightLocation: string
@@ -46,18 +48,16 @@ interface Ply {
 	scanCompleted?: boolean
 	engaging?: boolean
 	position
-	sector
-	location
-	sublocation
 }
 
-var sessions = {};
+var regs = {};
+var unregs = {};
 var logins = {};
+var sessions: Ply[] = [];
 
 var lost_minor_planet;
 var regions;
 
-var unregs = {};
 var all_plys: Ply[]
 
 interface LostMinorPlanet {
@@ -92,7 +92,7 @@ export function write_logins() {
 export function write_ply(ply: Ply) {
 	console.log('writing ply ', ply.id);
 
-	if (ply.unregistered)
+	if (ply.unreg)
 		object_to_file(unreg_path(ply.ip), ply);
 	else
 		object_to_file(reg_path(ply.username), ply);
@@ -118,18 +118,17 @@ export function new_ply() {
 	let ply: Ply = {
 		id: lost_minor_planet.players,
 		ip: 'N/A',
+		unreg: false,
 		username: 'Captain',
 		password: 'N/A',
+		pos: [0, 0],
+		goto: [0, 0],
 		speed: 1,
 		health: 100,
-		unregistered: false,
 		flight: false,
 		flightLocation: '',
 		scanning: false,
-		position: [0, 0],
-		sector: 'Great Suldani Belt',
-		location: 'Dartwing',
-		sublocation: 'None'
+		position: [0, 0]
 	};
 	return ply;
 }
@@ -142,47 +141,76 @@ export function get_region(name) {
 
 export function tick() {
 
+	//for (const [, session] of Object.entries(regs)) {
+	//	console.log(session);
+	//}
+	
+
+}
+
+export function push_session(ply: Ply) {
+	let i = sessions.indexOf(ply);
+	if (i == -1)
+		sessions.push(ply);
+}
+
+export function pop_session(ply: Ply) {
+	let i = sessions.indexOf(ply);
+	if (i > -1)
+		this.sobjs.splice(i, 1).length;
 }
 
 export function get_ply(ip) {
 
-	let cleanIp = sanitize_ip(ip);
+	ip = sanitize_ip(ip);
 
 	let ply: Ply;
 
-	if (logins[`${cleanIp}`]) {
-		//console.log('this ip is remembered to be logged in');
+	/*
+	the following resolves ply, every http request (whether its a stylesheet or a page)
+	*/
 
-		const username = logins[`${cleanIp}`];
-
-		if (sessions[username]) {
-			//console.log('we have remembrance this server session');
-
-			ply = sessions[username];
+	if (logins[ip]) {
+		const username = logins[ip];
+		if (regs[username]) {
+			ply = regs[username];
 		}
 		else {
-			console.log('we dont have a remembrance this server session');
+			console.log('we dont have this ply in a session yet');
 
-			ply = object_from_file(reg_path(username));
+			if (object_exists(reg_path(username))) {
+				ply = object_from_file(reg_path(username));
+				regs[username] = ply;
+			}
+			else {
+				// invalid logins.json entry pointing to a deleted user
+				// todo this is way too much error-handling
+				delete logins[username];
+				ply = new_ply();
+				write_ply(ply);
+				regs[username] = ply;
+				console.warn('user in users doesnt exist');
+			}
 
-			sessions[username] = ply;
 		}
 	}
-	else if (unregs[`${cleanIp}`]) {
-		ply = unregs[`${cleanIp}`];
+	else if (unregs[ip]) {
+		ply = unregs[ip];
 		//console.log('got ply safely from unregistered table');
 	}
 	else {
-		if (object_exists(unreg_path(cleanIp)))
-			ply = unregs[`${cleanIp}`] = object_from_file(unreg_path(cleanIp));
+		if (object_exists(unreg_path(ip)))
+			ply = unregs[ip] = object_from_file(unreg_path(ip));
 		else {
 			ply = new_ply();
-			ply.unregistered = true;
-			ply.ip = cleanIp;
+			ply.unreg = true;
+			ply.ip = ip;
 
-			object_to_file(unreg_path(cleanIp), ply);
+			object_to_file(unreg_path(ip), ply);
 		}
 	}
+	ply.goto = [Math.random() * 10, Math.random() * 10];
+	push_session(ply);
 	return ply;
 }
 
@@ -213,10 +241,9 @@ function init() {
 			let object: any = {
 				id: ply.id,
 				username: ply.username,
-				unregistered: ply.unregistered,
-				sector: ply.sector,
-				location: ply.location,
-				sublocation: ply.sublocation,
+				unreg: ply.unreg,
+				pos: ply.pos,
+				goto: ply.goto,
 				position: ply.position,
 				flight: ply.flight,
 				flightLocation: ply.flightLocation,
@@ -262,7 +289,7 @@ function init() {
 
 			const sublocation = inputs.sublocation;
 			if (sublocation == 'refuel') {
-				ply.sublocation = 'Refuel';
+				//ply.sublocation = 'Refuel';
 				write_ply(ply);
 				send_sply();
 			}
@@ -294,7 +321,7 @@ function init() {
 
 					ply = object_from_file(path);
 
-					sessions[username] = ply;
+					regs[username] = ply;
 
 					let logged_in_elsewhere = false;
 					let ip2;
@@ -305,7 +332,7 @@ function init() {
 							break;
 						}
 					}
-					if (logins[`${ip}`] == username) {
+					if (logins[ip] == username) {
 						res.writeHead(400);
 						res.end('already logged in here');
 					}
@@ -319,7 +346,7 @@ function init() {
 						}
 						res.end(msg);
 
-						logins[`${ip}`] = ply.username;
+						logins[ip] = ply.username;
 						write_logins();
 
 						res.end();
@@ -393,13 +420,13 @@ function init() {
 					}
 					else {
 						let ply = new_ply();
-						ply.unregistered = false;
+						ply.unreg = false;
 						ply.ip = 'N/A';
 						ply.username = parsed['username'];
 						ply.password = parsed['password'];
 
 						res.writeHead(200);
-						res.end(`you're registered as ${username}. now login`);
+						res.end(`congratulations, you've registered as ${username}. now login`);
 
 						const payload = JSON.stringify(ply, null, 4);
 						fs.writeFileSync(reg_path(username), payload);
@@ -491,21 +518,22 @@ function init() {
 		else if (req.url == '/seeEnemies') {
 			console.log('seeEnemies');
 
-			const location = locations.instance(ply.location)!;
+			//const location = locations.instance(ply.location)!;
 
 			//ply.engaging = true;
 
-			const cast = location as locations.contested_location_instance;
+			//const cast = location as locations.contested_location_instance;
 
-			const enemies = cast.get_enemies();
+			//const enemies = cast.get_enemies();
 
 			//locations.locations
 
 			ply.position = [Math.random() * 10, Math.random() * 10]
 
-			sendStuple([['senemies'], enemies]);
+			//sendStuple([['senemies'], enemies]);
 		}
 		else if (req.url == '/scan') {
+			/*
 			const location = locations.get(ply.location)!;
 
 			if (location.type == 'Junk') {
@@ -520,9 +548,10 @@ function init() {
 			else {
 				sendSmessage("Can only scan junk.");
 			}
+			*/
 		}
 		else if (req.url == '/stopScanning') {
-			const location = locations.get(ply.location);
+			//const location = locations.get(ply.location);
 			ply.scanning = false;
 			write_ply(ply);
 			send_sply();
@@ -537,7 +566,7 @@ function init() {
 
 			if (ply.flight) {
 				ply.flight = false;
-				ply.location = ply.flightLocation;
+				//ply.location = ply.flightLocation;
 
 				write_ply(ply);
 				send_sply();
@@ -566,7 +595,7 @@ function init() {
 		}
 		else if (req.url == '/returnSublocation') {
 			//console.log('return from sublocation');
-			ply.sublocation = 'None';
+			//ply.sublocation = 'None';
 			write_ply(ply);
 			send_sply();
 		}

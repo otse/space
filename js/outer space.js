@@ -1,4 +1,5 @@
 import app from "./app";
+import space from "./space";
 import pts from "./pts";
 var outer_space;
 (function (outer_space) {
@@ -8,16 +9,23 @@ var outer_space;
     var floats = [];
     var regions = [];
     function init() {
-        setup();
     }
     outer_space.init = init;
+    function statics() {
+        console.log('outer space statics');
+        setup();
+    }
+    outer_space.statics = statics;
     function tick() {
-        outer_space.you.options.pos = pts.add(outer_space.you.options.pos, [0.001, 0]);
-        //console.log('center', center);
+        if (outer_space.you) {
+            outer_space.you.options.pos = pts.add(outer_space.you.options.pos, [0.001, 0]);
+            outer_space.center = outer_space.you.options.pos;
+        }
         if (app.wheel == 1)
-            outer_space.pixelMultiple += 2;
+            outer_space.pixelMultiple += 5;
         if (app.wheel == -1)
-            outer_space.pixelMultiple -= 2;
+            outer_space.pixelMultiple -= 5;
+        outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, 5, 120);
         for (let float of floats)
             float.tick();
         for (let region of regions)
@@ -35,7 +43,10 @@ var outer_space;
             name: 'collision',
             pos: [2, 1]
         });
-        let boob = new region('Great Suldani Belt', [0, 0], 10);
+        for (let blob of space.regions) {
+            console.log('new region', blob.name);
+            let boob = new region(blob.name, blob.center, blob.radius);
+        }
     }
     function rerender() {
     }
@@ -66,10 +77,10 @@ var outer_space;
         }
     }
     class region {
-        constructor(name, pos, size) {
+        constructor(name, pos, radius) {
             this.name = name;
             this.pos = pos;
-            this.size = size;
+            this.radius = radius;
             regions.push(this);
             this.element = document.createElement("div");
             this.element.classList.add('region');
@@ -82,10 +93,11 @@ var outer_space;
             let relative = pts.subtract(this.pos, outer_space.center);
             relative = pts.mult(relative, outer_space.pixelMultiple);
             relative = pts.add(relative, half);
-            this.element.style.top = relative[1];
-            this.element.style.left = relative[0];
-            this.element.style.width = this.size * outer_space.pixelMultiple;
-            this.element.style.height = this.size * outer_space.pixelMultiple;
+            const radius = this.radius * outer_space.pixelMultiple;
+            this.element.style.top = relative[1] - radius;
+            this.element.style.left = relative[0] - radius;
+            this.element.style.width = this.radius * 2 * outer_space.pixelMultiple;
+            this.element.style.height = this.radius * 2 * outer_space.pixelMultiple;
         }
         append() {
             outer_space.element.append(this.element);

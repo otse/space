@@ -1,4 +1,13 @@
-import client from "./client";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+import space from "./space";
 var app;
 (function (app) {
     let KEY;
@@ -46,22 +55,24 @@ var app;
     }
     app.mouse = mouse;
     function boot(version) {
-        console.log('boot');
-        app.salt = version;
-        function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-        function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
-            return false; }
-        function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
-        function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
-        function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
-        document.onkeydown = document.onkeyup = onkeys;
-        document.onmousemove = onmousemove;
-        document.onmousedown = onmousedown;
-        document.onmouseup = onmouseup;
-        document.onwheel = onwheel;
-        window.onerror = onerror;
-        client.init();
-        loop(0);
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log('boot');
+            app.salt = version;
+            function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
+            function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
+                return false; }
+            function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
+            function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
+            function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
+            document.onkeydown = document.onkeyup = onkeys;
+            document.onmousemove = onmousemove;
+            document.onmousedown = onmousedown;
+            document.onmouseup = onmouseup;
+            document.onwheel = onwheel;
+            window.onerror = onerror;
+            yield space.init();
+            loop(0);
+        });
     }
     app.boot = boot;
     function process_keys() {
@@ -79,9 +90,15 @@ var app;
             else if (buttons[b] == MOUSE.UP)
                 buttons[b] = MOUSE.OFF;
     }
+    var last, current;
     function loop(timestamp) {
         requestAnimationFrame(loop);
-        client.tick();
+        current = performance.now();
+        if (!last)
+            last = current;
+        app.delta = (current - last) / 1000;
+        last = current;
+        space.tick();
         app.wheel = 0;
         process_keys();
         process_mouse_buttons();

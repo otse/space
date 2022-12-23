@@ -1,7 +1,7 @@
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-	input: '../../js/client.js',
+	input: '../../js/space.js',
 	output: {
 		name: 'space',
 		file: '../../bin/server/bundle.js',

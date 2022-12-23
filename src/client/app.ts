@@ -1,4 +1,4 @@
-import client from "./client";
+import space from "./space";
 
 namespace app {
 	export enum KEY {
@@ -18,6 +18,7 @@ namespace app {
 	var keys = {};
 	var buttons = {};
 	var pos: vec2 = [0, 0];
+	export var delta;
 	export var salt = 'x';
 	export var wheel = 0;
 	export function onkeys(event) {
@@ -38,7 +39,7 @@ namespace app {
 	export function mouse(): vec2 {
 		return [...pos];
 	}
-	export function boot(version: string) {
+	export async function boot(version: string) {
 		console.log('boot');
 		
 		salt = version;
@@ -53,7 +54,7 @@ namespace app {
 		document.onmouseup = onmouseup;
 		document.onwheel = onwheel;
 		window.onerror = onerror;
-		client.init();
+		await space.init();
 		loop(0);
 	}
 	function process_keys() {
@@ -71,9 +72,15 @@ namespace app {
 			else if (buttons[b] == MOUSE.UP)
 				buttons[b] = MOUSE.OFF;
 	}
+	var last, current
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
-		client.tick();
+		current = performance.now();
+		if (!last)
+			last = current;
+		delta = (current - last) / 1000;
+		last = current;		
+		space.tick();
 		wheel = 0;
 		process_keys();
 		process_mouse_buttons();

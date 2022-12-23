@@ -1,6 +1,118 @@
 var space = (function () {
     'use strict';
 
+    var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+    var app;
+    (function (app) {
+        let KEY;
+        (function (KEY) {
+            KEY[KEY["OFF"] = 0] = "OFF";
+            KEY[KEY["PRESS"] = 1] = "PRESS";
+            KEY[KEY["WAIT"] = 2] = "WAIT";
+            KEY[KEY["AGAIN"] = 3] = "AGAIN";
+            KEY[KEY["UP"] = 4] = "UP";
+        })(KEY = app.KEY || (app.KEY = {}));
+        let MOUSE;
+        (function (MOUSE) {
+            MOUSE[MOUSE["UP"] = -1] = "UP";
+            MOUSE[MOUSE["OFF"] = 0] = "OFF";
+            MOUSE[MOUSE["DOWN"] = 1] = "DOWN";
+            MOUSE[MOUSE["STILL"] = 2] = "STILL";
+        })(MOUSE = app.MOUSE || (app.MOUSE = {}));
+        var keys = {};
+        var buttons = {};
+        var pos = [0, 0];
+        app.salt = 'x';
+        app.wheel = 0;
+        function onkeys(event) {
+            const key = event.key.toLowerCase();
+            if ('keydown' == event.type)
+                keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
+            else if ('keyup' == event.type)
+                keys[key] = KEY.UP;
+            if (event.keyCode == 114)
+                event.preventDefault();
+        }
+        app.onkeys = onkeys;
+        function key(k) {
+            return keys[k];
+        }
+        app.key = key;
+        function button(b) {
+            return buttons[b];
+        }
+        app.button = button;
+        function mouse() {
+            return [...pos];
+        }
+        app.mouse = mouse;
+        function boot(version) {
+            return __awaiter$1(this, void 0, void 0, function* () {
+                console.log('boot');
+                app.salt = version;
+                function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
+                function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
+                    return false; }
+                function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
+                function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
+                function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
+                document.onkeydown = document.onkeyup = onkeys;
+                document.onmousemove = onmousemove;
+                document.onmousedown = onmousedown;
+                document.onmouseup = onmouseup;
+                document.onwheel = onwheel;
+                window.onerror = onerror;
+                yield space$1.init();
+                loop();
+            });
+        }
+        app.boot = boot;
+        function process_keys() {
+            for (let i in keys) {
+                if (keys[i] == KEY.PRESS)
+                    keys[i] = KEY.WAIT;
+                else if (keys[i] == KEY.UP)
+                    keys[i] = KEY.OFF;
+            }
+        }
+        function process_mouse_buttons() {
+            for (let b of [0, 1, 2])
+                if (buttons[b] == MOUSE.DOWN)
+                    buttons[b] = MOUSE.STILL;
+                else if (buttons[b] == MOUSE.UP)
+                    buttons[b] = MOUSE.OFF;
+        }
+        var last, current;
+        function loop(timestamp) {
+            requestAnimationFrame(loop);
+            current = performance.now();
+            if (!last)
+                last = current;
+            app.delta = (current - last) / 1000;
+            last = current;
+            space$1.tick();
+            app.wheel = 0;
+            process_keys();
+            process_mouse_buttons();
+        }
+        app.loop = loop;
+        function sethtml(selector, html) {
+            let element = document.querySelectorAll(selector)[0];
+            element.innerHTML = html;
+        }
+        app.sethtml = sethtml;
+    })(app || (app = {}));
+    window['App'] = app;
+    var app$1 = app;
+
     class pts {
         static pt(a) {
             return { x: a[0], y: a[1] };
@@ -127,108 +239,6 @@ var space = (function () {
         ;
     }
 
-    var TEST;
-    (function (TEST) {
-        TEST[TEST["Outside"] = 0] = "Outside";
-        TEST[TEST["Inside"] = 1] = "Inside";
-        TEST[TEST["Overlap"] = 2] = "Overlap";
-    })(TEST || (TEST = {}));
-
-    var app;
-    (function (app) {
-        let KEY;
-        (function (KEY) {
-            KEY[KEY["OFF"] = 0] = "OFF";
-            KEY[KEY["PRESS"] = 1] = "PRESS";
-            KEY[KEY["WAIT"] = 2] = "WAIT";
-            KEY[KEY["AGAIN"] = 3] = "AGAIN";
-            KEY[KEY["UP"] = 4] = "UP";
-        })(KEY = app.KEY || (app.KEY = {}));
-        let MOUSE;
-        (function (MOUSE) {
-            MOUSE[MOUSE["UP"] = -1] = "UP";
-            MOUSE[MOUSE["OFF"] = 0] = "OFF";
-            MOUSE[MOUSE["DOWN"] = 1] = "DOWN";
-            MOUSE[MOUSE["STILL"] = 2] = "STILL";
-        })(MOUSE = app.MOUSE || (app.MOUSE = {}));
-        var keys = {};
-        var buttons = {};
-        var pos = [0, 0];
-        app.salt = 'x';
-        app.wheel = 0;
-        function onkeys(event) {
-            const key = event.key.toLowerCase();
-            if ('keydown' == event.type)
-                keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
-            else if ('keyup' == event.type)
-                keys[key] = KEY.UP;
-            if (event.keyCode == 114)
-                event.preventDefault();
-        }
-        app.onkeys = onkeys;
-        function key(k) {
-            return keys[k];
-        }
-        app.key = key;
-        function button(b) {
-            return buttons[b];
-        }
-        app.button = button;
-        function mouse() {
-            return [...pos];
-        }
-        app.mouse = mouse;
-        function boot(version) {
-            console.log('boot');
-            app.salt = version;
-            function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-            function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
-                return false; }
-            function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
-            function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
-            function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
-            document.onkeydown = document.onkeyup = onkeys;
-            document.onmousemove = onmousemove;
-            document.onmousedown = onmousedown;
-            document.onmouseup = onmouseup;
-            document.onwheel = onwheel;
-            window.onerror = onerror;
-            client$1.init();
-            loop();
-        }
-        app.boot = boot;
-        function process_keys() {
-            for (let i in keys) {
-                if (keys[i] == KEY.PRESS)
-                    keys[i] = KEY.WAIT;
-                else if (keys[i] == KEY.UP)
-                    keys[i] = KEY.OFF;
-            }
-        }
-        function process_mouse_buttons() {
-            for (let b of [0, 1, 2])
-                if (buttons[b] == MOUSE.DOWN)
-                    buttons[b] = MOUSE.STILL;
-                else if (buttons[b] == MOUSE.UP)
-                    buttons[b] = MOUSE.OFF;
-        }
-        function loop(timestamp) {
-            requestAnimationFrame(loop);
-            client$1.tick();
-            app.wheel = 0;
-            process_keys();
-            process_mouse_buttons();
-        }
-        app.loop = loop;
-        function sethtml(selector, html) {
-            let element = document.querySelectorAll(selector)[0];
-            element.innerHTML = html;
-        }
-        app.sethtml = sethtml;
-    })(app || (app = {}));
-    window['App'] = app;
-    var app$1 = app;
-
     var outer_space;
     (function (outer_space) {
         outer_space.locations = [];
@@ -237,16 +247,23 @@ var space = (function () {
         var floats = [];
         var regions = [];
         function init() {
-            setup();
         }
         outer_space.init = init;
+        function statics() {
+            console.log('outer space statics');
+            setup();
+        }
+        outer_space.statics = statics;
         function tick() {
-            outer_space.you.options.pos = pts.add(outer_space.you.options.pos, [0.001, 0]);
-            //console.log('center', center);
+            if (outer_space.you) {
+                outer_space.you.options.pos = pts.add(outer_space.you.options.pos, [0.001, 0]);
+                outer_space.center = outer_space.you.options.pos;
+            }
             if (app$1.wheel == 1)
-                outer_space.pixelMultiple += 2;
+                outer_space.pixelMultiple += 5;
             if (app$1.wheel == -1)
-                outer_space.pixelMultiple -= 2;
+                outer_space.pixelMultiple -= 5;
+            outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, 5, 120);
             for (let float of floats)
                 float.tick();
             for (let region of regions)
@@ -264,7 +281,10 @@ var space = (function () {
                 name: 'collision',
                 pos: [2, 1]
             });
-            new region('Great Suldani Belt', [0, 0], 10);
+            for (let blob of space$1.regions) {
+                console.log('new region', blob.name);
+                new region(blob.name, blob.center, blob.radius);
+            }
         }
         class float {
             constructor(options) {
@@ -293,10 +313,10 @@ var space = (function () {
             }
         }
         class region {
-            constructor(name, pos, size) {
+            constructor(name, pos, radius) {
                 this.name = name;
                 this.pos = pos;
-                this.size = size;
+                this.radius = radius;
                 regions.push(this);
                 this.element = document.createElement("div");
                 this.element.classList.add('region');
@@ -309,10 +329,11 @@ var space = (function () {
                 let relative = pts.subtract(this.pos, outer_space.center);
                 relative = pts.mult(relative, outer_space.pixelMultiple);
                 relative = pts.add(relative, half);
-                this.element.style.top = relative[1];
-                this.element.style.left = relative[0];
-                this.element.style.width = this.size * outer_space.pixelMultiple;
-                this.element.style.height = this.size * outer_space.pixelMultiple;
+                const radius = this.radius * outer_space.pixelMultiple;
+                this.element.style.top = relative[1] - radius;
+                this.element.style.left = relative[0] - radius;
+                this.element.style.width = this.radius * 2 * outer_space.pixelMultiple;
+                this.element.style.height = this.radius * 2 * outer_space.pixelMultiple;
             }
             append() {
                 outer_space.element.append(this.element);
@@ -333,19 +354,26 @@ var space = (function () {
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     };
-    var client;
-    (function (client) {
+    var space;
+    (function (space) {
+        function sample(a) {
+            return a[Math.floor(Math.random() * a.length)];
+        }
+        space.sample = sample;
+        function clamp(val, min, max) {
+            return val > max ? max : val < min ? min : val;
+        }
+        space.clamp = clamp;
         function get_location_by_name(name) {
-            for (let location of client.locations)
+            for (let location of space.locations)
                 if (location.name == name)
                     return location;
-            console.warn("location doesnt exist");
+            console.warn(`location ${space.location} doesnt exist`);
         }
         function get_region_by_name(name) {
-            for (let region of client.regions)
+            for (let region of space.regions)
                 if (region.name == name)
                     return region;
-            console.warn("region doesnt exist");
         }
         function make_request(method, url) {
             return new Promise(function (resolve, reject) {
@@ -374,38 +402,41 @@ var space = (function () {
         function tick() {
             outer_space$1.tick();
         }
-        client.tick = tick;
+        space.tick = tick;
         function init() {
-            outer_space$1.init();
-            app$1.mouse();
-            let menuButton = document.getElementById("menu_button");
-            menuButton.onclick = function () {
-                show_account_bubbles();
-            };
-            //new aabb2([0,0],[0,0]);
-            if (document.cookie) {
-                document.cookie = 'a';
-                console.log('our cookie is ', document.cookie);
-            }
-            else {
-                console.log('logged_in');
-            }
-            ask_initial();
+            return __awaiter(this, void 0, void 0, function* () {
+                outer_space$1.init();
+                app$1.mouse();
+                let menuButton = document.getElementById("menu_button");
+                menuButton.onclick = function () {
+                    show_account_bubbles();
+                };
+                //new aabb2([0,0],[0,0]);
+                if (document.cookie) {
+                    document.cookie = 'a';
+                    console.log('our cookie is ', document.cookie);
+                }
+                else {
+                    console.log('logged_in');
+                }
+                yield ask_initial();
+                outer_space$1.statics();
+            });
         }
-        client.init = init;
-        function handleSply() {
-            console.log('handlesply', client.sply);
+        space.init = init;
+        function handle_sply() {
+            console.log('handle-sply', space.sply);
             document.querySelector(".logo .text");
-            client.sector = get_region_by_name(client.sply.sector);
+            space.region = get_region_by_name(space.sply.sector);
             //if (sply.unregistered)
             //	logo.innerHTML = `space`
             //else
             //	logo.innerHTML = `space - ${sply.username}`
         }
-        client.handleSply = handleSply;
+        space.handle_sply = handle_sply;
         function show_account_bubbles() {
             let textHead = document.getElementById("mainDiv");
-            client.sply && client.sply.username;
+            space.sply && space.sply.username;
             let text = '';
             text += username_header();
             text += addReturnOption();
@@ -423,33 +454,38 @@ var space = (function () {
                 const one = yield make_request('GET', 'regions.json');
                 const two = yield make_request('GET', 'locations.json');
                 const three = yield make_request('GET', 'ply');
-                client.regions = JSON.parse(one);
-                client.locations = JSON.parse(two);
-                receiveStuple(three);
+                space.regions = JSON.parse(one);
+                space.locations = JSON.parse(two);
+                receive_stuple(three);
+                console.log('asked initials');
             });
         }
         function chooseLayout() {
-            if (client.sply.flight) {
+            if (space.sply.flight) {
                 layoutFlight();
             }
-            else if (client.sply.sublocation == 'Refuel') {
+            else if (space.sply.sublocation == 'Refuel') {
                 layoutRefuel();
             }
-            else if (client.sply.scanning) {
+            else if (space.sply.scanning) {
                 layoutScanning();
             }
-            else if (client.location.type == 'Station') {
-                layoutStation();
-            }
-            else if (client.location.type == 'Junk') {
-                layoutJunk();
-            }
-            else if (client.location.type == 'Contested') {
+            else if (space.location) {
+                if (space.location.type == 'Station') {
+                    layoutStation();
+                }
+                else if (space.location.type == 'Junk') {
+                    layoutJunk();
+                }
+                else if (space.location.type == 'Contested') ;
                 layoutContested();
             }
+            else {
+                layout_default();
+            }
         }
-        client.chooseLayout = chooseLayout;
-        function receiveStuple(res) {
+        space.chooseLayout = chooseLayout;
+        function receive_stuple(res) {
             if (res.length == 0) {
                 console.warn('expected a stuple but received nothing');
                 return;
@@ -459,24 +495,27 @@ var space = (function () {
             const payload = stuple[1];
             console.log('received stuple type', type);
             if (type == 'sply') {
-                client.sply = payload;
-                client.sector = get_region_by_name(client.sply.sector);
-                client.location = get_location_by_name(client.sply.location);
-                handleSply();
+                console.log('sply!');
+                space.sply = payload;
+                space.region = get_region_by_name(space.sply.sector);
+                space.location = get_location_by_name(space.sply.location);
+                handle_sply();
                 chooseLayout();
             }
             else if (type == 'message') {
                 layoutMessage(payload);
             }
             else if (type == 'senemies') {
-                client.senemies = payload;
+                space.senemies = payload;
             }
         }
         function username_header() {
             let text = '';
             text += `
 		<p class="smallish reminder">`;
-            if (client.sply.unregistered)
+            if (space.sply)
+                console.log('sply is', space.sply);
+            if (space.sply.unreg)
                 text += `
 			Playing unregistered (by ip)
 			<span class="material-icons" style="font-size: 18px">
@@ -484,7 +523,7 @@ var space = (function () {
 			</span>`;
             else
                 text += `
-			Logged in as ${client.sply.username} <!-- #${client.sply.id} -->
+			Logged in as ${space.sply.username} <!-- #${space.sply.id} -->
 			<span class="material-icons" style="font-size: 18px">
 			how_to_reg
 			</span>
@@ -493,14 +532,14 @@ var space = (function () {
             return text;
         }
         function addFlightOption() {
-            let textHead = document.getElementById("mainDiv");
+            document.getElementById("mainDiv");
             let text = '';
             text += `
 		<p>
 		<br />
 		<span class="spanButton" onclick="space.layoutFlightControls()">Flight Menu</span>
 		`;
-            textHead.innerHTML += text;
+            return text;
         }
         function addReturnOption() {
             let text = '';
@@ -514,30 +553,43 @@ var space = (function () {
         function addLocationMeter() {
             let text = '';
             let position = `<span class="positionArray">
-		<span>${client.sply.position[0].toFixed(1)}</span>,
-		<span>${client.sply.position[1].toFixed(1)}</span>
+		<span>${space.sply.position[0].toFixed(1)}</span>,
+		<span>${space.sply.position[1].toFixed(1)}</span>
 		</span>`;
             text += `
-		<div class="positionMeter">position: ${position} km in ${client.sply.location}</div>
+		<div class="positionMeter">position: ${position} km in ${space.sply.location}</div>
 		<p>
 		<br />
 		`;
             return text;
         }
         function makeWhereabouts() {
+            for (let region of space.regions) {
+                let dist = pts.dist([1, 0], region.center);
+                if (dist < region.radius) {
+                    console.log(`were in region ${region.name} dist ${dist}`);
+                }
+            }
             let text = '';
             text += `
 		<div id="whereabouts">
 		
-		<span class="sector">${client.sector.name}</span> ~>
+		<span class="sector">belt</span> ~>
 		<br />
 		
-		<span class="location" style="colors: ${client.location.color || "inherit"} ">
-		&nbsp;${client.location.name}
-		<!--(${client.location.type})--></span>
+		<span class="location" style="colors: inherit} ">
+		&nbsp;boop
+		<!--(crash)--></span>
 		</div>
 		`;
             return text;
+        }
+        function layout_default() {
+            let textHead = document.getElementById("mainDiv");
+            let text = username_header();
+            text += makeWhereabouts();
+            text += addFlightOption();
+            textHead.innerHTML = text;
         }
         function layoutStation() {
             let textHead = document.getElementById("mainDiv");
@@ -546,8 +598,8 @@ var space = (function () {
             text += makeWhereabouts();
             text += `<p>`;
             text += `<span class="facilities">`;
-            if (client.location.facilities) {
-                if (client.location.facilities.indexOf("Refuel") > -1)
+            if (space.location.facilities) {
+                if (space.location.facilities.indexOf("Refuel") > -1)
                     text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here.';
             }
             text += `</span>`;
@@ -617,7 +669,7 @@ var space = (function () {
 		</thead>
 		<tbody id="list">
 		`;
-            for (let enemy of client.senemies) {
+            for (let enemy of space.senemies) {
                 let position = [
                     enemy.position[0].toFixed(1),
                     enemy.position[1].toFixed(1)
@@ -629,7 +681,7 @@ var space = (function () {
 			<!--<td>%${enemy.health}</td>
 			<td>${enemy.damage}</td>-->
 			<td>${position[0]}, ${position[1]}</td>
-			<td>${pts.dist(client.sply.position, enemy.position).toFixed(1)} km</td>
+			<td>${pts.dist(space.sply.position, enemy.position).toFixed(1)} km</td>
 			</tr>
 			`;
                 //
@@ -672,21 +724,21 @@ var space = (function () {
         function layoutScanning() {
             let textHead = document.getElementById("mainDiv");
             let text = username_header();
-            text += `You\'re scanning the junk at ${client.location.name || ''}.`;
-            if (!client.sply.scanCompleted)
+            text += `You\'re scanning the junk at ${space.location.name || ''}.`;
+            if (!space.sply.scanCompleted)
                 text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel?</span>';
-            console.log(client.sply);
+            console.log(space.sply);
             //if (!sply.scanCompleted) {
             function updateBar() {
                 let now = Date.now();
-                if (now > client.sply.scanEnd)
-                    now = client.sply.scanEnd;
-                const duration = client.sply.scanEnd - client.sply.scanStart;
-                const time = now - client.sply.scanStart;
+                if (now > space.sply.scanEnd)
+                    now = space.sply.scanEnd;
+                const duration = space.sply.scanEnd - space.sply.scanStart;
+                const time = now - space.sply.scanStart;
                 const width = time / duration;
                 const minutesPast = Math.floor(time / 1000 / 60).toFixed(0);
                 const minutesRemain = Math.round(duration / 1000 / 60).toFixed(0);
-                const over = client.sply.scanEnd - Date.now();
+                const over = space.sply.scanEnd - Date.now();
                 let bar = document.getElementById("barProgress");
                 let text = document.getElementById("barText");
                 if (!bar || !text)
@@ -707,8 +759,8 @@ var space = (function () {
             textHead.innerHTML = text;
             updateBar();
             const t = setInterval(function () {
-                if (client.sply.scanning) {
-                    const time = client.sply.scanEnd - Date.now();
+                if (space.sply.scanning) {
+                    const time = space.sply.scanEnd - Date.now();
                     if (time <= 0) {
                         clearInterval(t);
                         console.log('clear the interval');
@@ -730,7 +782,7 @@ var space = (function () {
             let textHead = document.getElementById("mainDiv");
             let text = username_header();
             //text += addTabs();
-            const loc = get_location_by_name(client.sply.flightLocation);
+            const loc = get_location_by_name(space.sply.flightLocation);
             text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
 		(${loc.type})</span>.`;
             /*text += `
@@ -747,23 +799,26 @@ var space = (function () {
         }
         function layoutFlightControls() {
             let textHead = document.getElementById("mainDiv");
+            console.log('wot up');
             let text = username_header();
             text += addReturnOption();
-            text += `
+            if (space.region) {
+                text += `
 		Flight menu
 		<p>
-		${client.sector.name} ~>
+		${space.region.name} ~>
 		<select name="flights" id="flights" >`;
-            for (let location of client.sector.locations) {
-                text += `<option>${location}</option>`;
-            }
-            text += `<option>Non-existing option</option>`;
-            text += `</select>
+                for (let location of space.region.locations) {
+                    text += `<option>${location}</option>`;
+                }
+                text += `<option>Non-existing option</option>`;
+                text += `</select>
 		<span class="spanButton" onclick="space.submitFlight()">Flight</span>
 		</form>`;
+            }
             textHead.innerHTML = text;
         }
-        client.layoutFlightControls = layoutFlightControls;
+        space.layoutFlightControls = layoutFlightControls;
         function showLogin() {
             let textHead = document.getElementById("mainDiv");
             let text = `
@@ -782,7 +837,7 @@ var space = (function () {
 		`;
             textHead.innerHTML = text;
         }
-        client.showLogin = showLogin;
+        space.showLogin = showLogin;
         function showRegister() {
             let textHead = document.getElementById("mainDiv");
             let text = `
@@ -813,7 +868,7 @@ var space = (function () {
 		</form>`;
             textHead.innerHTML = text;
         }
-        client.showRegister = showRegister;
+        space.showRegister = showRegister;
         function submitFlight() {
             var e = document.getElementById("flights");
             var strUser = e.options[e.selectedIndex].text;
@@ -821,73 +876,72 @@ var space = (function () {
             make_request('GET', 'submitFlight=' + strUser)
                 .then(function (res) {
                 console.log('submitted flight');
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.submitFlight = submitFlight;
+        space.submitFlight = submitFlight;
         function scanJunk() {
             make_request('GET', 'scan')
                 .then(function (res) {
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.scanJunk = scanJunk;
+        space.scanJunk = scanJunk;
         function completeScan() {
             make_request('GET', 'completeScan')
                 .then(function (res) {
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.completeScan = completeScan;
+        space.completeScan = completeScan;
         function stopScanning() {
             make_request('GET', 'stopScanning')
                 .then(function (res) {
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.stopScanning = stopScanning;
+        space.stopScanning = stopScanning;
         function seeEnemies() {
             make_request('GET', 'seeEnemies')
                 .then(function (res) {
-                receiveStuple(res);
+                receive_stuple(res);
                 layoutEnemies();
             });
         }
-        client.seeEnemies = seeEnemies;
+        space.seeEnemies = seeEnemies;
         function tryDock() {
             make_request('GET', 'dock')
                 .then(function (res) {
                 console.log('asking server if we can dock');
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.tryDock = tryDock;
+        space.tryDock = tryDock;
         function returnSublocation() {
             make_request('GET', 'returnSublocation')
                 .then(function (res) {
                 console.log('returned from sublocation');
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.returnSublocation = returnSublocation;
+        space.returnSublocation = returnSublocation;
         function transportSublocation(facility) {
             make_request('GET', 'knock&sublocation=refuel')
                 .then(function (res) {
                 console.log('returned from sublocation');
-                receiveStuple(res);
+                receive_stuple(res);
             });
         }
-        client.transportSublocation = transportSublocation;
+        space.transportSublocation = transportSublocation;
         function logout() {
-            make_request('GET', 'logout')
-                .then(function (res) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const res = yield make_request('GET', 'logout');
                 alert(res);
-                client.sply.unregistered = true;
-                handleSply();
-                //chooseLayout();
+                space.sply.unreg = true;
+                handle_sply();
             });
         }
-        client.logout = logout;
+        space.logout = logout;
         function xhrLogin() {
             let username = document.getElementById("username").value;
             let password = document.getElementById("password").value;
@@ -902,7 +956,7 @@ var space = (function () {
                     alert(http.responseText);
                     make_request('GET', 'ply')
                         .then(function (res) {
-                        receiveStuple(res);
+                        receive_stuple(res);
                         //return makeRequest('GET', 'where');
                     });
                     //.then(function (res: any) {
@@ -915,11 +969,11 @@ var space = (function () {
             };
             http.send(params);
         }
-        client.xhrLogin = xhrLogin;
-        function xhrRegister() {
+        space.xhrLogin = xhrLogin;
+        function xhr_register() {
             let username = document.getElementById("username").value;
             let password = document.getElementById("password").value;
-            let password_repeat = document.getElementById("passwodr-repeat").value;
+            let password_repeat = document.getElementById("password-repeat").value;
             let keep_ship = document.getElementById("keep-ship").checked;
             console.log(keep_ship);
             var http = new XMLHttpRequest();
@@ -939,11 +993,11 @@ var space = (function () {
             };
             http.send(params);
         }
-        client.xhrRegister = xhrRegister;
-    })(client || (client = {}));
-    var client$1 = client;
-    window.client = client;
+        space.xhr_register = xhr_register;
+    })(space || (space = {}));
+    var space$1 = space;
+    window.space = space;
 
-    return client$1;
+    return space$1;
 
 })();

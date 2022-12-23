@@ -1,19 +1,24 @@
 {
-    "id": 12,
+    "id": 206,
     "ip": "1",
-    "unregistered": true,
+    "unreg": true,
     "username": "Captain",
-    "flight": false,
-    "flightLocation": "Dartwing",
-    "position": [
+    "password": "N/A",
+    "pos": [
         0,
         0
     ],
-    "sector": "Great Suldani Belt",
-    "location": "Dartwing",
-    "sublocation": "None",
+    "goto": [
+        0,
+        0
+    ],
+    "speed": 1,
+    "health": 100,
+    "flight": false,
+    "flightLocation": "",
     "scanning": false,
-    "scanCompleted": false,
-    "scanStart": 1650729698383,
-    "scanEnd": 1650729818383
+    "position": [
+        0,
+        0
+    ]
 }

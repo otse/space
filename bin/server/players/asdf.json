@@ -1,21 +1,23 @@
 {
-    "id": 39,
+    "id": 205,
     "ip": "N/A",
     "username": "asdf",
     "password": "asdf",
-    "speed": 1,
-    "unregistered": false,
-    "flight": false,
-    "flightLocation": "Dartwing",
-    "position": [
-        0.655139087787493,
-        7.907245381160209
+    "pos": [
+        0,
+        0
     ],
-    "sector": "Great Suldani Belt",
-    "location": "Dartwing",
-    "sublocation": "None",
+    "speed": 1,
+    "health": 100,
+    "unreg": false,
+    "flight": false,
+    "flightLocation": "",
     "scanning": false,
-    "scanCompleted": false,
-    "scanStart": 1671809542764,
-    "scanEnd": 1671809662764
+    "position": [
+        0,
+        0
+    ],
+    "sector": "Great Belt",
+    "location": "Dartwing",
+    "sublocation": "None"
 }

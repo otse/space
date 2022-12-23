@@ -1,11 +1,15 @@
 {
-    "id": 47,
-    "ip": "ffff167.248.133.61",
+    "id": 203,
+    "ip": "N/A",
     "username": "Captain",
     "password": "N/A",
+    "pos": [
+        0,
+        0
+    ],
     "speed": 1,
     "health": 100,
-    "unregistered": true,
+    "unreg": false,
     "flight": false,
     "flightLocation": "",
     "scanning": false,
@@ -13,7 +17,7 @@
         0,
         0
     ],
-    "sector": "Great Suldani Belt",
+    "sector": "Great Belt",
     "location": "Dartwing",
     "sublocation": "None"
 }

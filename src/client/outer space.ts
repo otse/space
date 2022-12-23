@@ -1,4 +1,5 @@
 import app from "./app";
+import space from "./space";
 import pts from "./pts";
 
 namespace outer_space {
@@ -9,7 +10,7 @@ namespace outer_space {
 
 	export var locations: any[] = []
 
-	export var you: float
+	export var you: float | undefined
 	export var center: vec2 = [1, 0]
 
 	export var pixelMultiple = 50
@@ -18,22 +19,30 @@ namespace outer_space {
 	var regions: region[] = [];
 
 	export function init() {
+	}
+
+	export function statics() {
+		console.log('outer space statics');
 
 		setup();
-
 	}
 
 	export function tick() {
-		you.options.pos = pts.add(you.options.pos, [0.001, 0]);
-		//console.log('center', center);
+		if (you) {
+			you.options.pos = pts.add(you.options.pos, [0.001, 0]);
+			center = you.options.pos;
+		}
 
 		if (app.wheel == 1)
-			pixelMultiple += 2;
+			pixelMultiple += 5;
 		if (app.wheel == -1)
-			pixelMultiple -= 2;
+			pixelMultiple -= 5;
+
+		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
 
 		for (let float of floats)
 			float.tick();
+
 		for (let region of regions)
 			region.tick();
 	}
@@ -53,7 +62,11 @@ namespace outer_space {
 			pos: [2, 1]
 		});
 
-		let boob = new region('Great Suldani Belt', [0, 0], 10);
+		for (let blob of space.regions) {
+			console.log('new region', blob.name);
+
+			let boob = new region(blob.name, blob.center, blob.radius);
+		}
 	}
 
 	function rerender() {
@@ -97,7 +110,7 @@ namespace outer_space {
 		constructor(
 			public name,
 			public pos,
-			public size) {
+			public radius) {
 			regions.push(this);
 			this.element = document.createElement("div");
 			this.element.classList.add('region');
@@ -110,10 +123,11 @@ namespace outer_space {
 			let relative = pts.subtract(this.pos, center);
 			relative = pts.mult(relative, pixelMultiple);
 			relative = pts.add(relative, half);
-			this.element.style.top = relative[1];
-			this.element.style.left = relative[0];
-			this.element.style.width = this.size * pixelMultiple;
-			this.element.style.height = this.size * pixelMultiple;
+			const radius = this.radius * pixelMultiple;
+			this.element.style.top = relative[1] - radius;
+			this.element.style.left = relative[0] - radius;
+			this.element.style.width = this.radius * 2 * pixelMultiple;
+			this.element.style.height = this.radius * 2 * pixelMultiple;
 		}
 		append() {
 			element.append(this.element);

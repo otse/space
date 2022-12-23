@@ -1,12 +1,29 @@
 [
 	{
-		"name": "Great Suldani Belt",
-		"size": 10,
-		"center": [5, 5],
+		"id": 1,
+		"name": "Small Belt",
+		"center": [0, 0],
+		"radius": 6,
 		"locations": [
 			"Dartwing",
 			"Generic Collision",
 			"Ungoverned Space"
 		]
-	}
+	},
+	{
+		"id": 2,
+		"name": "Braze",
+		"center": [-10, -5],
+		"radius": 4,
+		"locations": [
+		]
+	},
+	{
+		"id": 3,
+		"name": "Flint",
+		"center": [-4, -20],
+		"radius": 7,
+		"locations": [
+		]
+}
 ]
