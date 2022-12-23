@@ -335,13 +335,13 @@ function init() {
             res.writeHead(200, { CONTENT_TYPE: "text/css" });
             sendGeneric(style);
         }
-        else if (req.url.search('/tex/pngwing.com.png') == 0) {
-            let client = fs.readFileSync('tex/pngwing.com.png');
+        else if (req.url.search('/tex/wall.png') == 0) {
+            let client = fs.readFileSync('tex/wall.png');
             res.writeHead(200, { CONTENT_TYPE: "image/png" });
             sendGeneric(client);
         }
-        else if (req.url.search('/tex/test100.png') == 0) {
-            let client = fs.readFileSync('tex/test100.png');
+        else if (req.url.search('/tex/hull.png') == 0) {
+            let client = fs.readFileSync('tex/hull.png');
             res.writeHead(200, { CONTENT_TYPE: "image/png" });
             sendGeneric(client);
         }

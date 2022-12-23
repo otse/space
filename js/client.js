@@ -1,5 +1,7 @@
+//import { rename } from "fs";
 import aabb2 from "./aabb2";
 import app from "./app";
+import map from "./map";
 import pts from "./pts";
 var client;
 (function (client) {
@@ -56,10 +58,11 @@ var client;
     }
     client.tick = tick;
     function init() {
+        map.init();
         app.mouse();
-        let menu_button = document.getElementById("menu_button");
-        menu_button.onclick = function () {
-            showAccountBubbles();
+        let menuButton = document.getElementById("menu_button");
+        menuButton.onclick = function () {
+            show_account_bubbles();
         };
         //new aabb2([0,0],[0,0]);
         if (document.cookie) {
@@ -83,7 +86,7 @@ var client;
     }
     client.handleSply = handleSply;
     var showingAccountBubbles = false;
-    function showAccountBubbles() {
+    function show_account_bubbles() {
         showingAccountBubbles = true;
         let textHead = document.getElementById("mainDiv");
         let username = client.sply && client.sply.username;
@@ -244,7 +247,7 @@ var client;
         let text = '';
         text += `
 		<div id="whereabouts">
-		<div></div>
+		
 		<span class="sector">${client.sector.name}</span> ~>
 		<br />
 		
@@ -258,6 +261,7 @@ var client;
     function layoutStation() {
         let textHead = document.getElementById("mainDiv");
         let text = usernameReminder();
+        //text += drawSpaceship();
         text += makeWhereabouts();
         text += `<p>`;
         text += `<span class="facilities">`;

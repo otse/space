@@ -1,9 +1,5 @@
-var space = (function (THREE) {
+var space = (function () {
     'use strict';
-
-    function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-    var THREE__default = /*#__PURE__*/_interopDefaultLegacy(THREE);
 
     class pts {
         static pt(a) {
@@ -137,836 +133,16 @@ var space = (function (THREE) {
         TEST[TEST["Inside"] = 1] = "Inside";
         TEST[TEST["Overlap"] = 2] = "Overlap";
     })(TEST || (TEST = {}));
-    class aabb2 {
-        constructor(a, b) {
-            this.min = this.max = [...a];
-            if (b) {
-                this.extend(b);
-            }
-        }
-        static dupe(bb) {
-            return new aabb2(bb.min, bb.max);
-        }
-        extend(v) {
-            this.min = pts.min(this.min, v);
-            this.max = pts.max(this.max, v);
-        }
-        diagonal() {
-            return pts.subtract(this.max, this.min);
-        }
-        center() {
-            return pts.add(this.min, pts.mult(this.diagonal(), 0.5));
-        }
-        translate(v) {
-            this.min = pts.add(this.min, v);
-            this.max = pts.add(this.max, v);
-        }
-        test(b) {
-            if (this.max[0] < b.min[0] || this.min[0] > b.max[0] ||
-                this.max[1] < b.min[1] || this.min[1] > b.max[1])
-                return 0;
-            if (this.min[0] <= b.min[0] && this.max[0] >= b.max[0] &&
-                this.min[1] <= b.min[1] && this.max[1] >= b.max[1])
-                return 1;
-            return 2;
-        }
-    }
-    aabb2.TEST = TEST;
-
-    var ren;
-    (function (ren) {
-        ren.DPI_UPSCALED_RT = true;
-        ren.ndpi = 1;
-        ren.delta = 0;
-        ren.screen = [0, 0];
-        ren.screenCorrected = [0, 0];
-        function render() {
-            ren.renderer.setRenderTarget(null);
-            ren.renderer.clear();
-            ren.renderer.render(ren.scene, ren.camera);
-        }
-        ren.render = render;
-        function update() {
-            ren.delta = ren.clock.getDelta();
-            if (ren.delta > 2)
-                ren.delta = 0.016;
-            ren.delta *= 60.0;
-        }
-        ren.update = update;
-        function init() {
-            console.log('ren init');
-            ren.clock = new THREE.Clock();
-            ren.scene = new THREE.Scene();
-            //scene.background = new Color('#333');
-            ren.group = new THREE.Group;
-            ren.scene.add(ren.group);
-            ren.ambientLight = new THREE.AmbientLight(0xffffff);
-            ren.scene.add(ren.ambientLight);
-            if (ren.DPI_UPSCALED_RT)
-                ren.ndpi = window.devicePixelRatio;
-            ren.renderer = new THREE.WebGLRenderer({ antialias: false });
-            ren.renderer.setPixelRatio(ren.ndpi);
-            ren.renderer.setSize(100, 100);
-            ren.renderer.autoClear = true;
-            ren.renderer.setClearColor(0xffffff, 0);
-            window.addEventListener('resize', onWindowResize, false);
-            document.body.appendChild(ren.renderer.domElement);
-            onWindowResize();
-            window.ren = ren;
-        }
-        ren.init = init;
-        function onWindowResize() {
-            ren.screen = [window.innerWidth, window.innerHeight];
-            //screen = pts.divide(screen, 2);
-            ren.screen = pts.floor(ren.screen);
-            //screen = pts.even(screen, -1);
-            //screen = [800, 600];
-            ren.screenCorrected = pts.clone(ren.screen);
-            if (ren.DPI_UPSCALED_RT) {
-                //screen = pts.floor(screen);
-                ren.screenCorrected = pts.mult(ren.screen, ren.ndpi);
-                ren.screenCorrected = pts.floor(ren.screenCorrected);
-                ren.screenCorrected = pts.even(ren.screenCorrected, -1);
-            }
-            console.log(`
-		window inner ${pts.to_string(ren.screen)}\n
-		      new is ${pts.to_string(ren.screenCorrected)}`);
-            ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.camera.updateProjectionMatrix();
-            ren.renderer.setSize(ren.screen[0], ren.screen[1]);
-        }
-        function ortographic_camera(w, h) {
-            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10000, 10000);
-            camera.updateProjectionMatrix();
-            return camera;
-        }
-        ren.ortographic_camera = ortographic_camera;
-        let mem = [];
-        function load_texture(file, mode = 1, cb, key) {
-            if (mem[key || file])
-                return mem[key || file];
-            let texture = new THREE.TextureLoader().load(file + `?v=${app$1.salt}`, cb);
-            texture.generateMipmaps = false;
-            texture.center.set(0, 1);
-            texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
-            if (mode) {
-                texture.magFilter = THREE__default["default"].LinearFilter;
-                texture.minFilter = THREE__default["default"].LinearFilter;
-            }
-            else {
-                texture.magFilter = THREE__default["default"].NearestFilter;
-                texture.minFilter = THREE__default["default"].NearestFilter;
-            }
-            mem[key || file] = texture;
-            return texture;
-        }
-        ren.load_texture = load_texture;
-    })(ren || (ren = {}));
-    var ren$1 = ren;
-
-    // inspired by gmod lua !
-    class hooks {
-        //static readonly table: { [name: string]: func[] } = {}
-        //list: func[] = []
-        static register(name, f) {
-            if (!hooks[name])
-                hooks[name] = [];
-            hooks[name].push(f);
-        }
-        static unregister(name, f) {
-            hooks[name] = hooks[name].filter(e => e != f);
-        }
-        static call(name, x) {
-            if (!hooks[name])
-                return;
-            for (let i = hooks[name].length; i--;)
-                if (hooks[name][i](x))
-                    return;
-        }
-    }
-
-    var numbers;
-    (function (numbers) {
-        numbers.sectors = [0, 0];
-        numbers.sprites = [0, 0];
-        numbers.objs = [0, 0];
-    })(numbers || (numbers = {}));
-    class toggle {
-        constructor() {
-            this.active = false;
-        }
-        isActive() { return this.active; }
-        ;
-        on() {
-            if (this.active) {
-                console.warn(' (toggle) already on ');
-                return true;
-                // it was on before
-            }
-            this.active = true;
-            return false;
-            // it wasn't on before
-        }
-        off() {
-            if (!this.active) {
-                console.warn(' (toggle) already off ');
-                return true;
-            }
-            this.active = false;
-            return false;
-        }
-    }
-    var lod;
-    (function (lod) {
-        lod.chunk_coloration = false;
-        lod.grid_crawl_makes_sectors = true;
-        lod.SectorSpan = 8;
-        function register() {
-            // hooks.create('sectorCreate')
-            // hooks.create('sectorShow')
-            // hooks.create('sectorHide')
-            // hooks.register('sectorHide', () => { console.log('~'); return false; } );
-        }
-        lod.register = register;
-        function project(unit) {
-            return pts.mult(unit, space$1.size);
-        }
-        lod.project = project;
-        function unproject(pixel) {
-            return pts.divide(pixel, space$1.size);
-        }
-        lod.unproject = unproject;
-        function add(obj) {
-            let sector = lod.ggalaxy.at(lod.ggalaxy.big(obj.wpos));
-            sector.add(obj);
-        }
-        lod.add = add;
-        class galaxy {
-            constructor(span) {
-                this.arrays = [];
-                lod.ggalaxy = this;
-                new grid(3, 3);
-            }
-            update(wpos) {
-                lod.ggrid.big = this.big(wpos);
-                lod.ggrid.offs();
-                lod.ggrid.crawl();
-            }
-            lookup(big) {
-                if (this.arrays[big[1]] == undefined)
-                    this.arrays[big[1]] = [];
-                return this.arrays[big[1]][big[0]];
-            }
-            at(big) {
-                return this.lookup(big) || this.make(big);
-            }
-            make(big) {
-                let s = this.lookup(big);
-                if (s)
-                    return s;
-                s = this.arrays[big[1]][big[0]] = new sector(big, this);
-                return s;
-            }
-            big(units) {
-                return pts.floor(pts.divide(units, lod.SectorSpan));
-            }
-        }
-        lod.galaxy = galaxy;
-        class sector extends toggle {
-            constructor(big, galaxy) {
-                super();
-                this.big = big;
-                this.galaxy = galaxy;
-                this.objs = [];
-                if (lod.chunk_coloration)
-                    this.color = (['red', 'blue', 'yellow', 'orange'])[Math.floor(Math.random() * 4)];
-                let min = pts.mult(this.big, lod.SectorSpan);
-                min = pts.add(min, [-1, -1]);
-                let max = pts.add(min, [lod.SectorSpan, lod.SectorSpan]);
-                this.small = new aabb2(max, min);
-                this.group = new THREE.Group;
-                this.group.frustumCulled = false;
-                this.group.matrixAutoUpdate = false;
-                numbers.sectors[1]++;
-                galaxy.arrays[this.big[1]][this.big[0]] = this;
-                //console.log('sector');
-                hooks.call('sectorCreate', this);
-            }
-            objsro() {
-                return this.objs;
-            }
-            add(obj) {
-                let i = this.objs.indexOf(obj);
-                if (i == -1) {
-                    this.objs.push(obj);
-                    obj.sector = this;
-                    if (this.isActive())
-                        obj.show();
-                }
-            }
-            stacked(wpos) {
-                let stack = [];
-                for (let obj of this.objs)
-                    if (pts.equals(wpos, pts.round(obj.wpos)))
-                        stack.push(obj);
-                return stack;
-            }
-            remove(obj) {
-                let i = this.objs.indexOf(obj);
-                if (i > -1) {
-                    obj.sector = null;
-                    return !!this.objs.splice(i, 1).length;
-                }
-            }
-            swap(obj) {
-                var _a;
-                let newSector = this.galaxy.at(this.galaxy.big(pts.round(obj.wpos)));
-                if (obj.sector != newSector) {
-                    (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
-                    newSector.add(obj);
-                    if (!newSector.isActive())
-                        obj.hide();
-                }
-            }
-            tick() {
-                hooks.call('sectorTick', this);
-                //for (let obj of this.objs)
-                //	obj.tick();
-            }
-            show() {
-                if (this.on())
-                    return;
-                numbers.sectors[0]++;
-                for (let obj of this.objs)
-                    obj.show();
-                ren$1.scene.add(this.group);
-                hooks.call('sectorShow', this);
-            }
-            hide() {
-                if (this.off())
-                    return;
-                numbers.sectors[0]--;
-                for (let obj of this.objs)
-                    obj.hide();
-                ren$1.scene.remove(this.group);
-                hooks.call('sectorHide', this);
-            }
-            dist() {
-                return pts.distsimple(this.big, lod.ggrid.big);
-            }
-        }
-        lod.sector = sector;
-        class grid {
-            constructor(spread, outside) {
-                this.spread = spread;
-                this.outside = outside;
-                this.big = [0, 0];
-                this.shown = [];
-                lod.ggrid = this;
-                if (this.outside < this.spread) {
-                    console.warn(' outside less than spread ', this.spread, this.outside);
-                    this.outside = this.spread;
-                }
-            }
-            visible(sector) {
-                return sector.dist() < this.spread;
-            }
-            crawl() {
-                // spread = -2; < 2
-                for (let y = -this.spread; y < this.spread + 1; y++) {
-                    for (let x = -this.spread; x < this.spread + 1; x++) {
-                        let pos = pts.add(this.big, [x, y]);
-                        let sector = lod.grid_crawl_makes_sectors ? lod.ggalaxy.at(pos) : lod.ggalaxy.lookup(pos);
-                        if (!sector)
-                            continue;
-                        if (!sector.isActive()) {
-                            this.shown.push(sector);
-                            sector.show();
-                        }
-                    }
-                }
-            }
-            offs() {
-                let allObjs = [];
-                let i = this.shown.length;
-                while (i--) {
-                    let sector;
-                    sector = this.shown[i];
-                    allObjs = allObjs.concat(sector.objsro());
-                    sector.tick();
-                    if (sector.dist() > this.outside) {
-                        sector.hide();
-                        this.shown.splice(i, 1);
-                    }
-                }
-                for (let obj of allObjs)
-                    obj.tick();
-            }
-        }
-        lod.grid = grid;
-        class obj extends toggle {
-            constructor(counts = numbers.objs) {
-                super();
-                this.counts = counts;
-                this.type = 'an obj';
-                this.wpos = [0, 0];
-                this.rpos = [0, 0];
-                this.size = [100, 100];
-                this.ro = 0;
-                this.z = 0; // z is only used by tiles
-                this.height = 0;
-                this.heightAdd = 0;
-                this.counts[1]++;
-            }
-            finalize() {
-                this.hide();
-                this.counts[1]--;
-            }
-            show() {
-                var _a;
-                if (this.on())
-                    return;
-                this.counts[0]++;
-                this.create();
-                this.update();
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.show();
-            }
-            hide() {
-                var _a;
-                if (this.off())
-                    return;
-                this.counts[0]--;
-                this.delete();
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.hide();
-                // console.log(' obj.hide ');
-            }
-            wtorpos() {
-                this.rpos = lod.project(this.wpos);
-            }
-            rtospos() {
-                this.wtorpos();
-                return pts.clone(this.rpos);
-            }
-            tick() {
-            }
-            create() {
-                console.warn(' (lod) obj.create ');
-            }
-            delete() {
-                // console.warn(' (lod) obj.delete ');
-            }
-            update() {
-                var _a;
-                this.wtorpos();
-                this.bound();
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
-            }
-            bound() {
-                this.aabbScreen = new aabb2([0, 0], this.size);
-                this.aabbScreen.translate(this.rpos);
-            }
-            mousedSquare(mouse) {
-                var _a;
-                if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
-                    return true;
-            }
-        }
-        lod.obj = obj;
-        class shape extends toggle {
-            constructor(bindObj, counts) {
-                super();
-                this.bindObj = bindObj;
-                this.counts = counts;
-                this.bindObj.shape = this;
-                this.counts[1]++;
-            }
-            update() {
-            }
-            create() {
-            }
-            dispose() {
-            }
-            finalize() {
-                this.hide();
-                this.counts[1]--;
-            }
-            show() {
-                if (this.on())
-                    return;
-                this.create();
-                this.counts[0]++;
-            }
-            hide() {
-                if (this.off())
-                    return;
-                this.dispose();
-                this.counts[0]--;
-            }
-        }
-        lod.shape = shape;
-    })(lod || (lod = {}));
-    var lod$1 = lod;
-
-    var sprites;
-    (function (sprites) {
-        function start() {
-        }
-        sprites.start = start;
-        sprites.test100 = [[100, 100], [100, 100], 0, 'tex/test100'];
-        sprites.asteroid = [[512, 512], [512, 512], 0, 'tex/pngwing.com'];
-        function get_uv_transform(cell, tuple) {
-            let divide = pts.divides(tuple[1], tuple[0]);
-            let offset = pts.mults(divide, cell);
-            let repeat = divide;
-            let center = [0, 1];
-            let mat = new THREE.Matrix3;
-            mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);
-            return mat;
-        }
-        sprites.get_uv_transform = get_uv_transform;
-    })(sprites || (sprites = {}));
-    var sprites$1 = sprites;
-
-    class sprite extends lod$1.shape {
-        constructor(vars) {
-            super(vars.binded, numbers.sprites);
-            this.vars = vars;
-            this.dime = true;
-            this.rup = 0;
-            this.rleft = 0;
-            this.roffset = [0, 0];
-            if (!this.vars.cell)
-                this.vars.cell = [0, 0];
-            if (!this.vars.order)
-                this.vars.order = 0;
-            if (!this.vars.opacity)
-                this.vars.opacity = 1;
-            this.myUvTransform = new THREE.Matrix3;
-            this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
-        }
-        update() {
-            if (!this.mesh)
-                return;
-            const obj = this.vars.binded;
-            let calc = obj.rpos;
-            //if (this.dime)
-            // move bottom left corner
-            calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            //else
-            //	calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            pts.round(obj.wpos);
-            calc = pts.add(calc, [this.rleft, this.rup]);
-            if (this.mesh) {
-                this.retransform();
-                this.mesh.position.fromArray([...calc, 0]);
-                this.mesh.updateMatrix();
-                //this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.order!;
-                this.mesh.rotation.z = this.vars.binded.ro;
-            }
-        }
-        retransform() {
-            this.myUvTransform.copy(sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple));
-        }
-        dispose() {
-            var _a, _b, _c;
-            if (!this.mesh)
-                return;
-            (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
-            (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
-            (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
-        }
-        create() {
-            var _a;
-            this.vars.binded;
-            this.retransform();
-            this.geometry = new THREE.PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
-            let color;
-            if (lod$1.chunk_coloration) {
-                color = this.vars.binded.sector.color;
-            }
-            this.material = SpriteMaterial({
-                map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
-                transparent: true,
-                color: color || '#ffffff',
-                opacity: this.vars.opacity
-                //wireframe: true
-            }, {
-                myUvTransform: this.myUvTransform
-            });
-            this.mesh = new THREE.Mesh(this.geometry, this.material);
-            this.mesh.frustumCulled = false;
-            this.mesh.matrixAutoUpdate = false;
-            this.update();
-            (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
-            ren$1.group.add(this.mesh);
-        }
-    }
-    function SpriteMaterial(parameters, uniforms) {
-        let material = new THREE.MeshBasicMaterial(parameters);
-        material.customProgramCacheKey = function () {
-            return 'spritemat';
-        };
-        material.name = "spritemat";
-        material.onBeforeCompile = function (shader) {
-            shader.defines = {};
-            shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
-            shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
-			uniform mat3 myUvTransform;
-			`);
-            shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
-			#ifdef USE_UV
-			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
-			#endif
-			`);
-        };
-        return material;
-    }
-
-    var testing_chamber;
-    (function (testing_chamber) {
-        testing_chamber.started = false;
-        function start() {
-            console.log(' start testing chamber ');
-            console.log('placing squares on game area that should take up 1:1 pixels on screen...');
-            console.log('...regardless of your os or browsers dpi setting');
-            // document.title = 'testing chamber';
-            space$1.gview.zoom = 1;
-            space$1.gview.wpos = [0, 0];
-            space$1.gview.rpos = lod$1.unproject([0, 0]);
-            hooks.register('sectorCreate', (x) => {
-                console.log('(testing chamber) create sector');
-                let rock = new Asteroid;
-                let dif = pts.subtract(x.small.max, x.small.min);
-                let pos = [dif[0] * Math.random(), dif[1] * Math.random()];
-                pos = pts.add(pos, x.small.min);
-                pos = pts.add(pos, [-1, -1]);
-                rock.wpos = pos;
-                lod$1.add(rock);
-                return false;
-            });
-            hooks.register('viewClick', (view) => {
-                console.log(' asteorid! ');
-                let rock = new Asteroid;
-                rock.wpos = space$1.gview.mwpos;
-                //rock.wpos = pts.add(space.gview.mwpos, [-1, -1]);
-                //lod.add(rock);
-                return false;
-            });
-            // lod.SectorSpan = 8;
-            // new lod.grid(3, 3);
-            for (let y = 0; y < 20; y++) {
-                for (let x = 0; x < 20; x++) {
-                    let square = Square.make();
-                    square.wpos = [x, y];
-                    //lod.add(square);
-                }
-            }
-            testing_chamber.started = true;
-        }
-        testing_chamber.start = start;
-        function tick() {
-        }
-        testing_chamber.tick = tick;
-        class Asteroid extends lod$1.obj {
-            constructor() {
-                super(undefined);
-                this.float = pts.make((Math.random() - 0.5) / Asteroid.slowness, (Math.random() - 0.5) / Asteroid.slowness);
-                this.rate = (Math.random() - 0.5) / (Asteroid.slowness * 6);
-            }
-            create() {
-                this.size = [100, 100];
-                this.size = pts.mult(this.size, 1 + (Math.random() * 4));
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.asteroid
-                });
-            }
-            tick() {
-                var _a;
-                this.wpos[0] += this.float[0];
-                this.wpos[1] -= this.float[1];
-                this.ro += this.rate;
-                super.update();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-            }
-        }
-        Asteroid.slowness = 40;
-        testing_chamber.Asteroid = Asteroid;
-        class Square extends lod$1.obj {
-            static make() {
-                return new Square;
-            }
-            constructor() {
-                super(undefined);
-                console.log('square');
-            }
-            create() {
-                console.log('create');
-                this.size = [100, 100];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.test100
-                });
-            }
-            tick() {
-                this.shape;
-                //if (this.mousedSquare(space.gview.mrpos))
-                //	shape.mesh.material.color.set('white');
-                //else
-                //	shape.material.color.set('white');
-            }
-        }
-        testing_chamber.Square = Square;
-    })(testing_chamber || (testing_chamber = {}));
-    var testing_chamber$1 = testing_chamber;
-
-    // the view manages what it sees
-    class view {
-        constructor() {
-            this.zoom = 1;
-            this.zoomIndex = 0;
-            this.zooms = [1, 0.5, 0.33, 0.2, 0.1];
-            this.wpos = [0, 0];
-            this.rpos = [0, 0];
-            this.mpos = [0, 0];
-            this.mwpos = [0, 0];
-            this.mrpos = [0, 0];
-            this.begin = [0, 0];
-            this.before = [0, 0];
-            this.show = false;
-            new lod$1.galaxy(10);
-            this.rpos = lod$1.project(this.wpos);
-        }
-        static make() {
-            return new view;
-        }
-        chart(big) {
-        }
-        remove(obj) {
-            var _a;
-            (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
-        }
-        tick() {
-            this.move();
-            this.mouse();
-            this.pan();
-            this.float();
-            this.chase();
-            this.stats();
-            this.wpos = lod$1.unproject(this.rpos);
-            lod$1.ggalaxy.update(this.wpos);
-            const zoom = space$1.gview.zoom;
-            ren$1.camera.scale.set(zoom, zoom, zoom);
-            ren$1.camera.updateProjectionMatrix();
-        }
-        pan() {
-        }
-        float() {
-            const factor = 1.5;
-            let float = [factor, factor];
-            float = pts.mult(float, ren$1.delta);
-            this.rpos = pts.add(this.rpos, float);
-        }
-        chase() {
-            // let inv = pts.inv(this.rpos);
-            // ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
-            ren$1.camera.position.set(this.rpos[0], this.rpos[1], 0);
-        }
-        mouse() {
-            let mouse = app$1.mouse();
-            mouse = pts.subtract(mouse, pts.divide([ren$1.screen[0], ren$1.screen[1]], 2));
-            mouse = pts.mult(mouse, ren$1.ndpi);
-            mouse = pts.mult(mouse, this.zoom);
-            mouse[1] = -mouse[1];
-            this.mrpos = pts.add(mouse, this.rpos);
-            //this.mrpos = pts.add(this.mrpos, lod.project([.5, -.5])); // correction
-            this.mwpos = lod$1.unproject(this.mrpos);
-            //this.mwpos = pts.add(this.mwpos, [.5, -.5])
-            // now..
-            if (app$1.button(2) == 1) {
-                hooks.call('viewClick', this);
-            }
-        }
-        move() {
-            let pan = 10;
-            if (app$1.key('x'))
-                pan *= 2;
-            let add = [0, 0];
-            if (app$1.key('w'))
-                add = pts.add(add, [0, pan]);
-            if (app$1.key('s'))
-                add = pts.add(add, [0, -pan]);
-            if (app$1.key('a'))
-                add = pts.add(add, [-pan, 0]);
-            if (app$1.key('d'))
-                add = pts.add(add, [pan, 0]);
-            if ((app$1.key('f') == 1 || app$1.wheel == -1) && this.zoomIndex > 0)
-                this.zoomIndex -= 1;
-            if ((app$1.key('r') == 1 || app$1.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
-                this.zoomIndex += 1;
-            this.zoom = this.zooms[this.zoomIndex];
-            add = pts.mult(add, this.zoom);
-            add = pts.floor(add);
-            this.rpos = pts.add(this.rpos, add);
-        }
-        stats() {
-            if (app$1.key('h') == 1)
-                this.show = !this.show;
-            let crunch = ``;
-            //crunch += `DPI_UPSCALED_RT: ${ren.DPI_UPSCALED_RT}<br />`;
-            crunch += '<br />';
-            //crunch += `dpi: ${ren.ndpi}<br />`;
-            //crunch += `fps: ${ren.fps}<br />`;
-            crunch += `delta: ${ren$1.delta.toPrecision(6)}<br />`;
-            crunch += '<br />';
-            crunch += `textures: ${ren$1.renderer.info.memory.textures}<br />`;
-            crunch += `programs: ${ren$1.renderer.info.programs.length}<br />`;
-            //crunch += `memory: ${Math.floor(ren.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren.memory.totalJSHeapSize / 1000000)}<br />`;
-            crunch += '<br />';
-            //crunch += `mouse: ${pts.to_string(App.mouse())}<br />`;
-            //crunch += `mpos: ${pts.to_string(pts.floor(this.mpos))}<br />`;
-            crunch += `mwpos: ${pts.to_string(pts.floor(this.mwpos))}<br />`;
-            crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
-            crunch += `mbpos: ${pts.to_string(lod$1.ggalaxy.big(this.mwpos))}<br />`;
-            crunch += '<br />';
-            crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
-            crunch += `view bigpos: ${pts.to_string(lod$1.ggalaxy.big(this.wpos))}<br />`;
-            crunch += `view zoom: ${this.zoom}<br />`;
-            crunch += '<br />';
-            //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-            crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
-            crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
-            crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
-            crunch += '<br />';
-            let element = document.querySelectorAll('.stats')[0];
-            element.innerHTML = crunch;
-            element.style.visibility = this.show ? 'visible' : 'hidden';
-        }
-    }
 
     var space;
     (function (space) {
         space.size = 100;
         function init() {
-            starts();
         }
         space.init = init;
         function tick() {
-            space.gview === null || space.gview === void 0 ? void 0 : space.gview.tick();
-            testing_chamber$1.tick();
         }
         space.tick = tick;
-        function starts() {
-            lod$1.register();
-            space.gview = view.make();
-            //if (window.location.href.indexOf("#testingchamber") != -1) {
-            testing_chamber$1.start();
-            //tests.start();
-            //}
-            //else {
-            //}
-        }
     })(space || (space = {}));
     var space$1 = space;
 
@@ -1029,7 +205,6 @@ var space = (function (THREE) {
             document.onmouseup = onmouseup;
             document.onwheel = onwheel;
             window.onerror = onerror;
-            ren$1.init();
             client$1.init();
             space$1.init();
             loop();
@@ -1052,10 +227,8 @@ var space = (function (THREE) {
         }
         function loop(timestamp) {
             requestAnimationFrame(loop);
-            ren$1.update();
             client$1.tick();
             space$1.tick();
-            ren$1.render();
             app.wheel = 0;
             process_keys();
             process_mouse_buttons();
@@ -1070,6 +243,47 @@ var space = (function (THREE) {
     window['App'] = app;
     var app$1 = app;
 
+    var map;
+    (function (map) {
+        map.center = [1, 0];
+        map.pixelMultiple = 100;
+        function init() {
+            init_renderer();
+        }
+        map.init = init;
+        function init_renderer() {
+            map.rendererElement = document.getElementById("renderer");
+            map.mapSize = [window.innerWidth, window.innerHeight];
+            let you = new float({ name: 'you', pos: map.center });
+            you.append();
+            let collision = new float({ name: 'collision', pos: [2, 1] });
+            collision.append();
+        }
+        class float {
+            constructor(options) {
+                this.options = options;
+                this.element = document.createElement("div");
+                this.element.classList.add('float');
+                this.element.innerHTML = `<span></span><span>${options.name}</span>`;
+                this.style_position();
+            }
+            style_position() {
+                let half = pts.divide(map.mapSize, 2);
+                let deduct = pts.subtract(this.options.pos, map.center);
+                deduct = pts.mult(deduct, map.pixelMultiple);
+                let add = pts.add(deduct, half);
+                this.element.style.top = add[1];
+                this.element.style.left = add[0];
+                console.log('half', half);
+            }
+            append() {
+                map.rendererElement.append(this.element);
+            }
+        }
+    })(map || (map = {}));
+    var map$1 = map;
+
+    //import { rename } from "fs";
     var client;
     (function (client) {
         function getLocationByName(name) {
@@ -1112,10 +326,11 @@ var space = (function (THREE) {
         }
         client.tick = tick;
         function init() {
+            map$1.init();
             app$1.mouse();
-            let menu_button = document.getElementById("menu_button");
-            menu_button.onclick = function () {
-                showAccountBubbles();
+            let menuButton = document.getElementById("menu_button");
+            menuButton.onclick = function () {
+                show_account_bubbles();
             };
             //new aabb2([0,0],[0,0]);
             if (document.cookie) {
@@ -1138,7 +353,7 @@ var space = (function (THREE) {
             //	logo.innerHTML = `space - ${sply.username}`
         }
         client.handleSply = handleSply;
-        function showAccountBubbles() {
+        function show_account_bubbles() {
             let textHead = document.getElementById("mainDiv");
             client.sply && client.sply.username;
             let text = '';
@@ -1276,7 +491,7 @@ var space = (function (THREE) {
             let text = '';
             text += `
 		<div id="whereabouts">
-		<div></div>
+		
 		<span class="sector">${client.sector.name}</span> ~>
 		<br />
 		
@@ -1290,6 +505,7 @@ var space = (function (THREE) {
         function layoutStation() {
             let textHead = document.getElementById("mainDiv");
             let text = usernameReminder();
+            //text += drawSpaceship();
             text += makeWhereabouts();
             text += `<p>`;
             text += `<span class="facilities">`;
@@ -1693,4 +909,4 @@ var space = (function (THREE) {
 
     return client$1;
 
-})(THREE);
+})();

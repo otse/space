@@ -10,7 +10,7 @@
             "dom",
             "es6"
         ],
-        "outDir": "../../bin/js",
+        "outDir": "../../js",
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "node",
         "strictNullChecks": true

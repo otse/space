@@ -7,13 +7,16 @@
     "health": 100,
     "unregistered": false,
     "flight": false,
-    "flightLocation": "Ungoverned Space",
+    "flightLocation": "Generic Collision",
     "scanning": false,
     "position": [
-        0,
-        0
+        5.332973448837053,
+        1.596704164670859
     ],
     "sector": "Great Suldani Belt",
-    "location": "Ungoverned Space",
-    "sublocation": "None"
+    "location": "Generic Collision",
+    "sublocation": "None",
+    "scanCompleted": false,
+    "scanStart": 1671804902128,
+    "scanEnd": 1671805022128
 }

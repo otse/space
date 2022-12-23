@@ -1,8 +1,8 @@
-import { rename } from "fs";
+//import { rename } from "fs";
 import aabb2 from "./aabb2";
 import app from "./app";
+import map from "./map";
 import pts from "./pts";
-import ren from "./renderer";
 
 
 namespace client {
@@ -76,12 +76,14 @@ namespace client {
 
 	export function init() {
 
+		map.init();
+
 		app.mouse();
 
-		let menu_button = document.getElementById("menu_button")!;
+		let menuButton = document.getElementById("menu_button")!;
 
-		menu_button.onclick = function () {
-			showAccountBubbles();
+		menuButton.onclick = function () {
+			show_account_bubbles();
 		}
 
 		//new aabb2([0,0],[0,0]);
@@ -93,6 +95,7 @@ namespace client {
 		else {
 			console.log('logged_in');
 		}
+
 		getInitTrios();
 
 	}
@@ -111,7 +114,7 @@ namespace client {
 	}
 
 	var showingAccountBubbles = false;
-	function showAccountBubbles() {
+	function show_account_bubbles() {
 		showingAccountBubbles = true;
 		let textHead = document.getElementById("mainDiv")!;
 
@@ -316,7 +319,7 @@ namespace client {
 		let text = '';
 		text += `
 		<div id="whereabouts">
-		<div></div>
+		
 		<span class="sector">${sector.name}</span> ~>
 		<br />
 		
@@ -332,6 +335,8 @@ namespace client {
 		let textHead = document.getElementById("mainDiv")!;
 
 		let text = usernameReminder();
+
+		//text += drawSpaceship();
 
 		text += makeWhereabouts();
 
@@ -357,7 +362,6 @@ namespace client {
 		let text = usernameReminder();
 
 		text += makeWhereabouts();
-
 
 		text += `<p>`
 

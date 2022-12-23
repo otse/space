@@ -1,4 +1,3 @@
-import ren from "./renderer";
 import space from "./space";
 import client from "./client";
 var app;
@@ -62,7 +61,6 @@ var app;
         document.onmouseup = onmouseup;
         document.onwheel = onwheel;
         window.onerror = onerror;
-        ren.init();
         client.init();
         space.init();
         loop(0);
@@ -85,10 +83,8 @@ var app;
     }
     function loop(timestamp) {
         requestAnimationFrame(loop);
-        ren.update();
         client.tick();
         space.tick();
-        ren.render();
         app.wheel = 0;
         process_keys();
         process_mouse_buttons();
