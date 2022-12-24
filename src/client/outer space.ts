@@ -1,6 +1,6 @@
 import app from "./app";
 import space from "./space";
-import pts from "./pts";
+import pts from "../shared/pts";
 
 namespace outer_space {
 

@@ -1,6 +1,6 @@
 import app from "./app";
 import space from "./space";
-import pts from "./pts";
+import pts from "../shared/pts";
 var outer_space;
 (function (outer_space) {
     outer_space.locations = [];

@@ -18,6 +18,7 @@
     ],
     "include": [
         "./",
+        "../shared",
         "util"
     ],
     "exclude": [

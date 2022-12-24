@@ -1,5 +1,9 @@
 import { write } from "fs";
 import { locations } from "./locations";
+import game from "./game";
+import lod from "./lod";
+import lmp from "./lost minor planet";
+import short_lived from "./session";
 
 var http = require('http');
 var https = require('https');
@@ -26,39 +30,10 @@ function exit(options, exitCode) {
 
 process.on('SIGINT', exit);
 
-const indent = ``
+var sessions: game.ply[] = [];
 
-type appId = number;
-
-interface Ply {
-	id: number
-	ip: string
-	unreg: boolean
-	username: string
-	password: string
-	pos: vec2
-	goto: vec2
-	health: number
-	speed: number
-	flight: boolean
-	flightLocation: string
-	scanning?: boolean
-	scanStart?: number
-	scanEnd?: number
-	scanCompleted?: boolean
-	engaging?: boolean
-	position
-}
-
-var regs = {};
-var unregs = {};
-var logins = {};
-var sessions: Ply[] = [];
-
-var lost_minor_planet;
-var regions;
-
-var all_plys: Ply[]
+var ply_grids: [game.ply, lod.grid]
+var all_plys: game.ply[]
 
 interface LostMinorPlanet {
 	players: number
@@ -66,164 +41,25 @@ interface LostMinorPlanet {
 	boo: number
 }
 
-export function object_to_file(path, object) {
-	const stringified = JSON.stringify(object, null, 4);
-	fs.writeFileSync(path, stringified);
-	return 1;
-}
-
-export function object_from_file(path) {
-	return JSON.parse(fs.readFileSync(path, 'utf8'));
-}
-
-export function object_exists(path) {
-	return fs.existsSync(path);
-}
-
-export function write_lost_minor_planet() {
-	lost_minor_planet.writes++;
-	object_to_file('lost minor planet.json', lost_minor_planet);
-}
-
-export function write_logins() {
-	object_to_file('logins.json', logins);
-}
-
-export function write_ply(ply: Ply) {
-	console.log('writing ply ', ply.id);
-
-	if (ply.unreg)
-		object_to_file(unreg_path(ply.ip), ply);
-	else
-		object_to_file(reg_path(ply.username), ply);
-}
-
-export function sanitize_ip(ip: string) {
-	ip = ip.replace('::', '');
-	ip = ip.replace(':', '');
-	return ip;
-}
-
-export function unreg_path(ip) {
-	return `players/ip/${ip}.json`;
-}
-
-export function reg_path(username) {
-	return `players/${username}.json`;
-}
-
-export function new_ply() {
-	lost_minor_planet.players++;
-	write_lost_minor_planet();
-	let ply: Ply = {
-		id: lost_minor_planet.players,
-		ip: 'N/A',
-		unreg: false,
-		username: 'Captain',
-		password: 'N/A',
-		pos: [0, 0],
-		goto: [0, 0],
-		speed: 1,
-		health: 100,
-		flight: false,
-		flightLocation: '',
-		scanning: false,
-		position: [0, 0]
-	};
-	return ply;
-}
-
-export function get_region(name) {
+/*export function get_region_by_name(name) {
 	for (let region of regions)
 		if (regions.name == name)
 			return region;
-}
+}*/
 
 export function tick() {
 
-	//for (const [, session] of Object.entries(regs)) {
-	//	console.log(session);
-	//}
-	
-
-}
-
-export function push_session(ply: Ply) {
-	let i = sessions.indexOf(ply);
-	if (i == -1)
-		sessions.push(ply);
-}
-
-export function pop_session(ply: Ply) {
-	let i = sessions.indexOf(ply);
-	if (i > -1)
-		this.sobjs.splice(i, 1).length;
-}
-
-export function get_ply(ip) {
-
-	ip = sanitize_ip(ip);
-
-	let ply: Ply;
-
-	/*
-	the following resolves ply, every http request (whether its a stylesheet or a page)
-	*/
-
-	if (logins[ip]) {
-		const username = logins[ip];
-		if (regs[username]) {
-			ply = regs[username];
-		}
-		else {
-			console.log('we dont have this ply in a session yet');
-
-			if (object_exists(reg_path(username))) {
-				ply = object_from_file(reg_path(username));
-				regs[username] = ply;
-			}
-			else {
-				// invalid logins.json entry pointing to a deleted user
-				// todo this is way too much error-handling
-				delete logins[username];
-				ply = new_ply();
-				write_ply(ply);
-				regs[username] = ply;
-				console.warn('user in users doesnt exist');
-			}
-
-		}
-	}
-	else if (unregs[ip]) {
-		ply = unregs[ip];
-		//console.log('got ply safely from unregistered table');
-	}
-	else {
-		if (object_exists(unreg_path(ip)))
-			ply = unregs[ip] = object_from_file(unreg_path(ip));
-		else {
-			ply = new_ply();
-			ply.unreg = true;
-			ply.ip = ip;
-
-			object_to_file(unreg_path(ip), ply);
-		}
-	}
-	ply.goto = [Math.random() * 10, Math.random() * 10];
-	push_session(ply);
-	return ply;
 }
 
 function init() {
 
 	setInterval(tick, 1000);
 
-	lost_minor_planet = object_from_file('lost minor planet.json');
+	new lod.galaxy;
+	lmp.init();
 
 	locations.init();
 
-	regions = object_from_file('regions.json');
-	logins = object_from_file('logins.json');
 
 	//createLocationPersistence();
 
@@ -233,68 +69,38 @@ function init() {
 
 		// console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
 
-		const ip = sanitize_ip(req.socket.remoteAddress);
+		console.log(req.url);
 
-		let ply = get_ply(req.socket.remoteAddress);
-
-		const send_sply = function () {
-			let object: any = {
-				id: ply.id,
-				username: ply.username,
-				unreg: ply.unreg,
-				pos: ply.pos,
-				goto: ply.goto,
-				position: ply.position,
-				flight: ply.flight,
-				flightLocation: ply.flightLocation,
-			};
-
-			if (ply.scanning) {
-				console.log('were scanning');
-
-				object.scanning = true;
-				object.scanStart = ply.scanStart || 0;
-				object.scanEnd = ply.scanEnd || 0;
-				object.scanCompleted = ply.scanCompleted;
-			}
-
-			if (ply.engaging) {
-				object.engaging = true;
-			}
-
-			sendStuple([['sply'], object]);
+		if (req.url == '/') {
+			let page = fs.readFileSync('page.html');
+			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
+			res.end(page);
+			//sendGeneric(page);
 		}
-
-		const sendSmessage = function (message) {
-			sendStuple([['message'], message]);
+		else if (req.url == '/style.css') {
+			let style = fs.readFileSync('style.css');
+			res.writeHead(200, { CONTENT_TYPE: "text/css" });
+			res.end(style);
 		}
-
-		const transportSublocation = function (where) {
-			if (where == 'Refuel')
-				console.log('requesting refuel sublocation');
+		else if (req.url == '/outer%20space.css') {
+			let style = fs.readFileSync('outer space.css');
+			res.writeHead(200, { CONTENT_TYPE: "text/css" });
+			res.end(style);
 		}
-
-		const sendObject = function (anything: object) {
-			let str = JSON.stringify(anything);
+		else if (req.url == '/bundle.js') {
+			let client = fs.readFileSync('bundle.js');
+			res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
+			res.end(client);
+		}
+		else if (req.url == '/regions.json') {
+			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
+			let str = JSON.stringify(lmp.regions);
 			res.end(str);
 		}
-
-		const sendStuple = function (anything: object) {
-			let str = JSON.stringify(anything);
+		else if (req.url == '/locations.json') {
+			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
+			let str = JSON.stringify(locations.file);
 			res.end(str);
-		}
-
-		function receivedKnock(inputs: any) {
-			//console.log('Knock ', inputs);
-
-			const sublocation = inputs.sublocation;
-			if (sublocation == 'refuel') {
-				//ply.sublocation = 'Refuel';
-				write_ply(ply);
-				send_sply();
-			}
-
-			//let arg = input.split(' ');
 		}
 
 		if (req.url == '/login' && req.method == 'POST') {
@@ -315,24 +121,24 @@ function init() {
 				// if (parsed['username'] == 'asdf')
 				//	console.log('this is not your windows frend');
 
-				const path = reg_path(username);
+				const path = lmp.reg_path(username);
 
-				if (object_exists(path)) {
+				if (lmp.object_exists(path)) {
 
-					ply = object_from_file(path);
+					let ply = lmp.object_from_file(path);
 
-					regs[username] = ply;
+					lmp.regs[username] = ply;
 
 					let logged_in_elsewhere = false;
 					let ip2;
-					for (ip2 in logins) {
-						let username2 = logins[ip2];
+					for (ip2 in lmp.logins) {
+						let username2 = lmp.logins[ip2];
 						if (username == username2 && ip != ip2) {
 							logged_in_elsewhere = true;
 							break;
 						}
 					}
-					if (logins[ip] == username) {
+					if (lmp.logins[ip] == username) {
 						res.writeHead(400);
 						res.end('already logged in here');
 					}
@@ -342,12 +148,12 @@ function init() {
 
 						if (logged_in_elsewhere) {
 							msg += '. you\'ve been logged out of your other device';
-							delete logins[ip2];
+							delete lmp.logins[ip2];
 						}
 						res.end(msg);
 
-						logins[ip] = ply.username;
-						write_logins();
+						lmp.logins[ip] = ply.username;
+						lmp.write_logins();
 
 						res.end();
 					}
@@ -372,6 +178,7 @@ function init() {
 
 		if (req.url == '/register' && req.method == 'POST') {
 			let body = '';
+
 			req.on('data', function (chunk) {
 				body += chunk;
 			});
@@ -412,14 +219,14 @@ function init() {
 					const username = parsed.username;
 					const password = parsed.password;
 
-					const path = reg_path(username);
+					const path = lmp.reg_path(username);
 
 					if (fs.existsSync(path)) {
 						res.writeHead(400);
 						res.end(`a player already exists with username ${username}. try logging in`);
 					}
 					else {
-						let ply = new_ply();
+						let ply = lmp.new_ply();
 						ply.unreg = false;
 						ply.ip = 'N/A';
 						ply.username = parsed['username'];
@@ -429,77 +236,62 @@ function init() {
 						res.end(`congratulations, you've registered as ${username}. now login`);
 
 						const payload = JSON.stringify(ply, null, 4);
-						fs.writeFileSync(reg_path(username), payload);
+						fs.writeFileSync(lmp.reg_path(username), payload);
 					}
 				}
 			});
 
 			return;
 		}
-		else if (req.method !== 'GET') {
-			res.end('boo');
-			return;
-		}
-
-		if (ply.scanning) {
-			const scanRemaining = ply.scanEnd! - Date.now();
-
-			if (scanRemaining < 0) {
-				ply.scanCompleted = true;
-			}
-
-		}
-
-		console.log(req.url);
-
-
-		if (req.url == '/') {
-			let page = fs.readFileSync('page.html');
-			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
-			res.end(page);
-			//sendGeneric(page);
-		}
-		else if (req.url == '/style.css') {
-			let style = fs.readFileSync('style.css');
-			res.writeHead(200, { CONTENT_TYPE: "text/css" });
-			res.end(style);
-		}
-		else if (req.url == '/outer%20space.css') {
-			let style = fs.readFileSync('outer space.css');
-			res.writeHead(200, { CONTENT_TYPE: "text/css" });
-			res.end(style);
-		}
-		else if (req.url == '/bundle.js') {
-			let client = fs.readFileSync('bundle.js');
-			res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
-			res.end(client);
-		}
-		else if (req.url == '/regions.json') {
-			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			let str = JSON.stringify(regions);
-			res.end(str);
-		}
-		else if (req.url == '/locations.json') {
-			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			let str = JSON.stringify(locations.file);
-			res.end(str);
-		}
+		
 		/*else if (req.url == '/where') {
 			console.log('got where');
 
 			sendSwhere();
 		}*/
-		else if (req.url == '/ply') {
-			console.log('get ply');
 
+		const ip = lmp.sanitize_ip(req.socket.remoteAddress);
+
+		let ply = lmp.get_ply(req.socket.remoteAddress);
+
+		let session = new short_lived;
+		session.ply = ply;
+		session.grid = new lod.grid(lod.ggalaxy, 2, 2);
+		lod.ggalaxy.update_grid(session.grid, ply.pos);
+
+		const send_sply = function () {
+			let reduced: any = {
+				id: ply.id,
+				username: ply.username,
+				unreg: ply.unreg,
+				pos: ply.pos,
+				goto: ply.goto,
+				flight: ply.flight,
+				flightLocation: ply.flightLocation,
+			};
+
+			send_stuple([['sply'], reduced]);
+		}
+
+		const send_smessage = function (message) {
+			send_stuple([['message'], message]);
+		}
+
+		const send_stuple = function (anything: object) {
+			let str = JSON.stringify(anything);
+			res.end(str);
+		}
+
+		if (req.url == '/ply') {
+			console.log('get ply');
 			send_sply();
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
-			if (logins[`${ip}`]) {
-				const username = logins[`${ip}`];
-				delete logins[`${ip}`];
-				write_logins();
+			if (lmp.logins[`${ip}`]) {
+				const username = lmp.logins[`${ip}`];
+				delete lmp.logins[`${ip}`];
+				lmp.write_logins();
 				res.end(`logging out ${username}`);
 			}
 			else {
@@ -507,71 +299,7 @@ function init() {
 			}
 
 		}
-		else if (req.url == '/askTick') {
-
-		}
-		else if (req.url == '/engagePirate') {
-			ply.engaging = true;
-			send_sply();
-
-		}
-		else if (req.url == '/seeEnemies') {
-			console.log('seeEnemies');
-
-			//const location = locations.instance(ply.location)!;
-
-			//ply.engaging = true;
-
-			//const cast = location as locations.contested_location_instance;
-
-			//const enemies = cast.get_enemies();
-
-			//locations.locations
-
-			ply.position = [Math.random() * 10, Math.random() * 10]
-
-			//sendStuple([['senemies'], enemies]);
-		}
 		else if (req.url == '/scan') {
-			/*
-			const location = locations.get(ply.location)!;
-
-			if (location.type == 'Junk') {
-				const durationMinutes = 2;
-				ply.scanning = true;
-				ply.scanCompleted = false;
-				ply.scanStart = Date.now();
-				ply.scanEnd = Date.now() + (1000 * 60 * durationMinutes);
-				write_ply(ply);
-				send_sply();
-			}
-			else {
-				sendSmessage("Can only scan junk.");
-			}
-			*/
-		}
-		else if (req.url == '/stopScanning') {
-			//const location = locations.get(ply.location);
-			ply.scanning = false;
-			write_ply(ply);
-			send_sply();
-		}
-		else if (req.url == '/completeScan') {
-			//const location = locations.get(ply.location);
-			ply.scanning = false;
-			write_ply(ply);
-			send_sply();
-		}
-		else if (req.url == '/dock') {
-
-			if (ply.flight) {
-				ply.flight = false;
-				//ply.location = ply.flightLocation;
-
-				write_ply(ply);
-				send_sply();
-			}
-			//sendStuple([['message'], `Can\'t dock. Not nearby ${ply.flightLocation}.`]);
 		}
 		else if (req.url.search('/submitFlight') == 0) {
 			console.log('received flight');
@@ -582,41 +310,16 @@ function init() {
 
 			console.log(val);
 			if (!locations.get(val)) {
-				sendSmessage("Location doesn't exist");
+				send_smessage("Location doesn't exist");
 			}
 			else {
 				ply.flight = true;
 				ply.flightLocation = val;
 
-				write_ply(ply);
+				lmp.write_ply(ply);
 
 				send_sply();
 			}
-		}
-		else if (req.url == '/returnSublocation') {
-			//console.log('return from sublocation');
-			//ply.sublocation = 'None';
-			write_ply(ply);
-			send_sply();
-		}
-		else if (-1 < req.url.indexOf('/app/')) {
-			let appId = req.url.split('app/')[1];
-			console.log('ask app/', appId);
-			res.end('woo app: ' + appId);
-		}
-		else if (-1 < req.url.indexOf('/getobject/')) {
-			let appId = req.url.split('getobject/')[1];
-			sendObject({ someObject: true });
-		}
-		else if (req.url == '/api/server/2/booking') {
-
-		}
-		else if (req.url.search("/knock") == 0) {
-			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-			const parsed = qs.parse(req.url);
-			// msg&boo&shu '/knock': '', boo: '', shu: ''
-			//console.log(parsed);
-			receivedKnock(parsed);
 		}
 		else {
 			res.end();

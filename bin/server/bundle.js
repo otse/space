@@ -444,7 +444,7 @@ var space = (function () {
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
 		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
-		<span class="spanButton" onclick="space.showRegister()">register</span>
+		<span class="spanButton" onclick="space.show_register()">register</span>
 
 		`;
             textHead.innerHTML = text;
@@ -838,7 +838,7 @@ var space = (function () {
             textHead.innerHTML = text;
         }
         space.showLogin = showLogin;
-        function showRegister() {
+        function show_register() {
             let textHead = document.getElementById("mainDiv");
             let text = `
 		<form action="register" method="post">
@@ -863,12 +863,12 @@ var space = (function () {
 		<br />
 		<br />
 
-		<button type="button" onclick="space.xhrRegister()">Register</button>
+		<button type="button" onclick="space.xhr_register()">Register</button>
 		
 		</form>`;
             textHead.innerHTML = text;
         }
-        space.showRegister = showRegister;
+        space.show_register = show_register;
         function submitFlight() {
             var e = document.getElementById("flights");
             var strUser = e.options[e.selectedIndex].text;

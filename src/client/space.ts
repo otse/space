@@ -1,8 +1,8 @@
 //import { rename } from "fs";
-import aabb2 from "./aabb2";
 import app from "./app";
 import outer_space from "./outer space";
-import pts from "./pts";
+import aabb2 from "../shared/aabb2";
+import pts from "../shared/pts";
 
 
 namespace space {
@@ -135,7 +135,7 @@ namespace space {
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
 		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
-		<span class="spanButton" onclick="space.showRegister()">register</span>
+		<span class="spanButton" onclick="space.show_register()">register</span>
 
 		`;
 		textHead.innerHTML = text;
@@ -698,7 +698,7 @@ namespace space {
 		textHead.innerHTML = text;
 	}
 
-	export function showRegister() {
+	export function show_register() {
 		let textHead = document.getElementById("mainDiv")!;
 
 		let text = `
@@ -724,7 +724,7 @@ namespace space {
 		<br />
 		<br />
 
-		<button type="button" onclick="space.xhrRegister()">Register</button>
+		<button type="button" onclick="space.xhr_register()">Register</button>
 		
 		</form>`;
 

@@ -23,4 +23,4 @@ export class hooks<T = never> {
 	}
 }
 
-export default hooks
+export default hooks;

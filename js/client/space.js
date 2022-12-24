@@ -7,9 +7,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+//import { rename } from "fs";
 import app from "./app";
 import outer_space from "./outer space";
-import pts from "./pts";
+import pts from "../shared/pts";
 var space;
 (function (space) {
     function sample(a) {
@@ -112,7 +113,7 @@ var space;
 		<span class="spanButton" onclick="space.showLogin()">login</span>,
 		<span class="spanButton" onclick="space.logout()">logout</span>,
 		or
-		<span class="spanButton" onclick="space.showRegister()">register</span>
+		<span class="spanButton" onclick="space.show_register()">register</span>
 
 		`;
         textHead.innerHTML = text;
@@ -532,7 +533,7 @@ var space;
         textHead.innerHTML = text;
     }
     space.showLogin = showLogin;
-    function showRegister() {
+    function show_register() {
         let textHead = document.getElementById("mainDiv");
         let text = `
 		<form action="register" method="post">
@@ -557,12 +558,12 @@ var space;
 		<br />
 		<br />
 
-		<button type="button" onclick="space.xhrRegister()">Register</button>
+		<button type="button" onclick="space.xhr_register()">Register</button>
 		
 		</form>`;
         textHead.innerHTML = text;
     }
-    space.showRegister = showRegister;
+    space.show_register = show_register;
     function submitFlight() {
         var e = document.getElementById("flights");
         var strUser = e.options[e.selectedIndex].text;
