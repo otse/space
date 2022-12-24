@@ -37,10 +37,12 @@ exports.tick = tick;
 function init() {
     setInterval(tick, 1000);
     new lod_1.default.galaxy;
-    let rock = new lod_1.default.obj;
-    rock.type = 'rock';
-    rock.pos = [-1, -1];
-    lod_1.default.add(rock);
+    for (let i = 0; i < 5; i++) {
+        let rock = new lod_1.default.obj;
+        rock.type = 'rock';
+        rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
+        lod_1.default.add(rock);
+    }
     lost_minor_planet_1.default.init();
     locations_1.locations.init();
     //createLocationPersistence();

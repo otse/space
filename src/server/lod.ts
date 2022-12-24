@@ -26,8 +26,6 @@ class toggle {
 namespace lod {
 	const grid_makes_sectors = true;
 
-	const chunk_size = 10;
-
 	export var SectorSpan = 3;
 
 	export var ggalaxy: galaxy
@@ -185,12 +183,14 @@ namespace lod {
 		}
 	}
 	export class obj extends toggle {
+		static ids = 1
 		chunk: chunk | null = null
 		id = 0
 		type = 'an sobj'
 		pos: vec2 = [0, 0]
 		constructor() {
 			super();
+			this.id = obj.ids++;
 		}
 		gather() {
 			let sent = [{}, this.id, this.pos, this.type];

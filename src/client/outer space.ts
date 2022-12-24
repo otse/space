@@ -18,6 +18,8 @@ namespace outer_space {
 	var floats: float[] = [];
 	var regions: region[] = [];
 
+	export var stamp = 0;
+
 	export function init() {
 		setInterval(fetch, 1000);
 	}
@@ -28,29 +30,43 @@ namespace outer_space {
 		setup();
 	}
 
+	function get_float_by_id(id) {
+		for (const float of floats)
+			if (float.id == id)
+				return float;
+	}
+
 	export async function fetch() {
-		let text = <string>await space.make_request('GET', 'celestial objects');
-		let tuple = JSON.parse(text);
+		stamp++;
+		let text = await space.make_request('GET', 'celestial objects');
+		let tuple = JSON.parse(<string>text);
 		const objects = tuple[1];
 
 		for (const object of objects) {
-			const [ random, id, pos, type ] = object;			
-			new float({
-				name: type,
-				pos: pos
-			});
+			const [random, id, pos, type] = object;
+			const bee = get_float_by_id(id);
+			if (bee) {
+				bee.pos = pos;
+				bee.stamp = stamp;
+				//bee.stylize();
+			}
+			else {
+				new float(id, type, pos);
+			}
 		}
 
-		for (let float of floats)
+		for (let float of floats) {
 			float.tick();
-		for (let region of regions)
+		}
+		for (let region of regions) {
 			region.tick();
+		}
 	}
 
 	export function tick() {
 		if (you) {
-			you.options.pos = pts.add(you.options.pos, [0.001, 0]);
-			center = you.options.pos;
+			you.pos = pts.add(you.pos, [0.001, 0]);
+			center = you.pos;
 		}
 
 		if (app.wheel == 1)
@@ -72,15 +88,9 @@ namespace outer_space {
 
 		mapSize = [window.innerWidth, window.innerHeight];
 
-		you = new float({
-			name: 'you',
-			pos: center
-		});
+		you = new float(-1, 'you', center);
 
-		let collision = new float({
-			name: 'collision',
-			pos: [2, 1]
-		});
+		let collision = new float(-1, 'collision', [2, 1]);
 
 		for (let blob of space.regions) {
 			console.log('new region', blob.name);
@@ -89,25 +99,24 @@ namespace outer_space {
 		}
 	}
 
-	interface float_traits {
-		name: string
-		pos: vec2
-	}
-
 	class float {
+		stamp = 0
 		static = false
 		element
-		constructor(public options: float_traits) {
+		constructor(
+			public id: number,
+			public name: string,
+			public pos: vec2) {
 			floats.push(this);
 			this.element = document.createElement("div");
 			this.element.classList.add('float');
-			this.element.innerHTML = `<span></span><span>${options.name}</span>`;
-			this.style_position();
+			this.element.innerHTML = `<span></span><span>${name}</span>`;
+			this.stylize();
 			this.append();
 		}
-		style_position() {
+		stylize() {
 			const half = pts.divide(mapSize, 2);
-			let relative = pts.subtract(this.options.pos, center);
+			let relative = pts.subtract(this.pos, center);
 			relative = pts.mult(relative, pixelMultiple);
 			relative = pts.add(relative, half);
 			this.element.style.top = relative[1];
@@ -121,7 +130,7 @@ namespace outer_space {
 			this.element.remove();
 		}
 		tick() {
-			this.style_position();
+			this.stylize();
 		}
 	}
 
@@ -136,10 +145,10 @@ namespace outer_space {
 			this.element = document.createElement("div");
 			this.element.classList.add('region');
 			this.element.innerHTML = `<span>${name}</span>`;
-			this.style_position();
+			this.stylize();
 			this.append();
 		}
-		style_position() {
+		stylize() {
 			const half = pts.divide(mapSize, 2);
 			let relative = pts.subtract(this.pos, center);
 			relative = pts.mult(relative, pixelMultiple);
@@ -157,7 +166,7 @@ namespace outer_space {
 			this.element.remove();
 		}
 		tick() {
-			this.style_position();
+			this.stylize();
 		}
 	}
 }

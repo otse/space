@@ -255,6 +255,7 @@ var space = (function () {
         outer_space_1.pixelMultiple = 50;
         var floats = [];
         var regions = [];
+        outer_space_1.stamp = 0;
         function init() {
             setInterval(fetch, 1000);
         }
@@ -264,29 +265,42 @@ var space = (function () {
             setup();
         }
         outer_space_1.statics = statics;
+        function get_float_by_id(id) {
+            for (const float of floats)
+                if (float.id == id)
+                    return float;
+        }
         function fetch() {
             return __awaiter$1(this, void 0, void 0, function* () {
+                outer_space_1.stamp++;
                 let text = yield space$1.make_request('GET', 'celestial objects');
                 let tuple = JSON.parse(text);
                 const objects = tuple[1];
                 for (const object of objects) {
                     const [random, id, pos, type] = object;
-                    new float({
-                        name: type,
-                        pos: pos
-                    });
+                    const bee = get_float_by_id(id);
+                    if (bee) {
+                        bee.pos = pos;
+                        bee.stamp = outer_space_1.stamp;
+                        //bee.stylize();
+                    }
+                    else {
+                        new float(id, type, pos);
+                    }
                 }
-                for (let float of floats)
+                for (let float of floats) {
                     float.tick();
-                for (let region of regions)
+                }
+                for (let region of regions) {
                     region.tick();
+                }
             });
         }
         outer_space_1.fetch = fetch;
         function tick() {
             if (outer_space_1.you) {
-                outer_space_1.you.options.pos = pts.add(outer_space_1.you.options.pos, [0.001, 0]);
-                outer_space_1.center = outer_space_1.you.options.pos;
+                outer_space_1.you.pos = pts.add(outer_space_1.you.pos, [0.001, 0]);
+                outer_space_1.center = outer_space_1.you.pos;
             }
             if (app$1.wheel == 1)
                 outer_space_1.pixelMultiple += 5;
@@ -302,33 +316,30 @@ var space = (function () {
         function setup() {
             outer_space_1.outer_space = document.getElementById("outer-space");
             outer_space_1.mapSize = [window.innerWidth, window.innerHeight];
-            outer_space_1.you = new float({
-                name: 'you',
-                pos: outer_space_1.center
-            });
-            new float({
-                name: 'collision',
-                pos: [2, 1]
-            });
+            outer_space_1.you = new float(-1, 'you', outer_space_1.center);
+            new float(-1, 'collision', [2, 1]);
             for (let blob of space$1.regions) {
                 console.log('new region', blob.name);
                 new region(blob.name, blob.center, blob.radius);
             }
         }
         class float {
-            constructor(options) {
-                this.options = options;
+            constructor(id, name, pos) {
+                this.id = id;
+                this.name = name;
+                this.pos = pos;
+                this.stamp = 0;
                 this.static = false;
                 floats.push(this);
                 this.element = document.createElement("div");
                 this.element.classList.add('float');
-                this.element.innerHTML = `<span></span><span>${options.name}</span>`;
-                this.style_position();
+                this.element.innerHTML = `<span></span><span>${name}</span>`;
+                this.stylize();
                 this.append();
             }
-            style_position() {
+            stylize() {
                 const half = pts.divide(outer_space_1.mapSize, 2);
-                let relative = pts.subtract(this.options.pos, outer_space_1.center);
+                let relative = pts.subtract(this.pos, outer_space_1.center);
                 relative = pts.mult(relative, outer_space_1.pixelMultiple);
                 relative = pts.add(relative, half);
                 this.element.style.top = relative[1];
@@ -342,7 +353,7 @@ var space = (function () {
                 this.element.remove();
             }
             tick() {
-                this.style_position();
+                this.stylize();
             }
         }
         class region {
@@ -355,10 +366,10 @@ var space = (function () {
                 this.element = document.createElement("div");
                 this.element.classList.add('region');
                 this.element.innerHTML = `<span>${name}</span>`;
-                this.style_position();
+                this.stylize();
                 this.append();
             }
-            style_position() {
+            stylize() {
                 const half = pts.divide(outer_space_1.mapSize, 2);
                 let relative = pts.subtract(this.pos, outer_space_1.center);
                 relative = pts.mult(relative, outer_space_1.pixelMultiple);
@@ -376,7 +387,7 @@ var space = (function () {
                 this.element.remove();
             }
             tick() {
-                this.style_position();
+                this.stylize();
             }
         }
     })(outer_space || (outer_space = {}));

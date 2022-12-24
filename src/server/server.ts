@@ -57,10 +57,12 @@ function init() {
 
 	new lod.galaxy;
 
-	let rock = new lod.obj;
-	rock.type = 'rock';
-	rock.pos = [-1, -1];
-	lod.add(rock);
+	for (let i = 0; i < 5; i++) {
+		let rock = new lod.obj;
+		rock.type = 'rock';
+		rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
+		lod.add(rock);
+	}
 
 	lmp.init();
 
@@ -294,8 +296,7 @@ function init() {
 			send_sply();
 			return;
 		}
-		else if (req.url == '/celestial%20objects')
-		{
+		else if (req.url == '/celestial%20objects') {
 			let objects = session.grid.gather();
 			send_stuple([['celestial objects'], objects]);
 			res.end();

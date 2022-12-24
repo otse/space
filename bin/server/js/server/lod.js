@@ -29,7 +29,6 @@ class toggle {
 var lod;
 (function (lod) {
     const grid_makes_sectors = true;
-    const chunk_size = 10;
     lod.SectorSpan = 3;
     function add(obj) {
         let chunk = lod.ggalaxy.at(lod.galaxy.big(pts_1.default.round(obj.pos)));
@@ -189,12 +188,14 @@ var lod;
             this.id = 0;
             this.type = 'an sobj';
             this.pos = [0, 0];
+            this.id = obj.ids++;
         }
         gather() {
             let sent = [{}, this.id, this.pos, this.type];
             return sent;
         }
     }
+    obj.ids = 1;
     lod.obj = obj;
 })(lod || (lod = {}));
 exports.default = lod;
