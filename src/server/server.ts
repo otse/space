@@ -56,6 +56,12 @@ function init() {
 	setInterval(tick, 1000);
 
 	new lod.galaxy;
+
+	let rock = new lod.obj;
+	rock.type = 'rock';
+	rock.pos = [-1, -1];
+	lod.add(rock);
+
 	lmp.init();
 
 	locations.init();
@@ -75,32 +81,37 @@ function init() {
 			let page = fs.readFileSync('page.html');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
 			res.end(page);
-			//sendGeneric(page);
+			return;
 		}
 		else if (req.url == '/style.css') {
 			let style = fs.readFileSync('style.css');
 			res.writeHead(200, { CONTENT_TYPE: "text/css" });
 			res.end(style);
+			return;
 		}
 		else if (req.url == '/outer%20space.css') {
 			let style = fs.readFileSync('outer space.css');
 			res.writeHead(200, { CONTENT_TYPE: "text/css" });
 			res.end(style);
+			return;
 		}
 		else if (req.url == '/bundle.js') {
 			let client = fs.readFileSync('bundle.js');
 			res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
 			res.end(client);
+			return;
 		}
 		else if (req.url == '/regions.json') {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
 			let str = JSON.stringify(lmp.regions);
 			res.end(str);
+			return;
 		}
 		else if (req.url == '/locations.json') {
 			res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
 			let str = JSON.stringify(locations.file);
 			res.end(str);
+			return;
 		}
 
 		if (req.url == '/login' && req.method == 'POST') {
@@ -124,11 +135,8 @@ function init() {
 				const path = lmp.reg_path(username);
 
 				if (lmp.object_exists(path)) {
-
 					let ply = lmp.object_from_file(path);
-
 					lmp.regs[username] = ply;
-
 					let logged_in_elsewhere = false;
 					let ip2;
 					for (ip2 in lmp.logins) {
@@ -151,10 +159,8 @@ function init() {
 							delete lmp.logins[ip2];
 						}
 						res.end(msg);
-
 						lmp.logins[ip] = ply.username;
 						lmp.write_logins();
-
 						res.end();
 					}
 					else if (ply.password != password) {
@@ -243,7 +249,7 @@ function init() {
 
 			return;
 		}
-		
+
 		/*else if (req.url == '/where') {
 			console.log('got where');
 
@@ -257,6 +263,7 @@ function init() {
 		let session = new short_lived;
 		session.ply = ply;
 		session.grid = new lod.grid(lod.ggalaxy, 2, 2);
+		session.grid.big = lod.galaxy.big(ply.pos);
 		lod.ggalaxy.update_grid(session.grid, ply.pos);
 
 		const send_sply = function () {
@@ -285,44 +292,30 @@ function init() {
 		if (req.url == '/ply') {
 			console.log('get ply');
 			send_sply();
+			return;
+		}
+		else if (req.url == '/celestial%20objects')
+		{
+			let objects = session.grid.gather();
+			send_stuple([['celestial objects'], objects]);
+			res.end();
+			return;
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
-			if (lmp.logins[`${ip}`]) {
-				const username = lmp.logins[`${ip}`];
-				delete lmp.logins[`${ip}`];
+			if (lmp.logins[ip]) {
+				const username = lmp.logins[ip];
+				delete lmp.logins[ip];
 				lmp.write_logins();
 				res.end(`logging out ${username}`);
 			}
 			else {
 				res.end(`not logged in, playing as unregistered`);
 			}
-
-		}
-		else if (req.url == '/scan') {
-		}
-		else if (req.url.search('/submitFlight') == 0) {
-			console.log('received flight');
-
-			let val;
-			val = req.url.split('=')[1];
-			val = val.replace(/%20/g, " ");
-
-			console.log(val);
-			if (!locations.get(val)) {
-				send_smessage("Location doesn't exist");
-			}
-			else {
-				ply.flight = true;
-				ply.flightLocation = val;
-
-				lmp.write_ply(ply);
-
-				send_sply();
-			}
+			return;
 		}
 		else {
-			res.end();
+			res.end('unhandled resource');
 		}
 
 	}).listen(port);

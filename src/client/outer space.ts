@@ -4,7 +4,7 @@ import pts from "../shared/pts";
 
 namespace outer_space {
 
-	export var element
+	export var outer_space
 
 	export var mapSize: vec2
 
@@ -19,12 +19,32 @@ namespace outer_space {
 	var regions: region[] = [];
 
 	export function init() {
+		setInterval(fetch, 1000);
 	}
 
 	export function statics() {
 		console.log('outer space statics');
 
 		setup();
+	}
+
+	export async function fetch() {
+		let text = <string>await space.make_request('GET', 'celestial objects');
+		let tuple = JSON.parse(text);
+		const objects = tuple[1];
+
+		for (const object of objects) {
+			const [ random, id, pos, type ] = object;			
+			new float({
+				name: type,
+				pos: pos
+			});
+		}
+
+		for (let float of floats)
+			float.tick();
+		for (let region of regions)
+			region.tick();
 	}
 
 	export function tick() {
@@ -48,7 +68,7 @@ namespace outer_space {
 	}
 
 	function setup() {
-		element = document.getElementById("outer-space")!;
+		outer_space = document.getElementById("outer-space")!;
 
 		mapSize = [window.innerWidth, window.innerHeight];
 
@@ -69,16 +89,13 @@ namespace outer_space {
 		}
 	}
 
-	function rerender() {
-
-	}
-
 	interface float_traits {
 		name: string
 		pos: vec2
 	}
 
 	class float {
+		static = false
 		element
 		constructor(public options: float_traits) {
 			floats.push(this);
@@ -98,7 +115,10 @@ namespace outer_space {
 			//console.log('half', half);
 		}
 		append() {
-			element.append(this.element);
+			outer_space.append(this.element);
+		}
+		remove() {
+			this.element.remove();
 		}
 		tick() {
 			this.style_position();
@@ -106,6 +126,7 @@ namespace outer_space {
 	}
 
 	class region {
+		static = false
 		element;
 		constructor(
 			public name,
@@ -130,7 +151,10 @@ namespace outer_space {
 			this.element.style.height = this.radius * 2 * pixelMultiple;
 		}
 		append() {
-			element.append(this.element);
+			outer_space.append(this.element);
+		}
+		remove() {
+			this.element.remove();
 		}
 		tick() {
 			this.style_position();

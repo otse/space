@@ -1,0 +1,20 @@
+{
+    "id": 208,
+    "ip": "ffff192.168.2.16",
+    "unreg": true,
+    "username": "Captain",
+    "password": "N/A",
+    "pos": [
+        0,
+        0
+    ],
+    "goto": [
+        0,
+        0
+    ],
+    "speed": 1,
+    "health": 100,
+    "flight": false,
+    "flightLocation": "",
+    "scanning": false
+}

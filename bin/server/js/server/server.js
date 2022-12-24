@@ -37,6 +37,10 @@ exports.tick = tick;
 function init() {
     setInterval(tick, 1000);
     new lod_1.default.galaxy;
+    let rock = new lod_1.default.obj;
+    rock.type = 'rock';
+    rock.pos = [-1, -1];
+    lod_1.default.add(rock);
     lost_minor_planet_1.default.init();
     locations_1.locations.init();
     //createLocationPersistence();
@@ -48,32 +52,37 @@ function init() {
             let page = fs.readFileSync('page.html');
             res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
             res.end(page);
-            //sendGeneric(page);
+            return;
         }
         else if (req.url == '/style.css') {
             let style = fs.readFileSync('style.css');
             res.writeHead(200, { CONTENT_TYPE: "text/css" });
             res.end(style);
+            return;
         }
         else if (req.url == '/outer%20space.css') {
             let style = fs.readFileSync('outer space.css');
             res.writeHead(200, { CONTENT_TYPE: "text/css" });
             res.end(style);
+            return;
         }
         else if (req.url == '/bundle.js') {
             let client = fs.readFileSync('bundle.js');
             res.writeHead(200, { CONTENT_TYPE: TEXT_JAVASCRIPT });
             res.end(client);
+            return;
         }
         else if (req.url == '/regions.json') {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             let str = JSON.stringify(lost_minor_planet_1.default.regions);
             res.end(str);
+            return;
         }
         else if (req.url == '/locations.json') {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
             let str = JSON.stringify(locations_1.locations.file);
             res.end(str);
+            return;
         }
         if (req.url == '/login' && req.method == 'POST') {
             let body = '';
@@ -196,6 +205,7 @@ function init() {
         let session = new session_1.default;
         session.ply = ply;
         session.grid = new lod_1.default.grid(lod_1.default.ggalaxy, 2, 2);
+        session.grid.big = lod_1.default.galaxy.big(ply.pos);
         lod_1.default.ggalaxy.update_grid(session.grid, ply.pos);
         const send_sply = function () {
             let reduced = {
@@ -219,39 +229,29 @@ function init() {
         if (req.url == '/ply') {
             console.log('get ply');
             send_sply();
+            return;
+        }
+        else if (req.url == '/celestial%20objects') {
+            let objects = session.grid.gather();
+            send_stuple([['celestial objects'], objects]);
+            res.end();
+            return;
         }
         else if (req.url == '/logout') {
             console.log('going to log you out');
-            if (lost_minor_planet_1.default.logins[`${ip}`]) {
-                const username = lost_minor_planet_1.default.logins[`${ip}`];
-                delete lost_minor_planet_1.default.logins[`${ip}`];
+            if (lost_minor_planet_1.default.logins[ip]) {
+                const username = lost_minor_planet_1.default.logins[ip];
+                delete lost_minor_planet_1.default.logins[ip];
                 lost_minor_planet_1.default.write_logins();
                 res.end(`logging out ${username}`);
             }
             else {
                 res.end(`not logged in, playing as unregistered`);
             }
-        }
-        else if (req.url == '/scan') {
-        }
-        else if (req.url.search('/submitFlight') == 0) {
-            console.log('received flight');
-            let val;
-            val = req.url.split('=')[1];
-            val = val.replace(/%20/g, " ");
-            console.log(val);
-            if (!locations_1.locations.get(val)) {
-                send_smessage("Location doesn't exist");
-            }
-            else {
-                ply.flight = true;
-                ply.flightLocation = val;
-                lost_minor_planet_1.default.write_ply(ply);
-                send_sply();
-            }
+            return;
         }
         else {
-            res.end();
+            res.end('unhandled resource');
         }
     }).listen(port);
 }

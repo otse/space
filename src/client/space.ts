@@ -36,7 +36,7 @@ namespace space {
 				return region;
 	}
 
-	function make_request(method, url) {
+	export function make_request(method, url) {
 		return new Promise(function (resolve, reject) {
 			var xhr = new XMLHttpRequest();
 			xhr.open(method, url);

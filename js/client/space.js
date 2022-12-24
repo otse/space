@@ -56,6 +56,7 @@ var space;
             xhr.send();
         });
     }
+    space.make_request = make_request;
     // Example:
     function deleteAllCookies() {
         var cookies = document.cookie.split(";");
