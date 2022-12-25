@@ -315,8 +315,8 @@ function init() {
 			return;
 		}
 		else if (req.url == '/purge') {
-			let res = lmp.delete_user(ip);
-			send_object(res);
+			let res = lmp.delete_user(ip, true);
+			send_object(res || false);
 			return;
 		}
 		else if (req.url == '/astronomical%20objects') {
@@ -328,7 +328,7 @@ function init() {
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
-
+			
 			if (lmp.logins[ip]) {
 				const username = lmp.logins[ip];
 				const ply = lmp.table[username];

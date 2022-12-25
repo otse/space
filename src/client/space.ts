@@ -126,8 +126,16 @@ namespace space {
 			text += username_header();
 			text += addReturnOption();
 
+			//<div class="amenities">
 			text += `
-			<div class="amenities">
+			`;
+			if (!sply || sply.guest)
+				text += `
+			Do you wish to
+			<span class="span-button" onclick="space.show_register()">register</span>
+			
+			<span class="span-button" onclick="space.show_login()">or login</span>
+			<p>
 			`;
 			if (!sply.guest)
 				text += `
@@ -135,10 +143,10 @@ namespace space {
 			`;
 			if (sply.guest)
 				text += `
-			You're allowed to <br />
-			<span class="span-button" onclick="space.purge()">delete guest account</span>
-			</div>
-		`;
+			(Perhaps you want to
+			<span class="span-button" onclick="space.purge()">delete your guest account</span>)
+			`;
+			//</div>
 			main.innerHTML = text;
 		}
 		else {
@@ -334,7 +342,7 @@ namespace space {
 	export function show_logout_message() {
 		let main = document.getElementById("main")!;
 
-		let text = `you logged out`;
+		let text = `You logged out`;
 
 		main.innerHTML = text;
 	}
@@ -342,11 +350,12 @@ namespace space {
 	export function show_guest_choice() {
 		let main = document.getElementById("main")!;
 		let text = `
-		You can <span class="span-button" onclick="space.play_as_guest()">play as a guest</span>,
-		<span class="span-button" onclick="space.show_login()">login</span>
-		or
+		Welcome, space farer.
+		<p>
+		<span class="span-button" onclick="space.play_as_guest()">Play as a guest</span>,
 		<span class="span-button" onclick="space.show_register()">register</span>
-		
+		<span class="span-button" onclick="space.show_login()">or login</span>
+		</p>
 		`;
 		main.innerHTML = text;
 	}
@@ -354,10 +363,14 @@ namespace space {
 	export function show_login() {
 		let textHead = document.getElementById("main")!;
 
-		let text = `
+		let text = ``;
+		if (sply && sply.guest)
+			text += `
 		<p>
-		logging in will remove your temporary user / ship
+		You're currently playing as a guest. Here you can login to an actual account.
 		</p>
+		`;
+		text += `
 		<form action="login" method="post">
 		<label for="username">Username</label><br />
 		<input id="username" type="text" placeholder="" name="username" required><br /><br />
@@ -436,6 +449,8 @@ namespace space {
 
 	export async function purge() {
 		const res = await make_request_json('GET', 'purge');
+		loggedIn = false;
+		sply = undefined;
 		show_guest_choice();
 	}
 

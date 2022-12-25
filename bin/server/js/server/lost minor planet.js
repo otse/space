@@ -13,7 +13,7 @@ var lost_minor_planet;
         let num = 0;
         for (let name of lost_minor_planet.users) {
             let ply = fetch_user(name);
-            if (!ply.dormant) {
+            if (ply && !ply.dormant) {
                 num++;
                 lost_minor_planet.table[name] = ply;
             }
@@ -80,18 +80,24 @@ var lost_minor_planet;
     }
     lost_minor_planet.new_ply = new_ply;
     function handle_new_login(ip) {
-        if (lost_minor_planet.logins[ip])
-            0;
+        delete_user(ip, true);
     }
     lost_minor_planet.handle_new_login = handle_new_login;
-    function delete_user(ip) {
+    function splice_user(username) {
+        lost_minor_planet.users.splice(lost_minor_planet.users.indexOf(username), 1);
+    }
+    function delete_user(ip, guest) {
         const username = lost_minor_planet.logins[ip];
         if (username) {
             const ply = get_ply_from_table_or_fetch(username);
             if (ply) {
-                if (ply.guest) {
+                if (guest == ply.guest) {
                     delete lost_minor_planet.logins[ip];
+                    delete lost_minor_planet.table[username];
+                    fs.unlinkSync(user_path(username));
+                    splice_user(username);
                     write_logins();
+                    write_users();
                     return true;
                 }
             }
@@ -101,20 +107,23 @@ var lost_minor_planet;
     function get_ply_from_table_or_fetch(username) {
         let ply = lost_minor_planet.table[username];
         if (!ply) {
-            ply = lost_minor_planet.table[username] = fetch_user(username);
+            let ply = fetch_user(username);
+            if (ply)
+                lost_minor_planet.table[username] = ply;
         }
         return ply;
     }
     lost_minor_planet.get_ply_from_table_or_fetch = get_ply_from_table_or_fetch;
     function fetch_user(username) {
-        return object_from_file(user_path(username));
+        if (object_exists(user_path(username)))
+            return object_from_file(user_path(username));
     }
     lost_minor_planet.fetch_user = fetch_user;
     function make_quest(ip) {
-        console.log('make new quest');
+        console.log('make new quest', lost_minor_planet.meta.users);
         let ply;
         ply = new_ply();
-        ply.username = `pilot#${lost_minor_planet.meta.users++}`;
+        ply.username = `pilot#${lost_minor_planet.meta.users}`;
         ply.guest = true;
         ply.ip = ip;
         lost_minor_planet.logins[ip] = ply.username;
@@ -126,29 +135,21 @@ var lost_minor_planet;
     }
     lost_minor_planet.make_quest = make_quest;
     function get_ply_from_ip(ip) {
-        console.log('new get ply', ip);
-        let ply;
+        console.log('get_ply_from_ip', ip);
         if (lost_minor_planet.logins[ip]) {
             const username = lost_minor_planet.logins[ip];
             if (lost_minor_planet.table[username]) {
-                ply = lost_minor_planet.table[username];
+                return lost_minor_planet.table[username];
             }
             else {
                 // not logged in yet this server-session
                 if (object_exists(user_path(username))) {
-                    ply = fetch_user(username);
+                    let ply = fetch_user(username);
                     lost_minor_planet.table[username] = ply;
-                }
-                else {
-                    // logins.json is pointing to a non-existing user.json
+                    return ply;
                 }
             }
         }
-        //else {
-        // we aren't in logins.json -> make a temporary ply user#1234
-        //	ply = make_quest(ip);
-        //}
-        return ply;
     }
     lost_minor_planet.get_ply_from_ip = get_ply_from_ip;
 })(lost_minor_planet || (lost_minor_planet = {}));

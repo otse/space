@@ -262,8 +262,8 @@ function init() {
             return;
         }
         else if (req.url == '/purge') {
-            let res = lost_minor_planet_1.default.delete_user(ip);
-            send_object(res);
+            let res = lost_minor_planet_1.default.delete_user(ip, true);
+            send_object(res || false);
             return;
         }
         else if (req.url == '/astronomical%20objects') {

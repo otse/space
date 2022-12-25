@@ -492,8 +492,16 @@ var space = (function () {
             if (space.sply) {
                 text += username_header();
                 text += addReturnOption();
+                //<div class="amenities">
                 text += `
-			<div class="amenities">
+			`;
+                if (!space.sply || space.sply.guest)
+                    text += `
+			Do you wish to
+			<span class="span-button" onclick="space.show_register()">register</span>
+			
+			<span class="span-button" onclick="space.show_login()">or login</span>
+			<p>
 			`;
                 if (!space.sply.guest)
                     text += `
@@ -501,10 +509,10 @@ var space = (function () {
 			`;
                 if (space.sply.guest)
                     text += `
-			You're allowed to <br />
-			<span class="span-button" onclick="space.purge()">delete guest account</span>
-			</div>
-		`;
+			(Perhaps you want to
+			<span class="span-button" onclick="space.purge()">delete your guest account</span>)
+			`;
+                //</div>
                 main.innerHTML = text;
             }
             else {
@@ -631,28 +639,33 @@ var space = (function () {
         space.layoutFlightControls = layoutFlightControls;
         function show_logout_message() {
             let main = document.getElementById("main");
-            let text = `you logged out`;
+            let text = `You logged out`;
             main.innerHTML = text;
         }
         space.show_logout_message = show_logout_message;
         function show_guest_choice() {
             let main = document.getElementById("main");
             let text = `
-		You can <span class="span-button" onclick="space.play_as_guest()">play as a guest</span>,
-		<span class="span-button" onclick="space.show_login()">login</span>
-		or
+		Welcome, space farer.
+		<p>
+		<span class="span-button" onclick="space.play_as_guest()">Play as a guest</span>,
 		<span class="span-button" onclick="space.show_register()">register</span>
-		
+		<span class="span-button" onclick="space.show_login()">or login</span>
+		</p>
 		`;
             main.innerHTML = text;
         }
         space.show_guest_choice = show_guest_choice;
         function show_login() {
             let textHead = document.getElementById("main");
-            let text = `
+            let text = ``;
+            if (space.sply && space.sply.guest)
+                text += `
 		<p>
-		logging in will remove your temporary user / ship
+		You're currently playing as a guest. Here you can login to an actual account.
 		</p>
+		`;
+            text += `
 		<form action="login" method="post">
 		<label for="username">Username</label><br />
 		<input id="username" type="text" placeholder="" name="username" required><br /><br />
@@ -730,6 +743,8 @@ var space = (function () {
         function purge() {
             return __awaiter(this, void 0, void 0, function* () {
                 yield make_request_json('GET', 'purge');
+                space.loggedIn = false;
+                space.sply = undefined;
                 show_guest_choice();
             });
         }

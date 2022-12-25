@@ -37,7 +37,7 @@ namespace lost_minor_planet {
 		let num = 0;
 		for (let name of users) {
 			let ply = fetch_user(name);
-			if (!ply.dormant) {
+			if (ply && !ply.dormant) {
 				num++;
 				table[name] = ply;
 			}
@@ -84,7 +84,7 @@ namespace lost_minor_planet {
 		return ip;
 	}
 
-	export function user_path(username) {
+	export function user_path(username: string) {
 		return `users/${username}.json`;
 	}
 
@@ -105,18 +105,25 @@ namespace lost_minor_planet {
 	}
 
 	export function handle_new_login(ip) {
-		if (logins[ip])
-			0;
+		delete_user(ip, true);
 	}
 
-	export function delete_user(ip) {
+	function splice_user(username) {
+		users.splice(users.indexOf(username), 1);
+	}
+
+	export function delete_user(ip, guest) {
 		const username = logins[ip];
 		if (username) {
 			const ply = get_ply_from_table_or_fetch(username);
 			if (ply) {
-				if (ply.guest) {
+				if (guest == ply.guest) {
 					delete logins[ip];
+					delete table[username];
+					fs.unlinkSync(user_path(username));
+					splice_user(username);
 					write_logins();
+					write_users();
 					return true;
 				}
 			}
@@ -126,20 +133,23 @@ namespace lost_minor_planet {
 	export function get_ply_from_table_or_fetch(username) {
 		let ply = table[username];
 		if (!ply) {
-			ply = table[username] = fetch_user(username);
+			let ply = fetch_user(username);
+			if (ply)
+				table[username] = ply;
 		}
 		return ply;
 	}
 
 	export function fetch_user(username) {
-		return object_from_file(user_path(username));
+		if (object_exists(user_path(username)))
+			return object_from_file(user_path(username));
 	}
 
 	export function make_quest(ip) {
-		console.log('make new quest');
+		console.log('make new quest', meta.users);
 		let ply: ply_json;
 		ply = new_ply();
-		ply.username = `pilot#${meta.users++}`;
+		ply.username = `pilot#${meta.users}`;
 		ply.guest = true;
 		ply.ip = ip;
 		logins[ip] = ply.username;
@@ -152,33 +162,22 @@ namespace lost_minor_planet {
 
 	export function get_ply_from_ip(ip) {
 
-		console.log('new get ply', ip);
-
-		let ply: ply_json | undefined;
+		console.log('get_ply_from_ip', ip);
 
 		if (logins[ip]) {
 			const username = logins[ip];
 			if (table[username]) {
-				ply = table[username];
+				return table[username];
 			}
 			else {
 				// not logged in yet this server-session
 				if (object_exists(user_path(username))) {
-					ply = fetch_user(username);
+					let ply = fetch_user(username);
 					table[username] = ply;
-				}
-				else {
-					// logins.json is pointing to a non-existing user.json
-
+					return ply;
 				}
 			}
 		}
-		//else {
-		// we aren't in logins.json -> make a temporary ply user#1234
-		//	ply = make_quest(ip);
-		//}
-
-		return ply;
 	}
 }
 

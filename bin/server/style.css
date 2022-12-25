@@ -144,10 +144,12 @@ span.facilities {}
 
 span.span-button {
 	display: inline-block;
-	border: 1px inset #c1c1c1;
-	padding: 0px 6px;
-	cursor: pointer;
-	border-radius: 4px;
+    /* color: white; */
+    /* border: 1px inset #c1c1c1; */
+    border-bottom: 1px dashed white;
+    /* padding: 0px 6px; */
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 span.refuel {
