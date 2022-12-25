@@ -15,20 +15,11 @@ namespace space {
 		return val > max ? max : val < min ? min : val;
 	}
 
-	export var sply, senemies;
+	export var loggedIn = false;
+	export var sply;
 
-	export var region, location;
-
+	export var region;
 	export var regions, locations
-
-	export var currentSector, currentLocation;
-
-	function get_location_by_name(name) {
-		for (let location of locations)
-			if (location.name == name)
-				return location;
-		console.warn(`location ${location} doesnt exist`);
-	}
 
 	function get_region_by_name(name) {
 		for (let region of regions)
@@ -36,13 +27,13 @@ namespace space {
 				return region;
 	}
 
-	export function make_request(method, url) {
+	export function make_request_json(method, url) {
 		return new Promise(function (resolve, reject) {
 			var xhr = new XMLHttpRequest();
 			xhr.open(method, url);
 			xhr.onload = function () {
 				if (xhr.status >= 200 && xhr.status < 300) {
-					resolve(xhr.response);
+					resolve(JSON.parse(xhr.response));
 				} else {
 					reject({
 						status: xhr.status,
@@ -73,9 +64,9 @@ namespace space {
 		}
 	}
 
-	export function tick() {
+	export function step() {
 
-		outer_space.tick();
+		outer_space.step();
 
 	}
 
@@ -95,171 +86,121 @@ namespace space {
 
 		if (document.cookie) {
 			document.cookie = 'a';
-			console.log('our cookie is ', document.cookie);
+			//console.log('our cookie is ', document.cookie);
 		}
 		else {
-			console.log('logged_in');
+			//console.log('logged_in');
 		}
 
+		console.log('pre ask initial');
+
 		await ask_initial();
+
+		console.log('post ask initial');
 
 		outer_space.statics();
 
 	}
 
-	export function handle_sply() {
-		console.log('handle-sply', sply);
+	async function ask_initial() {
+		regions = await make_request_json('GET', 'regions.json');
+		locations = await make_request_json('GET', 'locations.json');
+		loggedIn = <boolean>await make_request_json('GET', 'loggedIn');
+		let stuple = <any>await make_request_json('GET', 'ply');
 
-		let logo = document.querySelector(".logo .text")!;
-
-		region = get_region_by_name(sply.sector);
-
-		//if (sply.unregistered)
-		//	logo.innerHTML = `space`
-		//else
-		//	logo.innerHTML = `space - ${sply.username}`
+		receive_stuple(stuple);
+		choose_layout();
+		console.log('asked initials');
 	}
 
 	var showingAccountBubbles = false;
 	function show_account_bubbles() {
 		showingAccountBubbles = true;
-		let textHead = document.getElementById("mainDiv")!;
 
 		let username = sply && sply.username;
 		let text = '';
 
-		text += username_header();
-		text += addReturnOption();
+		let main = document.getElementById("main")!;
 
-		text += `
-		<span class="spanButton" onclick="space.showLogin()">login</span>,
-		<span class="spanButton" onclick="space.logout()">logout</span>,
-		or
-		<span class="spanButton" onclick="space.show_register()">register</span>
+		if (sply) {
+			text += username_header();
+			text += addReturnOption();
 
+			text += `
+			<div class="amenities">
+			`;
+			if (!sply.guest)
+				text += `
+			Do you want to <span class="span-button" onclick="space.logout()">logout</span> ?
+			`;
+			if (sply.guest)
+				text += `
+			You're allowed to <br />
+			<span class="span-button" onclick="space.purge()">delete guest account</span>
+			</div>
 		`;
-		textHead.innerHTML = text;
-	}
-
-	async function ask_initial() {
-		const one = <string>await make_request('GET', 'regions.json');
-		const two = <string>await make_request('GET', 'locations.json');
-		const three = <string>await make_request('GET', 'ply');
-
-		regions = JSON.parse(one);
-		locations = JSON.parse(two);
-		receive_stuple(three);
-
-		console.log('asked initials');
-	}
-
-	export function chooseLayout() {
-		if (sply.flight) {
-			layoutFlight();
-		}
-		else if (sply.sublocation == 'Refuel') {
-			layoutRefuel();
-		}
-		else if (sply.scanning) {
-			layoutScanning();
-		}
-		else if (location) {
-			if (location.type == 'Station') {
-				layoutStation();
-			}
-			else if (location.type == 'Junk') {
-				layoutJunk();
-			}
-			else if (location.type == 'Contested') {
-			}
-			layoutContested();
+			main.innerHTML = text;
 		}
 		else {
+			show_guest_choice();
+		}
+	}
+
+	export function choose_layout() {
+		console.log('choose layout', loggedIn);
+
+		if (loggedIn) {
 			layout_default();
 		}
+		else {
+			show_guest_choice();
+		}
 	}
 
-
-	function receive_stuple(res) {
-
-		if (res.length == 0) {
-			console.warn('expected a stuple but received nothing');
+	function receive_stuple(stuple) {
+		console.log('received stuple', stuple);
+		if (stuple == false)
 			return;
-		}
-
-		let stuple: Stuple = JSON.parse(res);
-
-		const type = stuple[0];
-		const payload = stuple[1];
-
-		console.log('received stuple type', type);
-
+		const [type, data] = stuple;
 		if (type == 'sply') {
-			console.log('sply!');
-
-			sply = payload;
-
-			region = get_region_by_name(sply.sector);
-			location = get_location_by_name(sply.location);
-
-			handle_sply();
-
-			chooseLayout();
+			sply = data;
+			//choose_layout();
 		}
-
 		else if (type == 'message') {
-			layoutMessage(payload);
+			layout_message(data);
 		}
-
-		else if (type == 'senemies') {
-			senemies = payload;
-		}
-	}
-
-	function BuildLargeTile(tile: any) {
-		console.log('build large tile from', tile);
-		let gameBox = document.createElement('div');
-		gameBox.classList.toggle('gameBox');
+		//else if (type == 'senemies') {
+		//	senemies = data;
+		//}
 	}
 
 	function username_header() {
-
 		let text = '';
-
-		text += `
-		<p class="smallish reminder">`;
-
-		if (sply)
-			console.log('sply is', sply);
-
-		if (sply.unreg)
+		text += `<p class="logged">`;
+		if (sply.guest)
 			text += `
-			Playing unregistered (by ip)
-			<span class="material-icons" style="font-size: 18px">
-			no_accounts
-			</span>`;
+			[ Playing as unregistered ${sply.username}
+			<span class="material-icons" style="font-size: 18px">no_accounts</span>
+			]`;
 		else
 			text += `
-			Logged in as ${sply.username} <!-- #${sply.id} -->
-			<span class="material-icons" style="font-size: 18px">
-			how_to_reg
-			</span>
+			[ Logged in as ${sply.username}
+			<span class="material-icons" style="font-size: 18px">how_to_reg</span>
+			]
 			`;
-
 		text += `<p>`;
-
 		return text;
 	}
 
 	function addFlightOption() {
-		let textHead = document.getElementById("mainDiv")!;
+		let textHead = document.getElementById("main")!;
 
 		let text = '';
 
 		text += `
 		<p>
 		<br />
-		<span class="spanButton" onclick="space.layoutFlightControls()">Flight Menu</span>
+		<span class="span-button" onclick="space.layoutFlightControls()">Flight Menu</span>
 		`;
 
 		return text;
@@ -270,7 +211,7 @@ namespace space {
 
 		text += `
 		<p>
-		<span class="spanButton" onclick="space.chooseLayout()"><</span>
+		<span class="span-button" onclick="space.choose_layout()"><</span>
 		<p>
 		`;
 
@@ -321,10 +262,9 @@ namespace space {
 	function makeWhereabouts() {
 		for (let region of regions) {
 			let dist = pts.dist([1, 0], region.center);
-			if (dist < region.radius)
-			{
+			if (dist < region.radius) {
 				console.log(`were in region ${region.name} dist ${dist}`);
-				
+
 			}
 		}
 		let text = '';
@@ -344,311 +284,27 @@ namespace space {
 	}
 
 	function layout_default() {
-		let textHead = document.getElementById("mainDiv")!;
+		console.log('layout default');
+
+		let main = document.getElementById("main")!;
 		let text = username_header();
 		text += makeWhereabouts();
 		text += addFlightOption();
-		textHead.innerHTML = text;
+		main.innerHTML = text;
 	}
 
-	function layoutStation() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = username_header();
-
-		//text += drawSpaceship();
-
-		text += makeWhereabouts();
-
-		text += `<p>`
-		text += `<span class="facilities">`
-
-		if (location.facilities) {
-			if (location.facilities.indexOf("Refuel") > -1)
-				text += 'You can <span class="spanButton" onclick="space.transportSublocation(`refuel`)">refuel</span> here.';
-		}
-		text += `</span>`;
-
-		textHead.innerHTML = text;
-
-		addFlightOption();
-
-		//layoutFlightControls();
-	}
-
-	function layoutJunk() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = username_header();
-
-		text += makeWhereabouts();
-
-		text += `<p>`
-
-		text += `
-		It's a junk field.
-		You can <span class="spanButton" onclick="space.scanJunk()">scan</span> the debris.
-		`;
-
-		textHead.innerHTML = text;
-
-		addFlightOption();
-
-		//layoutFlightControls();
-	}
-
-
-	function layoutContested() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = username_header();
-
-		text += makeWhereabouts();
-
-		text += addLocationMeter();
-
-		text += `<p>`
-
-		text += `
-		This regional blob of space is unmonitored by law.
-		<p>
-		You can <span class="spanButton" onclick="space.seeEnemies()">see nearby enemies.</span>
-		`;
-
-		textHead.innerHTML = text;
-
-		addFlightOption();
-
-		//layoutFlightControls();
-	}
-
-	function layoutEnemies() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = '';
-
-		text += username_header();
-
-		text += addReturnOption();
-
-		text += addLocationMeter();
-
-		/*let t;
-		t = setInterval(() => {
-			makeRequest('GET', 'ply')
-			.then(function (res: any) {
-				//receiveStuple(res);
-				console.log('got');
-				
-			})
-		}, 2000);*/
-
-		//text += makeWhereabouts();
-
-		text += `<p>`
-
-		text += `
-		These are pirates and exiles that you can engage.
-		<p>
-		<div class="enemies">
-		<table>
-		<thead>
-		<tr>
-		<td></td>
-		<td>type</td>
-		<!--<td>hp</td>
-		<!--<td>dmg</td>-->
-		<td>pos</td>
-		<td>dist</td>
-		</tr>
-		</thead>
-		<tbody id="list">
-		`;
-
-		for (let enemy of senemies) {
-			let position = [
-				enemy.position[0].toFixed(1),
-				enemy.position[1].toFixed(1)
-			]
-			text += `
-			<tr>
-			<td class="sel">&nbsp;</td>
-			<td>${enemy.name}</td>
-			<!--<td>%${enemy.health}</td>
-			<td>${enemy.damage}</td>-->
-			<td>${position[0]}, ${position[1]}</td>
-			<td>${pts.dist(sply.position, enemy.position).toFixed(1)} km</td>
-			</tr>
-			`
-			//
-		}
-
-		text += `
-		</tbody>
-		</table>
-		</div>
-		`
-
-		textHead.innerHTML = text;
-
-		let list = document.getElementById("list")!;
-
-		console.log(list.childElementCount);
-
-		let active;
-		for (let i = 0; i < list.children.length; i++) {
-			let child = list.children[i] as HTMLElement;
-			child.onclick = function () {
-				let dom = this as HTMLElement;
-				console.log('woo', this);
-				if (active != this) {
-					if (active) {
-						active.classList.remove('selected')
-					}
-					dom.classList.add('selected')
-					active = this;
-				}
-			}
-			console.log(child);
-		}
-
-		//addFlightOption();
-
-		//layoutFlightControls();
-	}
-
-	function layoutRefuel() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = username_header();
-
-		text += 'You are at a refuelling bay.';
-
-		text += ' <span class="spanButton" onclick="space.returnSublocation()">Back to Station</span>';
-
-		textHead.innerHTML = text;
-
-		//layoutFlightControls();
-	}
-
-	function layoutScanning() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = username_header();
-
-		text += `You\'re scanning the junk at ${location.name || ''}.`;
-
-		if (!sply.scanCompleted)
-			text += ' <span class="spanButton" onclick="space.stopScanning()">Cancel?</span>';
-
-		console.log(sply);
-
-		//if (!sply.scanCompleted) {
-		function updateBar() {
-			let now = Date.now();
-
-			if (now > sply.scanEnd)
-				now = sply.scanEnd;
-
-			const duration = sply.scanEnd - sply.scanStart;
-			const time = now - sply.scanStart;
-			const width = time / duration;
-			const minutesPast = Math.floor(time / 1000 / 60).toFixed(0);
-			const minutesRemain = Math.round(duration / 1000 / 60).toFixed(0);
-
-			const over = sply.scanEnd - Date.now();
-
-			let bar = document.getElementById("barProgress")!;
-			let text = document.getElementById("barText")!;
-
-			if (!bar || !text)
-				return;
-
-			bar.style.width = `${(width * 100).toFixed(0)}%`;
-			if (over > 0)
-				text.innerHTML = `${minutesPast} / ${minutesRemain} minutes`;
-			else
-				text.innerHTML = '<span onclick="space.completeScan()">Ok</span>';
-
-		}
-
-		text += `
-		<div class="bar">
-		<div id="barProgress"></div>
-		<span id="barText"></span>
-		</div>`
-
-		//if (sply.scanCompleted)
-		//	text += '<p><br /><span class="spanButton" onclick="space.completeScan()">See scan results</span>';
-
-		textHead.innerHTML = text;
-
-		updateBar();
-
-		const t = setInterval(function () {
-			if (sply.scanning) {
-				const time = sply.scanEnd - Date.now();
-				if (time <= 0) {
-					clearInterval(t);
-					console.log('clear the interval');
-				}
-				updateBar();
-			}
-			else {
-				clearInterval(t);
-			}
-		}, 1000);
-
-		//layoutFlightControls();
-	}
-
-	function layoutMessage(message) {
-		let textHead = document.getElementById("mainDiv")!;
-
+	function layout_message(message) {
+		let textHead = document.getElementById("main")!;
 		let text = `<span class="message">${message}</span>`;
-
 		textHead.innerHTML += text;
-
 	}
 
 	function returnButton() {
-		return '<p><span class="spanButton" onclick="space.chooseLayout()">Return</span><p>';
-	}
-
-	function layoutFlight() {
-		let textHead = document.getElementById("mainDiv")!;
-
-		let text = username_header();
-
-		//text += addTabs();
-
-		const loc = get_location_by_name(sply.flightLocation);
-
-		text += `You\'re flying towards <span style="colors: ${loc.color || "inherit"} ">${loc.name}
-		(${loc.type})</span>.`;
-
-		/*text += `
-		<div class="bar">
-		<div id="barProgress"></div>
-		<span id="barText">x</span>
-		</div>`*/
-
-		text += '';
-
-		text += ' Attempt to <span class="spanButton" onclick="space.tryDock()">arrive / dock</span>';
-
-		textHead.innerHTML = text;
-
-		addFlightOption();
-
-		//text += endTabs();
-
-		//layoutFlightControls();
-
+		return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';
 	}
 
 	export function layoutFlightControls() {
-		let textHead = document.getElementById("mainDiv")!;
+		let textHead = document.getElementById("main")!;
 
 		console.log('wot up');
 
@@ -668,19 +324,40 @@ namespace space {
 			}
 			text += `<option>Non-existing option</option>`
 			text += `</select>
-		<span class="spanButton" onclick="space.submitFlight()">Flight</span>
+		<span class="span-button" onclick="space.submitFlight()">Flight</span>
 		</form>`;
 		}
 
 		textHead.innerHTML = text;
-
-
 	}
 
-	export function showLogin() {
-		let textHead = document.getElementById("mainDiv")!;
+	export function show_logout_message() {
+		let main = document.getElementById("main")!;
+
+		let text = `you logged out`;
+
+		main.innerHTML = text;
+	}
+
+	export function show_guest_choice() {
+		let main = document.getElementById("main")!;
+		let text = `
+		You can <span class="span-button" onclick="space.play_as_guest()">play as a guest</span>,
+		<span class="span-button" onclick="space.show_login()">login</span>
+		or
+		<span class="span-button" onclick="space.show_register()">register</span>
+		
+		`;
+		main.innerHTML = text;
+	}
+
+	export function show_login() {
+		let textHead = document.getElementById("main")!;
 
 		let text = `
+		<p>
+		logging in will remove your temporary user / ship
+		</p>
 		<form action="login" method="post">
 		<label for="username">Username</label><br />
 		<input id="username" type="text" placeholder="" name="username" required><br /><br />
@@ -688,7 +365,7 @@ namespace space {
 		<label for="psw">Password</label><br />
 		<input id="password" type="password" placeholder="" name="psw" required><br /><br />
 		
-		<button type="button" onclick="space.xhrLogin()">Login</button>
+		<button type="button" onclick="space.xhr_login()">Login</button>
 		
 		</form>
 		<p>
@@ -699,7 +376,7 @@ namespace space {
 	}
 
 	export function show_register() {
-		let textHead = document.getElementById("mainDiv")!;
+		let textHead = document.getElementById("main")!;
 
 		let text = `
 		<form action="register" method="post">
@@ -716,8 +393,8 @@ namespace space {
 		<input class="wrong" type="password" autocomplete="new-password" name="password-repeat" id="password-repeat" maxlength="20" minlength="4" required>
 		<br /><br />
 		
-		<label for="keep-ship" title="Start fresh or keep your play-via-ip, unregistered ship">
-		<input type="checkbox" checked="checked" name="remember" id="keep-ship"> Keep current progress
+		<label for="keep-ship" title="Keep your progress of your guest account">
+		<input type="checkbox" checked="checked" name="remember" id="keep-ship"> Keep current guest ship progress
 		</label>
 		<p>
 		you can link your mail later
@@ -731,94 +408,48 @@ namespace space {
 		textHead.innerHTML = text;
 	}
 
-	export function submitFlight() {
+	export async function submitFlight() {
 
 		var e = document.getElementById("flights")! as any;
 		var strUser = e.options[e.selectedIndex].text;
 
 		console.log(strUser);
 
-
-		make_request('GET', 'submitFlight=' + strUser)
-			.then(function (res: any) {
-				console.log('submitted flight');
-				receive_stuple(res);
-			});
-	}
-
-	export function scanJunk() {
-
-		make_request('GET', 'scan')
-			.then(function (res: any) {
-				receive_stuple(res);
-			});
-	}
-
-	export function completeScan() {
-
-		make_request('GET', 'completeScan')
-			.then(function (res: any) {
-				receive_stuple(res);
-			});
-	}
-
-	export function stopScanning() {
-
-		make_request('GET', 'stopScanning')
-			.then(function (res: any) {
-				receive_stuple(res);
-			});
-	}
-
-	export function seeEnemies() {
-
-		make_request('GET', 'seeEnemies')
-			.then(function (res: any) {
-				receive_stuple(res);
-				layoutEnemies();
-			});
-	}
-
-	export function tryDock() {
-
-		make_request('GET', 'dock')
-			.then(function (res: any) {
-				console.log('asking server if we can dock');
-				receive_stuple(res);
-			});
-	}
-
-	export function returnSublocation() {
-
-		make_request('GET', 'returnSublocation')
-			.then(function (res: any) {
-				console.log('returned from sublocation');
-
-				receive_stuple(res);
-
-			});
-	}
-
-	export function transportSublocation(facility) {
-
-		make_request('GET', 'knock&sublocation=refuel')
-			.then(function (res: any) {
-				console.log('returned from sublocation');
-
-				receive_stuple(res);
-
-			});
+		let res = await make_request_json('GET', 'submitFlight=' + strUser);
+		receive_stuple(res);
 	}
 
 	export async function logout() {
-		const res = await make_request('GET', 'logout')
-		alert(res);
-		sply.unreg = true;
-		handle_sply();
-
+		const data = <any>await make_request_json('GET', 'logout');
+		if (data[0]) {
+			alert(data[1]);
+			loggedIn = false;
+			sply = undefined;
+			show_logout_message();
+		}
+		else {
+			alert(data[1]);
+		}
+		//const three = <string>await make_request('GET', 'ply');
+		//receive_stuple(three);
 	}
 
-	export function xhrLogin() {
+	export async function purge() {
+		const res = await make_request_json('GET', 'purge');
+		show_guest_choice();
+	}
+
+	export async function play_as_guest() {
+		await make_request_json('GET', 'guest');
+		const res2 = await make_request_json('GET', 'ply');
+		loggedIn = <boolean>await make_request_json('GET', 'loggedIn');
+
+		receive_stuple(res2);
+		choose_layout();
+		console.log('layout');
+	}
+
+	export async function xhr_login() {
 		let username = (<any>document.getElementById("username")!).value;
 		let password = (<any>document.getElementById("password"))!.value;
 
@@ -831,15 +462,14 @@ namespace space {
 		//Send the proper header information along with the request
 		http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
-		http.onreadystatechange = function () {//Call a function when the state changes.
+		http.onreadystatechange = async function () {
 			if (http.readyState == 4 && http.status == 200) {
 				alert(http.responseText);
 
-				make_request('GET', 'ply')
-					.then(function (res: any) {
-						receive_stuple(res);
-						//return makeRequest('GET', 'where');
-					})
+				loggedIn = <boolean>await make_request_json('GET', 'loggedIn');
+				const stuple = await make_request_json('GET', 'ply');
+				receive_stuple(stuple);
+				choose_layout();
 				//.then(function (res: any) {
 				//	receiveStuple(res);
 				//});
@@ -871,7 +501,7 @@ namespace space {
 		http.onreadystatechange = function () {//Call a function when the state changes.
 			if (http.readyState == 4 && http.status == 200) {
 				alert(http.responseText);
-				showLogin();
+				show_login();
 			}
 			else if (http.readyState == 4 && http.status == 400) {
 				alert(http.responseText);

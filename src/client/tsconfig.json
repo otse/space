@@ -20,8 +20,11 @@
     ],
     "include": [
         "./",
-        "util"
-, "../shared/pts.ts", "../shared/hooks.ts", "../shared/aabb2.ts"    ],
+        "util",
+        "../shared/pts.ts",
+        "../shared/hooks.ts",
+        "../shared/aabb2.ts"
+    ],
     "exclude": [
         "node_modules",
     ]

@@ -27,20 +27,6 @@ canvas {
 	z-index: -1;
 }
 
-.tabbar {
-	margin: 10px;
-}
-
-.tabbar .tabbutton {
-	display: inline-block;
-	background: #1b2f3a;
-	padding: 5px 25px;
-	border-radius: 5px 5px 0 0;
-	border: 1px inset #696969;
-}
-
-.tabcontent {}
-
 input {
 	ffont-family: monospace;
 	color: white;
@@ -109,14 +95,24 @@ option:hover {
 	cursor: pointer;
 }
 
+.shaded {
+	background: #0000001a;
+}
+
 .reminder {}
+
+.logged {
+	font-size: 0.9em;
+	color: #bdbdbd;
+	/* border-bottom: 1px solid darkgray; */
+}
 
 .smallish {
 	font-size: 0.9em;
 	color: #d1d1d1;
 }
 
-.content {
+#main {
 	display: inline-block;
 	margin: 30px;
 	/*width: 300px;*/
@@ -125,7 +121,7 @@ option:hover {
 	/* background: rgb(189 189 189 / 50%); */
 }
 
-.content .text {
+#main .text {
 	margin: 00px 0;
 	font-size: 18px;
 	color: #ffffff;
@@ -137,10 +133,21 @@ span.message {
 
 span.facilities {}
 
-span.spanButton {
-	border: 1px inset #d4d4d4;
-	padding: 6px;
+.amenities {
+	background: #2f2f2f;
+    border-radius: 3px;
+    border: 1px inset #b1b1b1;
+    padding: 10px;
+    font-family: courier;
+    font-size: 14px;
+}
+
+span.span-button {
+	display: inline-block;
+	border: 1px inset #c1c1c1;
+	padding: 0px 6px;
 	cursor: pointer;
+	border-radius: 4px;
 }
 
 span.refuel {

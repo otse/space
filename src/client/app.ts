@@ -22,6 +22,8 @@ namespace app {
 	export var salt = 'x';
 	export var wheel = 0;
 	export function onkeys(event) {
+		if (!event.key)
+			return;
 		const key = event.key.toLowerCase();
 		if ('keydown' == event.type)
 			keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
@@ -41,7 +43,7 @@ namespace app {
 	}
 	export async function boot(version: string) {
 		console.log('boot');
-		
+
 		salt = version;
 		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
 		function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1) return false }
@@ -79,8 +81,8 @@ namespace app {
 		if (!last)
 			last = current;
 		delta = (current - last) / 1000;
-		last = current;		
-		space.tick();
+		last = current;
+		space.step();
 		wheel = 0;
 		process_keys();
 		process_mouse_buttons();

@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tick = void 0;
 const locations_1 = require("./locations");
+const stellar_objects_1 = require("./stellar objects");
 const lod_1 = require("./lod");
 const lost_minor_planet_1 = require("./lost minor planet");
 const session_1 = require("./session");
 var http = require('http');
 var https = require('https');
-var fs = require('fs');
+const fs = require('fs');
+const path = require('path');
 const qs = require('querystring');
 //var format = require('date-format');
 const port = 2;
@@ -23,9 +25,6 @@ function exit(options, exitCode) {
     process.exit();
 }
 process.on('SIGINT', exit);
-var sessions = [];
-var ply_grids;
-var all_plys;
 /*export function get_region_by_name(name) {
     for (let region of regions)
         if (regions.name == name)
@@ -45,11 +44,24 @@ function init() {
     }
     lost_minor_planet_1.default.init();
     locations_1.locations.init();
+    const make_ship = (ply) => {
+        let ship = new stellar_objects_1.default.ply_ship;
+        ship.plyId = ply.id;
+        ship.name = ply.username;
+        ship.pos = ply.pos;
+        ship.set();
+        lod_1.default.add(ship);
+        console.log('added ply-ship to lod', ply.username);
+    };
+    for (let username of lost_minor_planet_1.default.users) {
+        let ply = lost_minor_planet_1.default.get_ply_from_table_or_fetch(username);
+        make_ship(ply);
+    }
     //createLocationPersistence();
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
         // console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
-        console.log(req.url);
+        //console.log(req.url);
         if (req.url == '/') {
             let page = fs.readFileSync('page.html');
             res.writeHead(200, { CONTENT_TYPE: TEXT_HTML });
@@ -86,6 +98,7 @@ function init() {
             res.end(str);
             return;
         }
+        const ip = req.socket.remoteAddress;
         if (req.url == '/login' && req.method == 'POST') {
             let body = '';
             req.on('data', function (chunk) {
@@ -98,10 +111,8 @@ function init() {
                 const password = parsed.password;
                 // if (parsed['username'] == 'asdf')
                 //	console.log('this is not your windows frend');
-                const path = lost_minor_planet_1.default.reg_path(username);
-                if (lost_minor_planet_1.default.object_exists(path)) {
-                    let ply = lost_minor_planet_1.default.object_from_file(path);
-                    lost_minor_planet_1.default.regs[username] = ply;
+                if (lost_minor_planet_1.default.table[username] || lost_minor_planet_1.default.object_exists(lost_minor_planet_1.default.user_path(username))) {
+                    let ply = lost_minor_planet_1.default.get_ply_from_table_or_fetch(username);
                     let logged_in_elsewhere = false;
                     let ip2;
                     for (ip2 in lost_minor_planet_1.default.logins) {
@@ -113,7 +124,7 @@ function init() {
                     }
                     if (lost_minor_planet_1.default.logins[ip] == username) {
                         res.writeHead(400);
-                        res.end('already logged in here');
+                        res.end(`you're already logged in with this user`);
                     }
                     else if (ply.password == password) {
                         res.writeHead(200);
@@ -122,10 +133,10 @@ function init() {
                             msg += '. you\'ve been logged out of your other device';
                             delete lost_minor_planet_1.default.logins[ip2];
                         }
-                        res.end(msg);
+                        lost_minor_planet_1.default.handle_new_login(ip);
                         lost_minor_planet_1.default.logins[ip] = ply.username;
                         lost_minor_planet_1.default.write_logins();
-                        res.end();
+                        res.end(msg);
                     }
                     else if (ply.password != password) {
                         res.writeHead(400);
@@ -177,21 +188,20 @@ function init() {
                 else {
                     const username = parsed.username;
                     const password = parsed.password;
-                    const path = lost_minor_planet_1.default.reg_path(username);
+                    const path = lost_minor_planet_1.default.user_path(username);
                     if (fs.existsSync(path)) {
                         res.writeHead(400);
                         res.end(`a player already exists with username ${username}. try logging in`);
                     }
                     else {
                         let ply = lost_minor_planet_1.default.new_ply();
-                        ply.unreg = false;
+                        ply.guest = false;
                         ply.ip = 'N/A';
                         ply.username = parsed['username'];
                         ply.password = parsed['password'];
                         res.writeHead(200);
                         res.end(`congratulations, you've registered as ${username}. now login`);
-                        const payload = JSON.stringify(ply, null, 4);
-                        fs.writeFileSync(lost_minor_planet_1.default.reg_path(username), payload);
+                        lost_minor_planet_1.default.write_ply(ply);
                     }
                 }
             });
@@ -202,53 +212,85 @@ function init() {
 
             sendSwhere();
         }*/
-        const ip = lost_minor_planet_1.default.sanitize_ip(req.socket.remoteAddress);
-        let ply = lost_minor_planet_1.default.get_ply(req.socket.remoteAddress);
-        let session = new session_1.default;
-        session.ply = ply;
-        session.grid = new lod_1.default.grid(lod_1.default.ggalaxy, 2, 2);
-        session.grid.big = lod_1.default.galaxy.big(ply.pos);
-        lod_1.default.ggalaxy.update_grid(session.grid, ply.pos);
-        const send_sply = function () {
+        let ply = lost_minor_planet_1.default.get_ply_from_ip(req.socket.remoteAddress);
+        let session;
+        if (ply) {
+            session = new session_1.default;
+            session.ply = ply;
+            session.grid = new lod_1.default.grid(lod_1.default.ggalaxy, 2);
+            session.grid.big = lod_1.default.galaxy.big(ply.pos);
+            lod_1.default.ggalaxy.update_grid(session.grid, ply.pos);
+        }
+        const send_sply = function (ply) {
             let reduced = {
                 id: ply.id,
+                ip: ip,
+                guest: ply.guest,
                 username: ply.username,
-                unreg: ply.unreg,
                 pos: ply.pos,
-                goto: ply.goto,
-                flight: ply.flight,
-                flightLocation: ply.flightLocation,
+                goto: ply.goto
             };
-            send_stuple([['sply'], reduced]);
+            send_object(['sply', reduced]);
         };
         const send_smessage = function (message) {
-            send_stuple([['message'], message]);
+            send_object(['message', message]);
         };
-        const send_stuple = function (anything) {
+        const send_object = function (anything) {
             let str = JSON.stringify(anything);
             res.end(str);
         };
         if (req.url == '/ply') {
-            console.log('get ply');
-            send_sply();
+            if (ply) {
+                console.log('GET ply');
+                send_sply(ply);
+            }
+            else {
+                send_object(false);
+            }
             return;
         }
-        else if (req.url == '/celestial%20objects') {
-            let objects = session.grid.gather();
-            send_stuple([['celestial objects'], objects]);
-            res.end();
+        if (req.url == '/loggedIn') {
+            if (lost_minor_planet_1.default.logins[ip])
+                send_object(true);
+            else
+                send_object(false);
+            return;
+        }
+        else if (req.url == '/guest') {
+            let guest = lost_minor_planet_1.default.make_quest(ip);
+            res.end('1');
+            return;
+        }
+        else if (req.url == '/purge') {
+            let res = lost_minor_planet_1.default.delete_user(ip);
+            send_object(res);
+            return;
+        }
+        else if (req.url == '/astronomical%20objects') {
+            if (session) {
+                let objects = session.grid.gather();
+                send_object(['astronomical objects', objects]);
+            }
             return;
         }
         else if (req.url == '/logout') {
             console.log('going to log you out');
             if (lost_minor_planet_1.default.logins[ip]) {
                 const username = lost_minor_planet_1.default.logins[ip];
-                delete lost_minor_planet_1.default.logins[ip];
-                lost_minor_planet_1.default.write_logins();
-                res.end(`logging out ${username}`);
+                const ply = lost_minor_planet_1.default.table[username];
+                if (ply) {
+                    if (ply.guest) {
+                        send_object([false, `can't logout guest user`]);
+                    }
+                    else {
+                        delete lost_minor_planet_1.default.logins[ip];
+                        lost_minor_planet_1.default.write_logins();
+                        send_object([true, `logging out ${username}`]);
+                    }
+                }
             }
             else {
-                res.end(`not logged in, playing as unregistered`);
+                send_object([false, `you don't appear to be logged in`]);
             }
             return;
         }

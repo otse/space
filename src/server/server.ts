@@ -1,13 +1,15 @@
 import { write } from "fs";
 import { locations } from "./locations";
-import game from "./game";
+import stellar_objects from "./stellar objects";
 import lod from "./lod";
 import lmp from "./lost minor planet";
 import short_lived from "./session";
+import { send } from "process";
 
 var http = require('http');
 var https = require('https');
-var fs = require('fs');
+const fs = require('fs');
+const path = require('path');
 const qs = require('querystring');
 //var format = require('date-format');
 
@@ -29,17 +31,6 @@ function exit(options, exitCode) {
 }
 
 process.on('SIGINT', exit);
-
-var sessions: game.ply[] = [];
-
-var ply_grids: [game.ply, lod.grid]
-var all_plys: game.ply[]
-
-interface LostMinorPlanet {
-	players: number
-	writes: number
-	boo: number
-}
 
 /*export function get_region_by_name(name) {
 	for (let region of regions)
@@ -68,6 +59,19 @@ function init() {
 
 	locations.init();
 
+	const make_ship = (ply) => {
+		let ship = new stellar_objects.ply_ship;
+		ship.plyId = ply.id;
+		ship.name = ply.username;
+		ship.pos = ply.pos;
+		ship.set();
+		lod.add(ship);
+		console.log('added ply-ship to lod', ply.username);
+	}
+	for (let username of lmp.users) {
+		let ply = lmp.get_ply_from_table_or_fetch(username);
+		make_ship(ply);
+	}
 
 	//createLocationPersistence();
 
@@ -77,7 +81,7 @@ function init() {
 
 		// console.log('request from ', req.socket.remoteAddress, req.socket.remotePort);
 
-		console.log(req.url);
+		//console.log(req.url);
 
 		if (req.url == '/') {
 			let page = fs.readFileSync('page.html');
@@ -116,6 +120,8 @@ function init() {
 			return;
 		}
 
+		const ip = req.socket.remoteAddress;
+
 		if (req.url == '/login' && req.method == 'POST') {
 			let body = '';
 
@@ -134,11 +140,8 @@ function init() {
 				// if (parsed['username'] == 'asdf')
 				//	console.log('this is not your windows frend');
 
-				const path = lmp.reg_path(username);
-
-				if (lmp.object_exists(path)) {
-					let ply = lmp.object_from_file(path);
-					lmp.regs[username] = ply;
+				if (lmp.table[username] || lmp.object_exists(lmp.user_path(username))) {
+					let ply = lmp.get_ply_from_table_or_fetch(username);
 					let logged_in_elsewhere = false;
 					let ip2;
 					for (ip2 in lmp.logins) {
@@ -150,20 +153,19 @@ function init() {
 					}
 					if (lmp.logins[ip] == username) {
 						res.writeHead(400);
-						res.end('already logged in here');
+						res.end(`you're already logged in with this user`);
 					}
 					else if (ply.password == password) {
 						res.writeHead(200);
 						let msg = 'logging you in';
-
 						if (logged_in_elsewhere) {
 							msg += '. you\'ve been logged out of your other device';
 							delete lmp.logins[ip2];
 						}
-						res.end(msg);
+						lmp.handle_new_login(ip);
 						lmp.logins[ip] = ply.username;
 						lmp.write_logins();
-						res.end();
+						res.end(msg);
 					}
 					else if (ply.password != password) {
 						res.writeHead(400);
@@ -227,7 +229,7 @@ function init() {
 					const username = parsed.username;
 					const password = parsed.password;
 
-					const path = lmp.reg_path(username);
+					const path = lmp.user_path(username);
 
 					if (fs.existsSync(path)) {
 						res.writeHead(400);
@@ -235,7 +237,7 @@ function init() {
 					}
 					else {
 						let ply = lmp.new_ply();
-						ply.unreg = false;
+						ply.guest = false;
 						ply.ip = 'N/A';
 						ply.username = parsed['username'];
 						ply.password = parsed['password'];
@@ -243,8 +245,7 @@ function init() {
 						res.writeHead(200);
 						res.end(`congratulations, you've registered as ${username}. now login`);
 
-						const payload = JSON.stringify(ply, null, 4);
-						fs.writeFileSync(lmp.reg_path(username), payload);
+						lmp.write_ply(ply);
 					}
 				}
 			});
@@ -258,60 +259,92 @@ function init() {
 			sendSwhere();
 		}*/
 
-		const ip = lmp.sanitize_ip(req.socket.remoteAddress);
+		let ply = lmp.get_ply_from_ip(req.socket.remoteAddress);
 
-		let ply = lmp.get_ply(req.socket.remoteAddress);
+		let session: short_lived | undefined;
 
-		let session = new short_lived;
-		session.ply = ply;
-		session.grid = new lod.grid(lod.ggalaxy, 2, 2);
-		session.grid.big = lod.galaxy.big(ply.pos);
-		lod.ggalaxy.update_grid(session.grid, ply.pos);
-
-		const send_sply = function () {
+		if (ply) {
+			session = new short_lived;
+			session.ply = ply;
+			session.grid = new lod.grid(lod.ggalaxy, 2);
+			session.grid.big = lod.galaxy.big(ply.pos);
+			lod.ggalaxy.update_grid(session.grid, ply.pos);
+		}
+		const send_sply = function (ply) {
 			let reduced: any = {
 				id: ply.id,
+				ip: ip,
+				guest: ply.guest,
 				username: ply.username,
-				unreg: ply.unreg,
 				pos: ply.pos,
-				goto: ply.goto,
-				flight: ply.flight,
-				flightLocation: ply.flightLocation,
+				goto: ply.goto
 			};
 
-			send_stuple([['sply'], reduced]);
+			send_object(['sply', reduced]);
 		}
 
 		const send_smessage = function (message) {
-			send_stuple([['message'], message]);
+			send_object(['message', message]);
 		}
 
-		const send_stuple = function (anything: object) {
+		const send_object = function (anything) {
 			let str = JSON.stringify(anything);
 			res.end(str);
 		}
 
 		if (req.url == '/ply') {
-			console.log('get ply');
-			send_sply();
+			if (ply) {
+				console.log('GET ply');
+				send_sply(ply);
+			}
+			else {
+				send_object(false);
+			}
 			return;
 		}
-		else if (req.url == '/celestial%20objects') {
-			let objects = session.grid.gather();
-			send_stuple([['celestial objects'], objects]);
-			res.end();
+		if (req.url == '/loggedIn') {
+			if (lmp.logins[ip])
+				send_object(true);
+			else
+				send_object(false);
+			return;
+		}
+		else if (req.url == '/guest') {
+			let guest = lmp.make_quest(ip);
+			res.end('1');
+			return;
+		}
+		else if (req.url == '/purge') {
+			let res = lmp.delete_user(ip);
+			send_object(res);
+			return;
+		}
+		else if (req.url == '/astronomical%20objects') {
+			if (session) {
+				let objects = session.grid.gather();
+				send_object(['astronomical objects', objects]);
+			}
 			return;
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
+
 			if (lmp.logins[ip]) {
 				const username = lmp.logins[ip];
-				delete lmp.logins[ip];
-				lmp.write_logins();
-				res.end(`logging out ${username}`);
+				const ply = lmp.table[username];
+				if (ply) {
+					if (ply.guest) {
+						send_object([false, `can't logout guest user`]);
+					}
+					else {
+						delete lmp.logins[ip];
+						lmp.write_logins();
+						send_object([true, `logging out ${username}`]);
+					}
+				}
 			}
 			else {
-				res.end(`not logged in, playing as unregistered`);
+				send_object([false, `you don't appear to be logged in`]);
 			}
 			return;
 		}

@@ -33,6 +33,8 @@ var app;
     app.salt = 'x';
     app.wheel = 0;
     function onkeys(event) {
+        if (!event.key)
+            return;
         const key = event.key.toLowerCase();
         if ('keydown' == event.type)
             keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
@@ -98,7 +100,7 @@ var app;
             last = current;
         app.delta = (current - last) / 1000;
         last = current;
-        space.tick();
+        space.step();
         app.wheel = 0;
         process_keys();
         process_mouse_buttons();
