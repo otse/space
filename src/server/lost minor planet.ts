@@ -42,7 +42,6 @@ namespace lost_minor_planet {
 				table[name] = ply;
 			}
 		}
-		//colors.enable();
 		console.log(`loaded ${num} non dormant users`);
 
 	}
@@ -162,7 +161,7 @@ namespace lost_minor_planet {
 
 	export function get_ply_from_ip(ip) {
 
-		console.log('get_ply_from_ip', ip);
+		// console.log('get_ply_from_ip', ip);
 
 		if (logins[ip]) {
 			const username = logins[ip];

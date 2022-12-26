@@ -20,18 +20,57 @@ var outer_space;
     outer_space.stamp = 0;
     function init() {
         outer_space.renderer = document.getElementById("outer-space");
-        setInterval(fetch, 2000);
     }
     outer_space.init = init;
+    var started;
+    var fetcher;
+    function start() {
+        if (!started) {
+            fetch();
+            fetcher = setInterval(fetch, 2000);
+            started = true;
+        }
+    }
+    outer_space.start = start;
+    function stop() {
+        if (started) {
+            wipe();
+            clearInterval(fetcher);
+            started = false;
+        }
+    }
+    outer_space.stop = stop;
     function statics() {
         console.log(' outer space statics ');
         setup();
     }
     outer_space.statics = statics;
+    function wipe() {
+        let i;
+        i = floats.length;
+        while (i--) {
+            let float = floats[i];
+            float.remove();
+        }
+        i = regions.length;
+        while (i--) {
+            let region = regions[i];
+            if (!region.static)
+                region.remove();
+        }
+    }
+    outer_space.wipe = wipe;
     function get_float_by_id(id) {
         for (const float of floats)
             if (id == float.id)
                 return float;
+    }
+    function handle_you(object, float) {
+        const [random] = object;
+        if (random.plyId == space.sply.id) {
+            console.log(`we're us`);
+            outer_space.you = float;
+        }
     }
     function fetch() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47,6 +86,7 @@ var outer_space;
                 }
                 else {
                     bee = new float(id, pos, type, name);
+                    handle_you(object, bee);
                 }
                 bee.stamp = outer_space.stamp;
             }
@@ -56,7 +96,6 @@ var outer_space;
     function step() {
         if (outer_space.you) {
             outer_space.you.pos = pts.add(outer_space.you.pos, [0.001, 0]);
-            outer_space.you.stamp = -1;
             outer_space.center = outer_space.you.pos;
         }
         if (app.wheel == 1)
@@ -75,12 +114,14 @@ var outer_space;
     outer_space.step = step;
     function setup() {
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
-        outer_space.you = new float(-1, outer_space.center, 'you', 'you');
+        //you = new float(-1, center, 'you', 'you');
+        //you.stamp = -1;
         let collision = new float(-1, [2, 1], 'collision', 'collision');
         collision.stamp = -1;
         for (let blob of space.regions) {
             console.log('new region', blob.name);
-            let boob = new region(blob.name, blob.center, blob.radius);
+            let reg = new region(blob.name, blob.center, blob.radius);
+            reg.static = true;
         }
     }
     class float {

@@ -18,7 +18,6 @@ var lost_minor_planet;
                 lost_minor_planet.table[name] = ply;
             }
         }
-        //colors.enable();
         console.log(`loaded ${num} non dormant users`);
     }
     lost_minor_planet.init = init;
@@ -135,7 +134,7 @@ var lost_minor_planet;
     }
     lost_minor_planet.make_quest = make_quest;
     function get_ply_from_ip(ip) {
-        console.log('get_ply_from_ip', ip);
+        // console.log('get_ply_from_ip', ip);
         if (lost_minor_planet.logins[ip]) {
             const username = lost_minor_planet.logins[ip];
             if (lost_minor_planet.table[username]) {

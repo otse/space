@@ -21,7 +21,6 @@ var space;
         return val > max ? max : val < min ? min : val;
     }
     space.clamp = clamp;
-    space.loggedIn = false;
     function get_region_by_name(name) {
         for (let region of space.regions)
             if (region.name == name)
@@ -93,9 +92,8 @@ var space;
         return __awaiter(this, void 0, void 0, function* () {
             space.regions = yield make_request_json('GET', 'regions.json');
             space.locations = yield make_request_json('GET', 'locations.json');
-            space.loggedIn = (yield make_request_json('GET', 'loggedIn'));
             let stuple = yield make_request_json('GET', 'ply');
-            receive_stuple(stuple);
+            receive_sply(stuple);
             choose_layout();
             console.log('asked initials');
         });
@@ -137,8 +135,8 @@ var space;
         }
     }
     function choose_layout() {
-        console.log('choose layout', space.loggedIn);
-        if (space.loggedIn) {
+        console.log('choose layout');
+        if (space.sply) {
             layout_default();
         }
         else {
@@ -146,6 +144,18 @@ var space;
         }
     }
     space.choose_layout = choose_layout;
+    function receive_sply(stuple) {
+        const [type, data] = stuple;
+        if (type != 'sply')
+            console.warn('not sply');
+        space.sply = data;
+        if (space.sply) {
+            outer_space.start();
+        }
+        else {
+            outer_space.stop();
+        }
+    }
     function receive_stuple(stuple) {
         console.log('received stuple', stuple);
         if (stuple == false)
@@ -153,10 +163,11 @@ var space;
         const [type, data] = stuple;
         if (type == 'sply') {
             space.sply = data;
+            outer_space.start();
             //choose_layout();
         }
         else if (type == 'message') {
-            layout_message(data);
+            pin_message(data);
         }
         //else if (type == 'senemies') {
         //	senemies = data;
@@ -257,38 +268,21 @@ var space;
         text += addFlightOption();
         main.innerHTML = text;
     }
-    function layout_message(message) {
-        let textHead = document.getElementById("main");
-        let text = `<span class="message">${message}</span>`;
-        textHead.innerHTML += text;
+    var message_timeout;
+    function pin_message(message) {
+        let element = document.getElementById("message");
+        element.style.top = '0';
+        element.style.transition = 'none';
+        element.innerHTML = message;
+        clearTimeout(message_timeout);
+        message_timeout = setTimeout(() => { element.style.transition = 'top 2s'; element.style.top = '-40px'; }, 3000);
     }
     function returnButton() {
         return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';
     }
-    function layoutFlightControls() {
-        let textHead = document.getElementById("main");
-        console.log('wot up');
-        let text = username_header();
-        text += addReturnOption();
-        if (space.region) {
-            text += `
-		Flight menu
-		<p>
-		${space.region.name} ~>
-		<select name="flights" id="flights" >`;
-            for (let location of space.region.locations) {
-                text += `<option>${location}</option>`;
-            }
-            text += `<option>Non-existing option</option>`;
-            text += `</select>
-		<span class="span-button" onclick="space.submitFlight()">Flight</span>
-		</form>`;
-        }
-        textHead.innerHTML = text;
-    }
-    space.layoutFlightControls = layoutFlightControls;
     function show_logout_message() {
         let main = document.getElementById("main");
+        pin_message('You logged out');
         let text = `You logged out`;
         main.innerHTML = text;
     }
@@ -363,27 +357,19 @@ var space;
         textHead.innerHTML = text;
     }
     space.show_register = show_register;
-    function submitFlight() {
-        return __awaiter(this, void 0, void 0, function* () {
-            var e = document.getElementById("flights");
-            var strUser = e.options[e.selectedIndex].text;
-            console.log(strUser);
-            let res = yield make_request_json('GET', 'submitFlight=' + strUser);
-            receive_stuple(res);
-        });
-    }
-    space.submitFlight = submitFlight;
     function logout() {
         return __awaiter(this, void 0, void 0, function* () {
             const data = yield make_request_json('GET', 'logout');
             if (data[0]) {
-                alert(data[1]);
-                space.loggedIn = false;
+                //alert(data[1]);
+                pin_message(data[1]);
                 space.sply = undefined;
+                outer_space.stop();
                 show_logout_message();
             }
             else {
-                alert(data[1]);
+                pin_message(data[1]);
+                //alert(data[1]);
             }
             //const three = <string>await make_request('GET', 'ply');
             //receive_stuple(three);
@@ -393,8 +379,9 @@ var space;
     function purge() {
         return __awaiter(this, void 0, void 0, function* () {
             const res = yield make_request_json('GET', 'purge');
-            space.loggedIn = false;
             space.sply = undefined;
+            pin_message("Purged guest account");
+            outer_space.stop();
             show_guest_choice();
         });
     }
@@ -402,9 +389,9 @@ var space;
     function play_as_guest() {
         return __awaiter(this, void 0, void 0, function* () {
             yield make_request_json('GET', 'guest');
-            const res2 = yield make_request_json('GET', 'ply');
-            space.loggedIn = (yield make_request_json('GET', 'loggedIn'));
-            receive_stuple(res2);
+            const stuple = yield make_request_json('GET', 'ply');
+            pin_message('Playing as temporary guest user');
+            receive_sply(stuple);
             choose_layout();
             console.log('layout');
         });
@@ -423,17 +410,18 @@ var space;
             http.onreadystatechange = function () {
                 return __awaiter(this, void 0, void 0, function* () {
                     if (http.readyState == 4 && http.status == 200) {
-                        alert(http.responseText);
-                        space.loggedIn = (yield make_request_json('GET', 'loggedIn'));
+                        //alert(http.responseText);
+                        pin_message(http.responseText);
                         const stuple = yield make_request_json('GET', 'ply');
-                        receive_stuple(stuple);
+                        receive_sply(stuple);
                         choose_layout();
                         //.then(function (res: any) {
                         //	receiveStuple(res);
                         //});
                     }
                     else if (http.readyState == 4 && http.status == 400) {
-                        alert(http.responseText);
+                        pin_message(http.responseText);
+                        //alert(http.responseText);
                     }
                 });
             };
@@ -455,11 +443,13 @@ var space;
         http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         http.onreadystatechange = function () {
             if (http.readyState == 4 && http.status == 200) {
-                alert(http.responseText);
+                pin_message(http.responseText);
+                //alert(http.responseText);
                 show_login();
             }
             else if (http.readyState == 4 && http.status == 400) {
-                alert(http.responseText);
+                pin_message(http.responseText);
+                //alert(http.responseText);
             }
         };
         http.send(params);

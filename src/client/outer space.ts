@@ -23,8 +23,24 @@ namespace outer_space {
 
 	export function init() {
 		renderer = document.getElementById("outer-space");
+	}
 
-		setInterval(fetch, 2000);
+	var started;
+	var fetcher;
+	export function start() {
+		if (!started) {
+			fetch();
+			fetcher = setInterval(fetch, 2000);
+			started = true;
+		}
+	}
+
+	export function stop() {
+		if (started) {
+			wipe();
+			clearInterval(fetcher);
+			started = false;
+		}
 	}
 
 	export function statics() {
@@ -33,13 +49,36 @@ namespace outer_space {
 		setup();
 	}
 
+	export function wipe() {
+		let i;
+		i = floats.length;
+		while (i--) {
+			let float = floats[i];
+			float.remove();
+		}
+		i = regions.length;
+		while (i--) {
+			let region = regions[i];
+			if (!region.static)
+				region.remove();
+		}
+	}
+
 	function get_float_by_id(id) {
 		for (const float of floats)
 			if (id == float.id)
 				return float;
 	}
 
-	export async function fetch() {		
+	function handle_you(object, float) {
+		const [random] = object;
+		if (random.plyId == space.sply.id) {
+			console.log(`we're us`);
+			you = float;
+		}
+	}
+
+	export async function fetch() {
 		let tuple = <any>await space.make_request_json('GET', 'astronomical objects');
 		outer_space.stamp++;
 		const objects = tuple[1];
@@ -52,6 +91,7 @@ namespace outer_space {
 			}
 			else {
 				bee = new float(id, pos, type, name);
+				handle_you(object, bee);
 			}
 			bee.stamp = outer_space.stamp;
 		}
@@ -60,7 +100,6 @@ namespace outer_space {
 	export function step() {
 		if (you) {
 			you.pos = pts.add(you.pos, [0.001, 0]);
-			you.stamp = -1;
 			center = you.pos;
 		}
 
@@ -85,7 +124,8 @@ namespace outer_space {
 	function setup() {
 		mapSize = [window.innerWidth, window.innerHeight];
 
-		you = new float(-1, center, 'you', 'you');
+		//you = new float(-1, center, 'you', 'you');
+		//you.stamp = -1;
 
 		let collision = new float(-1, [2, 1], 'collision', 'collision');
 		collision.stamp = -1;
@@ -93,7 +133,8 @@ namespace outer_space {
 		for (let blob of space.regions) {
 			console.log('new region', blob.name);
 
-			let boob = new region(blob.name, blob.center, blob.radius);
+			let reg = new region(blob.name, blob.center, blob.radius);
+			reg.static = true;
 		}
 	}
 

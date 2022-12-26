@@ -15,10 +15,8 @@ namespace space {
 		return val > max ? max : val < min ? min : val;
 	}
 
-	export var loggedIn = false;
-	export var sply;
+	export var sply
 
-	export var region;
 	export var regions, locations
 
 	function get_region_by_name(name) {
@@ -105,10 +103,8 @@ namespace space {
 	async function ask_initial() {
 		regions = await make_request_json('GET', 'regions.json');
 		locations = await make_request_json('GET', 'locations.json');
-		loggedIn = <boolean>await make_request_json('GET', 'loggedIn');
 		let stuple = <any>await make_request_json('GET', 'ply');
-
-		receive_stuple(stuple);
+		receive_sply(stuple);
 		choose_layout();
 		console.log('asked initials');
 	}
@@ -155,13 +151,26 @@ namespace space {
 	}
 
 	export function choose_layout() {
-		console.log('choose layout', loggedIn);
+		console.log('choose layout');
 
-		if (loggedIn) {
+		if (sply) {
 			layout_default();
 		}
 		else {
 			show_guest_choice();
+		}
+	}
+
+	function receive_sply(stuple) {
+		const [type, data] = stuple;
+		if (type != 'sply')
+			console.warn('not sply');
+		sply = data;
+		if (sply) {
+			outer_space.start();
+		}
+		else {
+			outer_space.stop();
 		}
 	}
 
@@ -172,10 +181,11 @@ namespace space {
 		const [type, data] = stuple;
 		if (type == 'sply') {
 			sply = data;
+			outer_space.start();
 			//choose_layout();
 		}
 		else if (type == 'message') {
-			layout_message(data);
+			pin_message(data);
 		}
 		//else if (type == 'senemies') {
 		//	senemies = data;
@@ -301,47 +311,24 @@ namespace space {
 		main.innerHTML = text;
 	}
 
-	function layout_message(message) {
-		let textHead = document.getElementById("main")!;
-		let text = `<span class="message">${message}</span>`;
-		textHead.innerHTML += text;
+	var message_timeout;
+	function pin_message(message) {
+		let element = document.getElementById("message")!;
+		element.style.top = '0'
+		element.style.transition = 'none'
+		element.innerHTML = message;
+		clearTimeout(message_timeout);
+		message_timeout = setTimeout(() => { element.style.transition = 'top 2s'; element.style.top = '-40px' }, 3000);
 	}
 
 	function returnButton() {
 		return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';
 	}
 
-	export function layoutFlightControls() {
-		let textHead = document.getElementById("main")!;
-
-		console.log('wot up');
-
-		let text = username_header();
-
-		text += addReturnOption();
-
-		if (region) {
-			text += `
-		Flight menu
-		<p>
-		${region.name} ~>
-		<select name="flights" id="flights" >`;
-
-			for (let location of region.locations) {
-				text += `<option>${location}</option>`
-			}
-			text += `<option>Non-existing option</option>`
-			text += `</select>
-		<span class="span-button" onclick="space.submitFlight()">Flight</span>
-		</form>`;
-		}
-
-		textHead.innerHTML = text;
-	}
-
 	export function show_logout_message() {
 		let main = document.getElementById("main")!;
 
+		pin_message('You logged out');
 		let text = `You logged out`;
 
 		main.innerHTML = text;
@@ -421,27 +408,18 @@ namespace space {
 		textHead.innerHTML = text;
 	}
 
-	export async function submitFlight() {
-
-		var e = document.getElementById("flights")! as any;
-		var strUser = e.options[e.selectedIndex].text;
-
-		console.log(strUser);
-
-		let res = await make_request_json('GET', 'submitFlight=' + strUser);
-		receive_stuple(res);
-	}
-
 	export async function logout() {
 		const data = <any>await make_request_json('GET', 'logout');
 		if (data[0]) {
-			alert(data[1]);
-			loggedIn = false;
+			//alert(data[1]);
+			pin_message(data[1]);
 			sply = undefined;
+			outer_space.stop();
 			show_logout_message();
 		}
 		else {
-			alert(data[1]);
+			pin_message(data[1]);
+			//alert(data[1]);
 		}
 		//const three = <string>await make_request('GET', 'ply');
 		//receive_stuple(three);
@@ -449,17 +427,17 @@ namespace space {
 
 	export async function purge() {
 		const res = await make_request_json('GET', 'purge');
-		loggedIn = false;
 		sply = undefined;
+		pin_message("Purged guest account");
+		outer_space.stop();
 		show_guest_choice();
 	}
 
 	export async function play_as_guest() {
 		await make_request_json('GET', 'guest');
-		const res2 = await make_request_json('GET', 'ply');
-		loggedIn = <boolean>await make_request_json('GET', 'loggedIn');
-
-		receive_stuple(res2);
+		const stuple = await make_request_json('GET', 'ply');
+		pin_message('Playing as temporary guest user');
+		receive_sply(stuple);
 		choose_layout();
 		console.log('layout');
 	}
@@ -479,18 +457,18 @@ namespace space {
 
 		http.onreadystatechange = async function () {
 			if (http.readyState == 4 && http.status == 200) {
-				alert(http.responseText);
-
-				loggedIn = <boolean>await make_request_json('GET', 'loggedIn');
+				//alert(http.responseText);
+				pin_message(http.responseText);
 				const stuple = await make_request_json('GET', 'ply');
-				receive_stuple(stuple);
+				receive_sply(stuple);
 				choose_layout();
 				//.then(function (res: any) {
 				//	receiveStuple(res);
 				//});
 			}
 			else if (http.readyState == 4 && http.status == 400) {
-				alert(http.responseText);
+				pin_message(http.responseText);
+				//alert(http.responseText);
 			}
 		}
 		http.send(params);
@@ -515,11 +493,13 @@ namespace space {
 
 		http.onreadystatechange = function () {//Call a function when the state changes.
 			if (http.readyState == 4 && http.status == 200) {
-				alert(http.responseText);
+				pin_message(http.responseText);
+				//alert(http.responseText);
 				show_login();
 			}
 			else if (http.readyState == 4 && http.status == 400) {
-				alert(http.responseText);
+				pin_message(http.responseText);
+				//alert(http.responseText);
 			}
 		}
 		http.send(params);

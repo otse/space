@@ -72,6 +72,22 @@ option:hover {
 	color: #c9c9c9;
 }
 
+#message {
+    position: absolute;
+    font-family: courier;
+    font-size: 14px;
+    top: 0px;
+	transition: top 2s;
+    display: block;
+    background: #bba888;
+    box-sizing: border-box;
+    margin: 10px;
+    padding: 5px;
+    color: black;
+    /* text-shadow: 1px 1px 0px #bdbdbd; */
+    border-radius: 2px;
+}
+
 .logo {
 	color: #e8e8e8;
 }
@@ -112,14 +128,14 @@ option:hover {
 	color: #d1d1d1;
 }
 
-#main {
+#content {
 	display: inline-block;
 	margin: 30px;
 	/*width: 300px;*/
 	padding: 10px;
-	ffont-size: 18px;
-	/* background: rgb(189 189 189 / 50%); */
 }
+
+#main {}
 
 #main .text {
 	margin: 00px 0;
@@ -135,21 +151,21 @@ span.facilities {}
 
 .amenities {
 	background: #2f2f2f;
-    border-radius: 3px;
-    border: 1px inset #b1b1b1;
-    padding: 10px;
-    font-family: courier;
-    font-size: 14px;
+	border-radius: 3px;
+	border: 1px inset #b1b1b1;
+	padding: 10px;
+	font-family: courier;
+	font-size: 14px;
 }
 
 span.span-button {
 	display: inline-block;
-    /* color: white; */
-    /* border: 1px inset #c1c1c1; */
-    border-bottom: 1px dashed white;
-    /* padding: 0px 6px; */
-    cursor: pointer;
-    border-radius: 4px;
+	/* color: white; */
+	/* border: 1px inset #c1c1c1; */
+	border-bottom: 1px dashed white;
+	/* padding: 0px 6px; */
+	cursor: pointer;
+	border-radius: 4px;
 }
 
 span.refuel {

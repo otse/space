@@ -1,0 +1,16 @@
+{
+    "id": 413,
+    "ip": "N/A",
+    "guest": false,
+    "dormant": false,
+    "username": "asdf",
+    "password": "asdf",
+    "pos": [
+        0,
+        0
+    ],
+    "goto": [
+        0,
+        0
+    ]
+}

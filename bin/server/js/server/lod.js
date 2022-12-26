@@ -56,6 +56,14 @@ var lod;
         dist(grid) {
             return pts_1.default.distsimple(this.big, grid.big);
         }
+        static swap(obj) {
+            let oldChunk = obj.chunk;
+            let newChunk = oldChunk.galaxy.at(lod.galaxy.big(pts_1.default.round(obj.pos)));
+            if (oldChunk != newChunk) {
+                oldChunk.remove(obj);
+                newChunk.add(obj);
+            }
+        }
         add(obj) {
             let i = this.objs.indexOf(obj);
             if (i == -1) {

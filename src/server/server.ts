@@ -225,7 +225,6 @@ function init() {
 					res.end('your passwords arent the same');
 				}
 				else {
-
 					const username = parsed.username;
 					const password = parsed.password;
 
@@ -239,9 +238,10 @@ function init() {
 						let ply = lmp.new_ply();
 						ply.guest = false;
 						ply.ip = 'N/A';
-						ply.username = parsed['username'];
-						ply.password = parsed['password'];
-
+						ply.username = username;
+						ply.password = password;
+						lmp.table[username] = ply;
+						
 						res.writeHead(200);
 						res.end(`congratulations, you've registered as ${username}. now login`);
 
@@ -293,20 +293,10 @@ function init() {
 		}
 
 		if (req.url == '/ply') {
-			if (ply) {
-				console.log('GET ply');
+			if (ply)
 				send_sply(ply);
-			}
-			else {
-				send_object(false);
-			}
-			return;
-		}
-		if (req.url == '/loggedIn') {
-			if (lmp.logins[ip])
-				send_object(true);
 			else
-				send_object(false);
+				send_object(['sply', false]);
 			return;
 		}
 		else if (req.url == '/guest') {

@@ -197,8 +197,9 @@ function init() {
                         let ply = lost_minor_planet_1.default.new_ply();
                         ply.guest = false;
                         ply.ip = 'N/A';
-                        ply.username = parsed['username'];
-                        ply.password = parsed['password'];
+                        ply.username = username;
+                        ply.password = password;
+                        lost_minor_planet_1.default.table[username] = ply;
                         res.writeHead(200);
                         res.end(`congratulations, you've registered as ${username}. now login`);
                         lost_minor_planet_1.default.write_ply(ply);
@@ -240,20 +241,10 @@ function init() {
             res.end(str);
         };
         if (req.url == '/ply') {
-            if (ply) {
-                console.log('GET ply');
+            if (ply)
                 send_sply(ply);
-            }
-            else {
-                send_object(false);
-            }
-            return;
-        }
-        if (req.url == '/loggedIn') {
-            if (lost_minor_planet_1.default.logins[ip])
-                send_object(true);
             else
-                send_object(false);
+                send_object(['sply', false]);
             return;
         }
         else if (req.url == '/guest') {

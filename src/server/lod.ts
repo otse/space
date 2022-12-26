@@ -59,6 +59,15 @@ namespace lod {
 		dist(grid: grid) {
 			return pts.distsimple(this.big, grid.big);
 		}
+		static swap(obj: obj) {
+			let oldChunk = obj.chunk!;
+			let newChunk = oldChunk.galaxy.at(
+				lod.galaxy.big(pts.round(obj.pos)));
+			if (oldChunk != newChunk) {
+				oldChunk.remove(obj);
+				newChunk.add(obj);
+			}
+		}
 		add(obj: obj) {
 			let i = this.objs.indexOf(obj);
 			if (i == -1) {
