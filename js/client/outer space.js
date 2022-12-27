@@ -15,8 +15,6 @@ var outer_space;
     outer_space.locations = [];
     outer_space.center = [0, -1];
     outer_space.pixelMultiple = 50;
-    var floats = [];
-    var regions = [];
     outer_space.stamp = 0;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
@@ -24,8 +22,11 @@ var outer_space;
     outer_space.init = init;
     var started;
     var fetcher;
+    var things = [];
     function start() {
         if (!started) {
+            console.log(' outer space start ');
+            statics();
             fetch();
             fetcher = setInterval(fetch, 2000);
             started = true;
@@ -46,24 +47,17 @@ var outer_space;
     }
     outer_space.statics = statics;
     function wipe() {
-        let i;
-        i = floats.length;
+        let i = things.length;
         while (i--) {
-            let float = floats[i];
-            float.remove();
-        }
-        i = regions.length;
-        while (i--) {
-            let region = regions[i];
-            if (!region.static)
-                region.remove();
+            const joint = things[i];
+            joint.remove();
         }
     }
     outer_space.wipe = wipe;
     function get_float_by_id(id) {
-        for (const float of floats)
-            if (id == float.id)
-                return float;
+        for (const joint of things)
+            if (id == joint.id)
+                return joint;
     }
     function handle_you(object, float) {
         const [random] = object;
@@ -90,6 +84,7 @@ var outer_space;
                 }
                 bee.stamp = outer_space.stamp;
             }
+            thing.check();
         });
     }
     outer_space.fetch = fetch;
@@ -103,13 +98,7 @@ var outer_space;
         if (app.wheel == -1)
             outer_space.pixelMultiple -= 5;
         outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, 5, 120);
-        let i = floats.length;
-        while (i--) {
-            let float = floats[i];
-            float.step();
-        }
-        for (let region of regions)
-            region.step();
+        thing.steps();
     }
     outer_space.step = step;
     function setup() {
@@ -120,19 +109,55 @@ var outer_space;
         collision.stamp = -1;
         for (let blob of space.regions) {
             console.log('new region', blob.name);
-            let reg = new region(blob.name, blob.center, blob.radius);
+            let reg = new region(blob.center, blob.name, blob.radius);
             reg.static = true;
         }
     }
-    class float {
-        constructor(id, pos, type, name) {
+    class thing {
+        constructor(id, pos) {
             this.id = id;
             this.pos = pos;
-            this.type = type;
-            this.name = name;
             this.stamp = 0;
             this.static = false;
-            floats.push(this);
+            things.push(this);
+        }
+        append() {
+            outer_space.renderer.append(this.element);
+        }
+        remove() {
+            this.element.remove();
+        }
+        has_old_stamp() {
+            if (!this.static && this.stamp != -1 && this.stamp != outer_space.stamp) {
+                console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
+                return true;
+            }
+        }
+        static check() {
+            let i = things.length;
+            while (i--) {
+                const joint = things[i];
+                if (joint.has_old_stamp()) {
+                    things.splice(things.indexOf(joint), 1);
+                    joint.remove();
+                }
+            }
+        }
+        static steps() {
+            for (const joint of things)
+                joint.step();
+        }
+        step() {
+            this.stylize();
+        }
+        stylize() {
+        }
+    }
+    class float extends thing {
+        constructor(id, pos, type, name) {
+            super(id, pos);
+            this.type = type;
+            this.name = name;
             console.log('new float');
             this.element = document.createElement("div");
             this.element.classList.add('float');
@@ -149,31 +174,12 @@ var outer_space;
             this.element.style.left = relative[0];
             //console.log('half', half);
         }
-        append() {
-            outer_space.renderer.append(this.element);
-        }
-        remove() {
-            floats.splice(floats.indexOf(this), 1);
-            this.element.remove();
-            console.log('removed', this.name);
-        }
-        step() {
-            if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-                this.remove();
-                console.log(` ${this.name} went out of lod ! `, this.stamp, outer_space.stamp);
-            }
-            else {
-                this.stylize();
-            }
-        }
     }
-    class region {
-        constructor(name, pos, radius) {
+    class region extends thing {
+        constructor(pos, name, radius) {
+            super(-1, pos);
             this.name = name;
-            this.pos = pos;
             this.radius = radius;
-            this.static = false;
-            regions.push(this);
             this.element = document.createElement("div");
             this.element.classList.add('region');
             this.element.innerHTML = `<span>${name}</span>`;
@@ -190,17 +196,6 @@ var outer_space;
             this.element.style.left = relative[0] - radius;
             this.element.style.width = radius * 2;
             this.element.style.height = radius * 2;
-        }
-        append() {
-            outer_space.renderer.append(this.element);
-        }
-        remove() {
-            // todo regions are generally static and wont be removed
-            regions.splice(regions.indexOf(this), 1);
-            this.element.remove();
-        }
-        step() {
-            this.stylize();
         }
     }
 })(outer_space || (outer_space = {}));

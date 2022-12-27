@@ -1,9 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Major+Mono+Display&family=Poppins:wght@400;600&display=swap');
 
 body {
-	background: #303d4a;
-	background: #353f48;
-	bbackground: #1b1f23;
+	background-color: #353f48;
 	font-family: Arial, Helvetica, sans-serif;
 	font-family: 'Poppins', sans-serif;
 	color: #dddddd;
@@ -33,18 +31,26 @@ nav-bar {
 	z-index: 2;
     position: relative;
 	color: #e2e2e2;
-	background: #1d2e38;
-	background: rgb(16 130 196 / 50%);
-	height: 50px;
+	height: 60px;
 	display: flex;
 	align-items: center;
     justify-content: space-between;
+	background: rgb(11 73 109);
+    bbackground: linear-gradient(90deg, rgb(61 65 68 / 50%) 50%, rgb(66 103 125 / 50%) 100%);
 }
 
-nav-bar left {
+nav-bar-left {
 	align-content: center;
 	display: flex;
 	align-items: center;
+	height: 60px;
+    background: linear-gradient(90deg, rgb(24 89 141) 0%, rgb(11 73 109) 100%);
+}
+
+#menu-button {
+	margin: 30px;
+	font-size: 24px;
+	cursor: pointer;
 }
 
 nav-bar logo {
@@ -66,44 +72,50 @@ nav-bar logo span:nth-child(1) {
 	margin-left: 0ex;
 }
 
-#menu-button {
-	margin: 30px;
-	cursor: pointer;
-}
+
 
 .shaded {
 	background: #0000001a;
 }
 
-userstatus {
+nav-bar-right {
 	display: inline-block;
 	font-size: 15px;
 	padding: 10px;
 }
 
-message {
-	z-index: 3;
-	position: absolute;
-	font-family: courier;
-	font-size: 14px;
-	top: -60px;
-	transition: top 2s;
-	display: block;
-	background: #bba888;
-	box-sizing: border-box;
-	margin: 20px;
-	padding: 10px;
-	color: black;
-	/* text-shadow: 1px 1px 0px #bdbdbd; */
-	border-radius: 2px;
+my-message-container {
+	display: flex;
+    justify-content: center;
+	align-items: center;
+    position: absolute;
+    height: 60px;
+    width: 100%;
 }
 
-message span:nth-child(1) {
+my-message {
+    z-index: 3;
+    position: relative;
+    font-family: Inconsolata, courier;
+    font-size: 16px;
+    top: -110px;
+	transition-timing-function: linear;
+    display: block;
+    background: rgb(207 207 207);
+    box-sizing: border-box;
+    padding: 10px;
+    color: #494949;
+    /* text-shadow: 0px 1px 0px hsl(0deg 0% 0% / 40%); */
+    border-radius: 3px;
+	box-shadow: 0px 0px 5px #3e3e3e;
+}
+
+my-message span:nth-child(1) {
 	display: none;
 	color: gray;
 }
 
-message span:nth-child(2) {}
+my-message span:nth-child(2) {}
 
 /* end nav bar */
 
@@ -118,7 +130,7 @@ content {
 	ppadding: 10px;
 	box-sizing: border-box;
 	width: 100%;
-	height: calc(100% - 50px);
+	height: calc(100% - 60px);
 	overflow: hidden;
 }
 
@@ -139,7 +151,7 @@ intro {
 	transform: rotateY(4deg);
 	padding: 20px;
 	box-sizing: border-box;
-	border: 3px solid #19325e;
+	bborder: 3px solid #19325e;
     border-radius: 4px;
 }
 

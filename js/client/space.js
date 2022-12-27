@@ -88,7 +88,7 @@ var space;
             console.log('pre ask initial');
             yield ask_initial();
             console.log('post ask initial');
-            outer_space.statics();
+            //outer_space.statics();
         });
     }
     space.init = init;
@@ -102,10 +102,7 @@ var space;
             console.log('asked initials');
         });
     }
-    var showingAccountBubbles = false;
     function show_account_bubbles() {
-        showingAccountBubbles = true;
-        let username = space.sply && space.sply.username;
         let text = '';
         let main = document.getElementById("main");
         if (space.sply) {
@@ -154,7 +151,7 @@ var space;
             console.warn('not sply');
         space.sply = data;
         if (space.sply) {
-            post_login_notice();
+            update_user_status();
             outer_space.start();
         }
         else {
@@ -178,9 +175,9 @@ var space;
         //	senemies = data;
         //}
     }
-    function post_login_notice() {
+    function update_user_status() {
         console.log('post login notice');
-        let userstatus = document.querySelector("userstatus");
+        let navBarRight = document.querySelector("nav-bar-right");
         let text = '';
         if (space.sply) {
             if (space.sply.guest)
@@ -194,7 +191,7 @@ var space;
 			<span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span>
 			`;
         }
-        userstatus.innerHTML = text;
+        navBarRight.innerHTML = text;
     }
     function addFlightOption() {
         let textHead = document.getElementById("main");
@@ -276,14 +273,14 @@ var space;
     }
     var message_timeout;
     function pin_message(message) {
-        let element = document.querySelector("message");
-        let span = document.querySelector("message span:nth-child(2)");
+        let element = document.querySelector("my-message");
+        let span = document.querySelector("my-message span:nth-child(2)");
         console.log(span);
-        element.style.top = '50px';
+        element.style.top = '0px';
         element.style.transition = 'none';
         span.innerHTML = message;
         clearTimeout(message_timeout);
-        message_timeout = setTimeout(() => { element.style.transition = 'top 2s'; element.style.top = '-60px'; }, 3000);
+        message_timeout = setTimeout(() => { element.style.transition = 'top 2s linear 0s'; element.style.top = '-110px'; }, 3000);
     }
     function returnButton() {
         return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';
@@ -403,7 +400,7 @@ var space;
                 pin_message(data[1]);
                 space.sply = undefined;
                 outer_space.stop();
-                post_login_notice();
+                update_user_status();
                 show_logout_message();
                 show_landing_page();
             }
@@ -422,7 +419,7 @@ var space;
             space.sply = undefined;
             pin_message("Purged guest account");
             outer_space.stop();
-            post_login_notice();
+            update_user_status();
             show_landing_page();
         });
     }

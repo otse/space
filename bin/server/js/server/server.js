@@ -128,7 +128,7 @@ function init() {
                     }
                     else if (ply.password == password) {
                         res.writeHead(200);
-                        let msg = 'Logging you in';
+                        let msg = `Logged into ${username}`;
                         if (logged_in_elsewhere) {
                             msg += '. You\'ve been logged out of your other device';
                             delete lost_minor_planet_1.default.logins[ip2];

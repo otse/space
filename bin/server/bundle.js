@@ -255,8 +255,6 @@ var space = (function () {
         outer_space.locations = [];
         outer_space.center = [0, -1];
         outer_space.pixelMultiple = 50;
-        var floats = [];
-        var regions = [];
         outer_space.stamp = 0;
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
@@ -264,8 +262,11 @@ var space = (function () {
         outer_space.init = init;
         var started;
         var fetcher;
+        var things = [];
         function start() {
             if (!started) {
+                console.log(' outer space start ');
+                statics();
                 fetch();
                 fetcher = setInterval(fetch, 2000);
                 started = true;
@@ -286,24 +287,17 @@ var space = (function () {
         }
         outer_space.statics = statics;
         function wipe() {
-            let i;
-            i = floats.length;
+            let i = things.length;
             while (i--) {
-                let float = floats[i];
-                float.remove();
-            }
-            i = regions.length;
-            while (i--) {
-                let region = regions[i];
-                if (!region.static)
-                    region.remove();
+                const joint = things[i];
+                joint.remove();
             }
         }
         outer_space.wipe = wipe;
         function get_float_by_id(id) {
-            for (const float of floats)
-                if (id == float.id)
-                    return float;
+            for (const joint of things)
+                if (id == joint.id)
+                    return joint;
         }
         function handle_you(object, float) {
             const [random] = object;
@@ -330,6 +324,7 @@ var space = (function () {
                     }
                     bee.stamp = outer_space.stamp;
                 }
+                thing.check();
             });
         }
         outer_space.fetch = fetch;
@@ -343,13 +338,7 @@ var space = (function () {
             if (app$1.wheel == -1)
                 outer_space.pixelMultiple -= 5;
             outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, 5, 120);
-            let i = floats.length;
-            while (i--) {
-                let float = floats[i];
-                float.step();
-            }
-            for (let region of regions)
-                region.step();
+            thing.steps();
         }
         outer_space.step = step;
         function setup() {
@@ -360,19 +349,55 @@ var space = (function () {
             collision.stamp = -1;
             for (let blob of space$1.regions) {
                 console.log('new region', blob.name);
-                let reg = new region(blob.name, blob.center, blob.radius);
+                let reg = new region(blob.center, blob.name, blob.radius);
                 reg.static = true;
             }
         }
-        class float {
-            constructor(id, pos, type, name) {
+        class thing {
+            constructor(id, pos) {
                 this.id = id;
                 this.pos = pos;
-                this.type = type;
-                this.name = name;
                 this.stamp = 0;
                 this.static = false;
-                floats.push(this);
+                things.push(this);
+            }
+            append() {
+                outer_space.renderer.append(this.element);
+            }
+            remove() {
+                this.element.remove();
+            }
+            has_old_stamp() {
+                if (!this.static && this.stamp != -1 && this.stamp != outer_space.stamp) {
+                    console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
+                    return true;
+                }
+            }
+            static check() {
+                let i = things.length;
+                while (i--) {
+                    const joint = things[i];
+                    if (joint.has_old_stamp()) {
+                        things.splice(things.indexOf(joint), 1);
+                        joint.remove();
+                    }
+                }
+            }
+            static steps() {
+                for (const joint of things)
+                    joint.step();
+            }
+            step() {
+                this.stylize();
+            }
+            stylize() {
+            }
+        }
+        class float extends thing {
+            constructor(id, pos, type, name) {
+                super(id, pos);
+                this.type = type;
+                this.name = name;
                 console.log('new float');
                 this.element = document.createElement("div");
                 this.element.classList.add('float');
@@ -389,31 +414,12 @@ var space = (function () {
                 this.element.style.left = relative[0];
                 //console.log('half', half);
             }
-            append() {
-                outer_space.renderer.append(this.element);
-            }
-            remove() {
-                floats.splice(floats.indexOf(this), 1);
-                this.element.remove();
-                console.log('removed', this.name);
-            }
-            step() {
-                if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-                    this.remove();
-                    console.log(` ${this.name} went out of lod ! `, this.stamp, outer_space.stamp);
-                }
-                else {
-                    this.stylize();
-                }
-            }
         }
-        class region {
-            constructor(name, pos, radius) {
+        class region extends thing {
+            constructor(pos, name, radius) {
+                super(-1, pos);
                 this.name = name;
-                this.pos = pos;
                 this.radius = radius;
-                this.static = false;
-                regions.push(this);
                 this.element = document.createElement("div");
                 this.element.classList.add('region');
                 this.element.innerHTML = `<span>${name}</span>`;
@@ -430,17 +436,6 @@ var space = (function () {
                 this.element.style.left = relative[0] - radius;
                 this.element.style.width = radius * 2;
                 this.element.style.height = radius * 2;
-            }
-            append() {
-                outer_space.renderer.append(this.element);
-            }
-            remove() {
-                // todo regions are generally static and wont be removed
-                regions.splice(regions.indexOf(this), 1);
-                this.element.remove();
-            }
-            step() {
-                this.stylize();
             }
         }
     })(outer_space || (outer_space = {}));
@@ -514,7 +509,7 @@ var space = (function () {
                 console.log('pre ask initial');
                 yield ask_initial();
                 console.log('post ask initial');
-                outer_space$1.statics();
+                //outer_space.statics();
             });
         }
         space.init = init;
@@ -529,7 +524,6 @@ var space = (function () {
             });
         }
         function show_account_bubbles() {
-            space.sply && space.sply.username;
             let text = '';
             let main = document.getElementById("main");
             if (space.sply) {
@@ -578,16 +572,16 @@ var space = (function () {
                 console.warn('not sply');
             space.sply = data;
             if (space.sply) {
-                post_login_notice();
+                update_user_status();
                 outer_space$1.start();
             }
             else {
                 outer_space$1.stop();
             }
         }
-        function post_login_notice() {
+        function update_user_status() {
             console.log('post login notice');
-            let userstatus = document.querySelector("userstatus");
+            let navBarRight = document.querySelector("nav-bar-right");
             let text = '';
             if (space.sply) {
                 if (space.sply.guest)
@@ -601,7 +595,7 @@ var space = (function () {
 			<span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span>
 			`;
             }
-            userstatus.innerHTML = text;
+            navBarRight.innerHTML = text;
         }
         function addFlightOption() {
             document.getElementById("main");
@@ -653,14 +647,14 @@ var space = (function () {
         }
         var message_timeout;
         function pin_message(message) {
-            let element = document.querySelector("message");
-            let span = document.querySelector("message span:nth-child(2)");
+            let element = document.querySelector("my-message");
+            let span = document.querySelector("my-message span:nth-child(2)");
             console.log(span);
-            element.style.top = '50px';
+            element.style.top = '0px';
             element.style.transition = 'none';
             span.innerHTML = message;
             clearTimeout(message_timeout);
-            message_timeout = setTimeout(() => { element.style.transition = 'top 2s'; element.style.top = '-60px'; }, 3000);
+            message_timeout = setTimeout(() => { element.style.transition = 'top 2s linear 0s'; element.style.top = '-110px'; }, 3000);
         }
         function show_logout_message() {
             //let main = document.getElementById("main")!;
@@ -777,7 +771,7 @@ var space = (function () {
                     pin_message(data[1]);
                     space.sply = undefined;
                     outer_space$1.stop();
-                    post_login_notice();
+                    update_user_status();
                     show_logout_message();
                     show_landing_page();
                 }
@@ -796,7 +790,7 @@ var space = (function () {
                 space.sply = undefined;
                 pin_message("Purged guest account");
                 outer_space$1.stop();
-                post_login_notice();
+                update_user_status();
                 show_landing_page();
             });
         }

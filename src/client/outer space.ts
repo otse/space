@@ -16,9 +16,6 @@ namespace outer_space {
 
 	export var pixelMultiple = 50
 
-	var floats: float[] = []
-	var regions: region[] = []
-
 	export var stamp = 0;
 
 	export function init() {
@@ -27,8 +24,14 @@ namespace outer_space {
 
 	var started;
 	var fetcher;
+
+	var things: thing[] = []
+
 	export function start() {
 		if (!started) {
+			console.log(' outer space start ');
+
+			statics();
 			fetch();
 			fetcher = setInterval(fetch, 2000);
 			started = true;
@@ -50,24 +53,17 @@ namespace outer_space {
 	}
 
 	export function wipe() {
-		let i;
-		i = floats.length;
+		let i = things.length;
 		while (i--) {
-			let float = floats[i];
-			float.remove();
-		}
-		i = regions.length;
-		while (i--) {
-			let region = regions[i];
-			if (!region.static)
-				region.remove();
+			const joint = things[i];
+			joint.remove();
 		}
 	}
 
 	function get_float_by_id(id) {
-		for (const float of floats)
-			if (id == float.id)
-				return float;
+		for (const joint of things)
+			if (id == joint.id)
+				return joint as float;
 	}
 
 	function handle_you(object, float) {
@@ -95,6 +91,7 @@ namespace outer_space {
 			}
 			bee.stamp = outer_space.stamp;
 		}
+		thing.check();
 	}
 
 	export function step() {
@@ -110,14 +107,7 @@ namespace outer_space {
 
 		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
 
-		let i = floats.length;
-		while (i--) {
-			let float = floats[i];
-			float.step();
-		}
-
-		for (let region of regions)
-			region.step();
+		thing.steps();
 
 	}
 
@@ -133,22 +123,62 @@ namespace outer_space {
 		for (let blob of space.regions) {
 			console.log('new region', blob.name);
 
-			let reg = new region(blob.name, blob.center, blob.radius);
+			let reg = new region(blob.center, blob.name, blob.radius);
 			reg.static = true;
 		}
 	}
 
-	class float {
+	class thing {
 		stamp = 0
-		static = false
 		element
+		static = false
 		constructor(
 			public id: number,
 			public pos: vec2,
+		) {
+			things.push(this);
+		}
+		append() {
+			renderer.append(this.element);
+		}
+		remove() {
+			this.element.remove();
+		}
+		has_old_stamp() {
+			if (!this.static && this.stamp != -1 && this.stamp != outer_space.stamp) {
+				console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
+				return true;
+			}
+		}
+		static check() {
+			let i = things.length;
+			while (i--) {
+				const joint = things[i];
+				if (joint.has_old_stamp()) {
+					things.splice(things.indexOf(joint), 1);
+					joint.remove();
+				}
+			}
+		}
+		static steps() {
+			for (const joint of things)
+				joint.step();
+		}
+		step() {
+			this.stylize();
+		}
+		stylize() {
+		}
+	}
+
+	class float extends thing {
+		constructor(
+			id: number,
+			pos: vec2,
 			public type: string,
 			public name: string,
 		) {
-			floats.push(this);
+			super(id, pos);
 			console.log('new float');
 			this.element = document.createElement("div");
 			this.element.classList.add('float');
@@ -156,7 +186,7 @@ namespace outer_space {
 			this.stylize();
 			this.append();
 		}
-		stylize() {
+		override stylize() {
 			const half = pts.divide(mapSize, 2);
 			let relative = pts.subtract(this.pos, center);
 			relative = pts.mult(relative, pixelMultiple);
@@ -165,41 +195,21 @@ namespace outer_space {
 			this.element.style.left = relative[0];
 			//console.log('half', half);
 		}
-		append() {
-			renderer.append(this.element);
-		}
-		remove() {
-			floats.splice(floats.indexOf(this), 1);
-			this.element.remove();
-			console.log('removed', this.name);
-
-		}
-		step() {
-			if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-				this.remove();
-				console.log(` ${this.name} went out of lod ! `, this.stamp, outer_space.stamp);
-			}
-			else {
-				this.stylize();
-			}
-		}
 	}
 
-	class region {
-		static = false
-		element;
+	class region extends thing {
 		constructor(
+			pos,
 			public name,
-			public pos,
 			public radius) {
-			regions.push(this);
+			super(-1, pos);
 			this.element = document.createElement("div");
 			this.element.classList.add('region');
 			this.element.innerHTML = `<span>${name}</span>`;
 			this.stylize();
 			this.append();
 		}
-		stylize() {
+		override stylize() {
 			const half = pts.divide(mapSize, 2);
 			let relative = pts.subtract(this.pos, center);
 			relative = pts.mult(relative, pixelMultiple);
@@ -209,17 +219,6 @@ namespace outer_space {
 			this.element.style.left = relative[0] - radius;
 			this.element.style.width = radius * 2;
 			this.element.style.height = radius * 2;
-		}
-		append() {
-			renderer.append(this.element);
-		}
-		remove() {
-			// todo regions are generally static and wont be removed
-			regions.splice(regions.indexOf(this), 1);
-			this.element.remove();
-		}
-		step() {
-			this.stylize();
 		}
 	}
 }
