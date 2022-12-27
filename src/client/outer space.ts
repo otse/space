@@ -6,7 +6,7 @@ namespace outer_space {
 
 	export var renderer
 
-	export var mapSize: vec2
+	export var mapSize: vec2 = [100, 100]
 
 	export var locations: any[] = []
 
@@ -30,40 +30,42 @@ namespace outer_space {
 	export function start() {
 		if (!started) {
 			console.log(' outer space start ');
-
 			statics();
 			fetch();
-			fetcher = setInterval(fetch, 2000);
 			started = true;
 		}
 	}
 
 	export function stop() {
 		if (started) {
-			wipe();
-			clearInterval(fetcher);
+			let i = things.length;
+			while (i--)
+				things[i].remove();
 			started = false;
 		}
 	}
 
-	export function statics() {
-		console.log(' outer space statics ');
+	function statics() {
+		mapSize = [window.innerWidth, window.innerHeight];
 
-		setup();
-	}
+		//you = new float(-1, center, 'you', 'you');
+		//you.stamp = -1;
 
-	export function wipe() {
-		let i = things.length;
-		while (i--) {
-			const joint = things[i];
-			joint.remove();
+		let collision = new float(-1, [2, 1], 'collision', 'collision');
+		collision.stamp = -1;
+
+		for (let blob of space.regions) {
+			console.log('new region', blob.name);
+
+			let reg = new region(blob.center, blob.name, blob.radius);
+			reg.stamp = -1
 		}
 	}
-
-	function get_float_by_id(id) {
+	
+	function get_thing_by_id(id) {
 		for (const joint of things)
 			if (id == joint.id)
-				return joint as float;
+				return joint;
 	}
 
 	function handle_you(object, float) {
@@ -76,11 +78,13 @@ namespace outer_space {
 
 	export async function fetch() {
 		let tuple = <any>await space.make_request_json('GET', 'astronomical objects');
+		if (!tuple)
+			return;
 		outer_space.stamp++;
 		const objects = tuple[1];
 		for (const object of objects) {
 			const [random, id, pos, type, name] = object;
-			let bee = get_float_by_id(id);
+			let bee = get_thing_by_id(id);
 			if (bee) {
 				bee.pos = pos;
 				bee.stylize();
@@ -92,9 +96,12 @@ namespace outer_space {
 			bee.stamp = outer_space.stamp;
 		}
 		thing.check();
+		setTimeout(fetch, 2000);
 	}
 
 	export function step() {
+		mapSize = [window.innerWidth, window.innerHeight];
+
 		if (you) {
 			you.pos = pts.add(you.pos, [0.001, 0]);
 			center = you.pos;
@@ -108,30 +115,11 @@ namespace outer_space {
 		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
 
 		thing.steps();
-
-	}
-
-	function setup() {
-		mapSize = [window.innerWidth, window.innerHeight];
-
-		//you = new float(-1, center, 'you', 'you');
-		//you.stamp = -1;
-
-		let collision = new float(-1, [2, 1], 'collision', 'collision');
-		collision.stamp = -1;
-
-		for (let blob of space.regions) {
-			console.log('new region', blob.name);
-
-			let reg = new region(blob.center, blob.name, blob.radius);
-			reg.static = true;
-		}
 	}
 
 	class thing {
 		stamp = 0
 		element
-		static = false
 		constructor(
 			public id: number,
 			public pos: vec2,
@@ -142,10 +130,11 @@ namespace outer_space {
 			renderer.append(this.element);
 		}
 		remove() {
+			things.splice(things.indexOf(this), 1);
 			this.element.remove();
 		}
 		has_old_stamp() {
-			if (!this.static && this.stamp != -1 && this.stamp != outer_space.stamp) {
+			if (this.stamp != -1 && this.stamp != outer_space.stamp) {
 				console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
 				return true;
 			}
@@ -155,7 +144,6 @@ namespace outer_space {
 			while (i--) {
 				const joint = things[i];
 				if (joint.has_old_stamp()) {
-					things.splice(things.indexOf(joint), 1);
 					joint.remove();
 				}
 			}

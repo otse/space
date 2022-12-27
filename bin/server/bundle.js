@@ -252,6 +252,7 @@ var space = (function () {
     };
     var outer_space;
     (function (outer_space) {
+        outer_space.mapSize = [100, 100];
         outer_space.locations = [];
         outer_space.center = [0, -1];
         outer_space.pixelMultiple = 50;
@@ -261,40 +262,38 @@ var space = (function () {
         }
         outer_space.init = init;
         var started;
-        var fetcher;
         var things = [];
         function start() {
             if (!started) {
                 console.log(' outer space start ');
                 statics();
                 fetch();
-                fetcher = setInterval(fetch, 2000);
                 started = true;
             }
         }
         outer_space.start = start;
         function stop() {
             if (started) {
-                wipe();
-                clearInterval(fetcher);
+                let i = things.length;
+                while (i--)
+                    things[i].remove();
                 started = false;
             }
         }
         outer_space.stop = stop;
         function statics() {
-            console.log(' outer space statics ');
-            setup();
-        }
-        outer_space.statics = statics;
-        function wipe() {
-            let i = things.length;
-            while (i--) {
-                const joint = things[i];
-                joint.remove();
+            outer_space.mapSize = [window.innerWidth, window.innerHeight];
+            //you = new float(-1, center, 'you', 'you');
+            //you.stamp = -1;
+            let collision = new float(-1, [2, 1], 'collision', 'collision');
+            collision.stamp = -1;
+            for (let blob of space$1.regions) {
+                console.log('new region', blob.name);
+                let reg = new region(blob.center, blob.name, blob.radius);
+                reg.stamp = -1;
             }
         }
-        outer_space.wipe = wipe;
-        function get_float_by_id(id) {
+        function get_thing_by_id(id) {
             for (const joint of things)
                 if (id == joint.id)
                     return joint;
@@ -309,11 +308,13 @@ var space = (function () {
         function fetch() {
             return __awaiter$1(this, void 0, void 0, function* () {
                 let tuple = yield space$1.make_request_json('GET', 'astronomical objects');
+                if (!tuple)
+                    return;
                 outer_space.stamp++;
                 const objects = tuple[1];
                 for (const object of objects) {
                     const [random, id, pos, type, name] = object;
-                    let bee = get_float_by_id(id);
+                    let bee = get_thing_by_id(id);
                     if (bee) {
                         bee.pos = pos;
                         bee.stylize();
@@ -325,10 +326,12 @@ var space = (function () {
                     bee.stamp = outer_space.stamp;
                 }
                 thing.check();
+                setTimeout(fetch, 2000);
             });
         }
         outer_space.fetch = fetch;
         function step() {
+            outer_space.mapSize = [window.innerWidth, window.innerHeight];
             if (outer_space.you) {
                 outer_space.you.pos = pts.add(outer_space.you.pos, [0.001, 0]);
                 outer_space.center = outer_space.you.pos;
@@ -341,34 +344,22 @@ var space = (function () {
             thing.steps();
         }
         outer_space.step = step;
-        function setup() {
-            outer_space.mapSize = [window.innerWidth, window.innerHeight];
-            //you = new float(-1, center, 'you', 'you');
-            //you.stamp = -1;
-            let collision = new float(-1, [2, 1], 'collision', 'collision');
-            collision.stamp = -1;
-            for (let blob of space$1.regions) {
-                console.log('new region', blob.name);
-                let reg = new region(blob.center, blob.name, blob.radius);
-                reg.static = true;
-            }
-        }
         class thing {
             constructor(id, pos) {
                 this.id = id;
                 this.pos = pos;
                 this.stamp = 0;
-                this.static = false;
                 things.push(this);
             }
             append() {
                 outer_space.renderer.append(this.element);
             }
             remove() {
+                things.splice(things.indexOf(this), 1);
                 this.element.remove();
             }
             has_old_stamp() {
-                if (!this.static && this.stamp != -1 && this.stamp != outer_space.stamp) {
+                if (this.stamp != -1 && this.stamp != outer_space.stamp) {
                     console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
                     return true;
                 }
@@ -378,7 +369,6 @@ var space = (function () {
                 while (i--) {
                     const joint = things[i];
                     if (joint.has_old_stamp()) {
-                        things.splice(things.indexOf(joint), 1);
                         joint.remove();
                     }
                 }
@@ -499,16 +489,16 @@ var space = (function () {
                 };
                 let logo = document.querySelector("nav-bar logo");
                 logo.onclick = function () {
-                    show_landing_page();
+                    if (!space.sply) {
+                        show_landing_page();
+                    }
                 };
                 //new aabb2([0,0],[0,0]);
                 if (document.cookie) {
                     document.cookie = 'a';
                     //console.log('our cookie is ', document.cookie);
                 }
-                console.log('pre ask initial');
                 yield ask_initial();
-                console.log('post ask initial');
                 //outer_space.statics();
             });
         }
@@ -597,16 +587,6 @@ var space = (function () {
             }
             navBarRight.innerHTML = text;
         }
-        function addFlightOption() {
-            document.getElementById("main");
-            let text = '';
-            text += `
-		<p>
-		<br />
-		<span class="span-button" onclick="space.layoutFlightControls()">Flight Menu</span>
-		`;
-            return text;
-        }
         function addReturnOption() {
             let text = '';
             text += `
@@ -616,33 +596,10 @@ var space = (function () {
 		`;
             return text;
         }
-        function makeWhereabouts() {
-            for (let region of space.regions) {
-                let dist = pts.dist([1, 0], region.center);
-                if (dist < region.radius) {
-                    console.log(`were in region ${region.name} dist ${dist}`);
-                }
-            }
-            let text = '';
-            text += `
-		<div id="whereabouts">
-		
-		<span class="sector">belt</span> ~>
-		<br />
-		
-		<span class="location" style="colors: inherit} ">
-		&nbsp;boop
-		<!--(crash)--></span>
-		</div>
-		`;
-            return text;
-        }
         function layout_default() {
             console.log('layout default');
             let main = document.getElementById("main");
             let text = ``; //post_login_notice();
-            text += makeWhereabouts();
-            text += addFlightOption();
             main.innerHTML = text;
         }
         var message_timeout;
@@ -654,7 +611,7 @@ var space = (function () {
             element.style.transition = 'none';
             span.innerHTML = message;
             clearTimeout(message_timeout);
-            message_timeout = setTimeout(() => { element.style.transition = 'top 2s linear 0s'; element.style.top = '-110px'; }, 3000);
+            message_timeout = setTimeout(() => { element.style.transition = 'top 1s linear 0s'; element.style.top = '-110px'; }, 3000);
         }
         function show_logout_message() {
             //let main = document.getElementById("main")!;

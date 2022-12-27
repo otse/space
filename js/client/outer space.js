@@ -12,6 +12,7 @@ import space from "./space";
 import pts from "../shared/pts";
 var outer_space;
 (function (outer_space) {
+    outer_space.mapSize = [100, 100];
     outer_space.locations = [];
     outer_space.center = [0, -1];
     outer_space.pixelMultiple = 50;
@@ -28,33 +29,32 @@ var outer_space;
             console.log(' outer space start ');
             statics();
             fetch();
-            fetcher = setInterval(fetch, 2000);
             started = true;
         }
     }
     outer_space.start = start;
     function stop() {
         if (started) {
-            wipe();
-            clearInterval(fetcher);
+            let i = things.length;
+            while (i--)
+                things[i].remove();
             started = false;
         }
     }
     outer_space.stop = stop;
     function statics() {
-        console.log(' outer space statics ');
-        setup();
-    }
-    outer_space.statics = statics;
-    function wipe() {
-        let i = things.length;
-        while (i--) {
-            const joint = things[i];
-            joint.remove();
+        outer_space.mapSize = [window.innerWidth, window.innerHeight];
+        //you = new float(-1, center, 'you', 'you');
+        //you.stamp = -1;
+        let collision = new float(-1, [2, 1], 'collision', 'collision');
+        collision.stamp = -1;
+        for (let blob of space.regions) {
+            console.log('new region', blob.name);
+            let reg = new region(blob.center, blob.name, blob.radius);
+            reg.stamp = -1;
         }
     }
-    outer_space.wipe = wipe;
-    function get_float_by_id(id) {
+    function get_thing_by_id(id) {
         for (const joint of things)
             if (id == joint.id)
                 return joint;
@@ -69,11 +69,13 @@ var outer_space;
     function fetch() {
         return __awaiter(this, void 0, void 0, function* () {
             let tuple = yield space.make_request_json('GET', 'astronomical objects');
+            if (!tuple)
+                return;
             outer_space.stamp++;
             const objects = tuple[1];
             for (const object of objects) {
                 const [random, id, pos, type, name] = object;
-                let bee = get_float_by_id(id);
+                let bee = get_thing_by_id(id);
                 if (bee) {
                     bee.pos = pos;
                     bee.stylize();
@@ -85,10 +87,12 @@ var outer_space;
                 bee.stamp = outer_space.stamp;
             }
             thing.check();
+            setTimeout(fetch, 2000);
         });
     }
     outer_space.fetch = fetch;
     function step() {
+        outer_space.mapSize = [window.innerWidth, window.innerHeight];
         if (outer_space.you) {
             outer_space.you.pos = pts.add(outer_space.you.pos, [0.001, 0]);
             outer_space.center = outer_space.you.pos;
@@ -101,34 +105,22 @@ var outer_space;
         thing.steps();
     }
     outer_space.step = step;
-    function setup() {
-        outer_space.mapSize = [window.innerWidth, window.innerHeight];
-        //you = new float(-1, center, 'you', 'you');
-        //you.stamp = -1;
-        let collision = new float(-1, [2, 1], 'collision', 'collision');
-        collision.stamp = -1;
-        for (let blob of space.regions) {
-            console.log('new region', blob.name);
-            let reg = new region(blob.center, blob.name, blob.radius);
-            reg.static = true;
-        }
-    }
     class thing {
         constructor(id, pos) {
             this.id = id;
             this.pos = pos;
             this.stamp = 0;
-            this.static = false;
             things.push(this);
         }
         append() {
             outer_space.renderer.append(this.element);
         }
         remove() {
+            things.splice(things.indexOf(this), 1);
             this.element.remove();
         }
         has_old_stamp() {
-            if (!this.static && this.stamp != -1 && this.stamp != outer_space.stamp) {
+            if (this.stamp != -1 && this.stamp != outer_space.stamp) {
                 console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
                 return true;
             }
@@ -138,7 +130,6 @@ var outer_space;
             while (i--) {
                 const joint = things[i];
                 if (joint.has_old_stamp()) {
-                    things.splice(things.indexOf(joint), 1);
                     joint.remove();
                 }
             }

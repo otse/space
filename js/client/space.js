@@ -21,11 +21,6 @@ var space;
         return val > max ? max : val < min ? min : val;
     }
     space.clamp = clamp;
-    function get_region_by_name(name) {
-        for (let region of space.regions)
-            if (region.name == name)
-                return region;
-    }
     function make_request_json(method, url) {
         return new Promise(function (resolve, reject) {
             var xhr = new XMLHttpRequest();
@@ -75,7 +70,9 @@ var space;
             };
             let logo = document.querySelector("nav-bar logo");
             logo.onclick = function () {
-                show_landing_page();
+                if (!space.sply) {
+                    show_landing_page();
+                }
             };
             //new aabb2([0,0],[0,0]);
             if (document.cookie) {
@@ -85,9 +82,7 @@ var space;
             else {
                 //console.log('logged_in');
             }
-            console.log('pre ask initial');
             yield ask_initial();
-            console.log('post ask initial');
             //outer_space.statics();
         });
     }
@@ -267,8 +262,6 @@ var space;
         console.log('layout default');
         let main = document.getElementById("main");
         let text = ``; //post_login_notice();
-        text += makeWhereabouts();
-        text += addFlightOption();
         main.innerHTML = text;
     }
     var message_timeout;
@@ -280,7 +273,7 @@ var space;
         element.style.transition = 'none';
         span.innerHTML = message;
         clearTimeout(message_timeout);
-        message_timeout = setTimeout(() => { element.style.transition = 'top 2s linear 0s'; element.style.top = '-110px'; }, 3000);
+        message_timeout = setTimeout(() => { element.style.transition = 'top 1s linear 0s'; element.style.top = '-110px'; }, 3000);
     }
     function returnButton() {
         return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';

@@ -31,7 +31,7 @@ nav-bar {
 	z-index: 2;
     position: relative;
 	color: #e2e2e2;
-	height: 60px;
+	height: 50px;
 	display: flex;
 	align-items: center;
     justify-content: space-between;
@@ -43,7 +43,7 @@ nav-bar-left {
 	align-content: center;
 	display: flex;
 	align-items: center;
-	height: 60px;
+	height: 50px;
     background: linear-gradient(90deg, rgb(24 89 141) 0%, rgb(11 73 109) 100%);
 }
 
@@ -57,9 +57,6 @@ nav-bar logo {
 	display: inline-block;
 }
 
-nav-bar logo span:nth-child(1) {
-
-}
 
 nav-bar logo span:nth-child(1) {
 	cursor: pointer;

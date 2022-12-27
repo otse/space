@@ -19,12 +19,6 @@ namespace space {
 
 	export var regions, locations
 
-	function get_region_by_name(name) {
-		for (let region of regions)
-			if (region.name == name)
-				return region;
-	}
-
 	export function make_request_json(method, url) {
 		return new Promise(function (resolve, reject) {
 			var xhr = new XMLHttpRequest();
@@ -81,7 +75,9 @@ namespace space {
 
 		let logo = document.querySelector("nav-bar logo") as HTMLElement;
 		logo.onclick = function () {
-			show_landing_page();
+			if (!sply) {
+				show_landing_page();
+			}
 		}
 
 		//new aabb2([0,0],[0,0]);
@@ -94,11 +90,7 @@ namespace space {
 			//console.log('logged_in');
 		}
 
-		console.log('pre ask initial');
-
 		await ask_initial();
-
-		console.log('post ask initial');
 
 		//outer_space.statics();
 	}
@@ -194,7 +186,7 @@ namespace space {
 
 	function update_user_status() {
 		console.log('post login notice');
-		
+
 		let navBarRight = document.querySelector("nav-bar-right")!;
 		let text = '';
 		if (sply) {
@@ -308,8 +300,6 @@ namespace space {
 
 		let main = document.getElementById("main")!;
 		let text = ``;//post_login_notice();
-		text += makeWhereabouts();
-		text += addFlightOption();
 		main.innerHTML = text;
 	}
 
@@ -318,11 +308,11 @@ namespace space {
 		let element = document.querySelector("my-message") as HTMLElement;
 		let span = document.querySelector("my-message span:nth-child(2)")!;
 		console.log(span);
-		element.style.top = '0px'
-		element.style.transition = 'none'
+		element.style.top = '0px';
+		element.style.transition = 'none';
 		span.innerHTML = message;
 		clearTimeout(message_timeout);
-		message_timeout = setTimeout(() => { element.style.transition = 'top 2s linear 0s'; element.style.top = '-110px' }, 3000);
+		message_timeout = setTimeout(() => { element.style.transition = 'top 1s linear 0s'; element.style.top = '-110px' }, 3000);
 	}
 
 	function returnButton() {
