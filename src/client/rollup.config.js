@@ -7,6 +7,6 @@ export default {
 		file: '../../bin/server/bundle.js',
 		format: 'iife', // immediately-invoked function expression — suitable for <script> tags
 		sourcemap: false,
-		globals: { THREEX: 'THREEX' }
+		globals: { }
 	}
 };

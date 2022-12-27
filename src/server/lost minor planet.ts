@@ -35,11 +35,15 @@ namespace lost_minor_planet {
 		users = object_from_file('users.json');
 
 		let num = 0;
-		for (let name of users) {
-			let ply = fetch_user(name);
-			if (ply && !ply.dormant) {
-				num++;
-				table[name] = ply;
+		for (const username of users) {
+			let ply = get_ply_from_table_or_fetch(username);
+			if (ply) {
+				if (ply.dormant) {
+					delete table[username];
+				} else {
+					num++;
+					table[username] = ply;
+				}
 			}
 		}
 		console.log(`loaded ${num} non dormant users`);
@@ -60,21 +64,25 @@ namespace lost_minor_planet {
 		return fs.existsSync(path);
 	}
 
-	export function write_meta() {
+	export function has_user(username) {
+		return users.indexOf(username) !== -1;
+	}
+
+	export function out_meta() {
 		meta.writes++;
 		out_neat('lost minor planet.json', meta);
 	}
 
-	export function write_logins() {
+	export function out_logins() {
 		out_neat('logins.json', logins);
 	}
 
-	export function write_users() {
+	export function out_users() {
 		out_neat('users.json', users);
 	}
 
-	export function write_ply(ply: ply_json) {
-		console.log('writing ply', ply.id);
+	export function out_ply(ply: ply_json) {
+		console.log('out ply', ply.id);
 		out_neat(user_path(ply.username), ply);
 	}
 
@@ -89,7 +97,7 @@ namespace lost_minor_planet {
 
 	export function new_ply() {
 		meta.users++;
-		write_meta();
+		out_meta();
 		let ply: ply_json = {
 			id: meta.users,
 			ip: 'N/A',
@@ -121,25 +129,29 @@ namespace lost_minor_planet {
 					delete table[username];
 					fs.unlinkSync(user_path(username));
 					splice_user(username);
-					write_logins();
-					write_users();
+					out_logins();
+					out_users();
 					return true;
 				}
 			}
 		}
 	}
 
-	export function get_ply_from_table_or_fetch(username) {
+	export function get_ply_from_table_or_fetch(username, dormant = true) {
 		let ply = table[username];
-		if (!ply) {
-			let ply = fetch_user(username);
+		if (ply)
+			return ply;
+		else {
+			let ply = in_user(username);
+			if (ply.dormant && !dormant)
+				return;
 			if (ply)
 				table[username] = ply;
+			return ply;
 		}
-		return ply;
 	}
 
-	export function fetch_user(username) {
+	export function in_user(username) {
 		if (object_exists(user_path(username)))
 			return object_from_file(user_path(username));
 	}
@@ -153,29 +165,17 @@ namespace lost_minor_planet {
 		ply.ip = ip;
 		logins[ip] = ply.username;
 		users.push(ply.username);
-		write_users();
-		write_ply(ply);
-		write_logins();
+		out_ply(ply);
+		out_users();
+		out_logins();
 		return ply;
 	}
 
 	export function get_ply_from_ip(ip) {
-
-		// console.log('get_ply_from_ip', ip);
-
 		if (logins[ip]) {
 			const username = logins[ip];
-			if (table[username]) {
-				return table[username];
-			}
-			else {
-				// not logged in yet this server-session
-				if (object_exists(user_path(username))) {
-					let ply = fetch_user(username);
-					table[username] = ply;
-					return ply;
-				}
-			}
+			let ply = get_ply_from_table_or_fetch(username);
+			return ply;
 		}
 	}
 }

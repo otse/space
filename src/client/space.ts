@@ -74,10 +74,14 @@ namespace space {
 
 		app.mouse();
 
-		let menuButton = document.getElementById("menu_button")!;
-
+		let menuButton = document.getElementById("menu-button")!;
 		menuButton.onclick = function () {
 			show_account_bubbles();
+		}
+
+		let logo = document.querySelector("nav-bar logo") as HTMLElement;
+		logo.onclick = function () {
+			show_landing_page();
 		}
 
 		//new aabb2([0,0],[0,0]);
@@ -97,7 +101,6 @@ namespace space {
 		console.log('post ask initial');
 
 		outer_space.statics();
-
 	}
 
 	async function ask_initial() {
@@ -119,7 +122,7 @@ namespace space {
 		let main = document.getElementById("main")!;
 
 		if (sply) {
-			text += username_header();
+			//text += post_login_notice();
 			text += addReturnOption();
 
 			//<div class="amenities">
@@ -140,13 +143,13 @@ namespace space {
 			if (sply.guest)
 				text += `
 			(Perhaps you want to
-			<span class="span-button" onclick="space.purge()">delete your guest account</span>)
+			<span class="span-button" onclick="space.purge()">delete guest</span>)
 			`;
 			//</div>
 			main.innerHTML = text;
 		}
 		else {
-			show_guest_choice();
+			show_landing_page();
 		}
 	}
 
@@ -157,7 +160,7 @@ namespace space {
 			layout_default();
 		}
 		else {
-			show_guest_choice();
+			show_landing_page();
 		}
 	}
 
@@ -167,6 +170,7 @@ namespace space {
 			console.warn('not sply');
 		sply = data;
 		if (sply) {
+			post_login_notice();
 			outer_space.start();
 		}
 		else {
@@ -192,22 +196,24 @@ namespace space {
 		//}
 	}
 
-	function username_header() {
+	function post_login_notice() {
+		console.log('post login notice');
+		
+		let userstatus = document.querySelector("userstatus")!;
 		let text = '';
-		text += `<p class="logged">`;
-		if (sply.guest)
-			text += `
-			[ Playing as unregistered ${sply.username}
-			<span class="material-icons" style="font-size: 18px">no_accounts</span>
-			]`;
-		else
-			text += `
-			[ Logged in as ${sply.username}
-			<span class="material-icons" style="font-size: 18px">how_to_reg</span>
-			]
+		if (sply) {
+			if (sply.guest)
+				text += `
+			Guest ${sply.username}
+			<span class="material-symbols-outlined" style="font-size: 18px">no_accounts</span>
 			`;
-		text += `<p>`;
-		return text;
+			else
+				text += `
+			Logged in as ${sply.username}
+			<span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span>
+			`;
+		}
+		userstatus.innerHTML = text;
 	}
 
 	function addFlightOption() {
@@ -305,7 +311,7 @@ namespace space {
 		console.log('layout default');
 
 		let main = document.getElementById("main")!;
-		let text = username_header();
+		let text = ``;//post_login_notice();
 		text += makeWhereabouts();
 		text += addFlightOption();
 		main.innerHTML = text;
@@ -313,12 +319,14 @@ namespace space {
 
 	var message_timeout;
 	function pin_message(message) {
-		let element = document.getElementById("message")!;
-		element.style.top = '0'
+		let element = document.querySelector("message") as HTMLElement;
+		let span = document.querySelector("message span:nth-child(2)")!;
+		console.log(span);
+		element.style.top = '50px'
 		element.style.transition = 'none'
-		element.innerHTML = message;
+		span.innerHTML = message;
 		clearTimeout(message_timeout);
-		message_timeout = setTimeout(() => { element.style.transition = 'top 2s'; element.style.top = '-40px' }, 3000);
+		message_timeout = setTimeout(() => { element.style.transition = 'top 2s'; element.style.top = '-60px' }, 3000);
 	}
 
 	function returnButton() {
@@ -326,23 +334,30 @@ namespace space {
 	}
 
 	export function show_logout_message() {
-		let main = document.getElementById("main")!;
+		//let main = document.getElementById("main")!;
 
 		pin_message('You logged out');
-		let text = `You logged out`;
+		//let text = `You logged out`;
 
-		main.innerHTML = text;
+		//main.innerHTML = text;
 	}
 
-	export function show_guest_choice() {
+	export function show_landing_page() {
 		let main = document.getElementById("main")!;
 		let text = `
-		Welcome, space farer.
+		<intro>
+		<div id="welcome">
+		<!--<h1>spAce</h1>-->
+		Web space sim that combines <span>real-time</span> with <span>text-based</span>.
+		<br />
+		<br />
+		<span class="colorful-button" onclick="space.play_as_guest()">Play as a guest</span>,
+		<span class="colorful-button" onclick="space.show_register()">register</span>
+		<span class="colorful-button" onclick="space.show_login()">or login</span>
+		</div>
 		<p>
-		<span class="span-button" onclick="space.play_as_guest()">Play as a guest</span>,
-		<span class="span-button" onclick="space.show_register()">register</span>
-		<span class="span-button" onclick="space.show_login()">or login</span>
 		</p>
+		</intro>
 		`;
 		main.innerHTML = text;
 	}
@@ -358,18 +373,38 @@ namespace space {
 		</p>
 		`;
 		text += `
+		<div id="forms">
 		<form action="login" method="post">
-		<label for="username">Username</label><br />
-		<input id="username" type="text" placeholder="" name="username" required><br /><br />
-		
-		<label for="psw">Password</label><br />
-		<input id="password" type="password" placeholder="" name="psw" required><br /><br />
-		
-		<button type="button" onclick="space.xhr_login()">Login</button>
+		<table>
+		<tr>
+		<td>
+		<label for="username">Username</label>
+		</td>
+		<td>
+		<input id="username" type="text" placeholder="username" name="username" required>
+		</td>
+		</tr>
+		<tr>
+		<td>
+		<label for="psw">Password</label>
+		</td>
+		<td>
+		<input id="password" type="password" placeholder="password" name="psw" required>
+		</td>
+		</tr>
+		<tr>
+		<td>
+		</td>
+		<td>
+		<button class="login-button" type="button" onclick="space.xhr_login()">Login</button>
+		</td>
+		</tr>
+		</table>
 		
 		</form>
 		<p>
 		<span class="smallish">You will remain logged in until you logout.</span>
+		</div>
 		`;
 
 		textHead.innerHTML = text;
@@ -379,6 +414,7 @@ namespace space {
 		let textHead = document.getElementById("main")!;
 
 		let text = `
+		<div id="forms">
 		<form action="register" method="post">
 
 		<label for="username">Username</label><br />
@@ -403,7 +439,9 @@ namespace space {
 
 		<button type="button" onclick="space.xhr_register()">Register</button>
 		
-		</form>`;
+		</form>
+		</div>
+		`;
 
 		textHead.innerHTML = text;
 	}
@@ -415,7 +453,9 @@ namespace space {
 			pin_message(data[1]);
 			sply = undefined;
 			outer_space.stop();
+			post_login_notice();
 			show_logout_message();
+			show_landing_page();
 		}
 		else {
 			pin_message(data[1]);
@@ -430,13 +470,17 @@ namespace space {
 		sply = undefined;
 		pin_message("Purged guest account");
 		outer_space.stop();
-		show_guest_choice();
+		post_login_notice();
+		show_landing_page();
 	}
 
 	export async function play_as_guest() {
-		await make_request_json('GET', 'guest');
+		const guest = await make_request_json('GET', 'guest');
 		const stuple = await make_request_json('GET', 'ply');
-		pin_message('Playing as temporary guest user');
+		if (guest)
+			pin_message('Guest users have no limits, enjoy');
+		else
+			pin_message('You\'re already a guest');
 		receive_sply(stuple);
 		choose_layout();
 		console.log('layout');

@@ -19,7 +19,7 @@ var outer_space;
     var regions = [];
     outer_space.stamp = 0;
     function init() {
-        outer_space.renderer = document.getElementById("outer-space");
+        outer_space.renderer = document.querySelector("outer-space");
     }
     outer_space.init = init;
     var started;

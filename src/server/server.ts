@@ -69,7 +69,7 @@ function init() {
 		console.log('added ply-ship to lod', ply.username);
 	}
 	for (let username of lmp.users) {
-		let ply = lmp.get_ply_from_table_or_fetch(username);
+		let ply = lmp.get_ply_from_table_or_fetch(username, false);
 		make_ship(ply);
 	}
 
@@ -153,32 +153,32 @@ function init() {
 					}
 					if (lmp.logins[ip] == username) {
 						res.writeHead(400);
-						res.end(`you're already logged in with this user`);
+						res.end(`You're already logged in with this user`);
 					}
 					else if (ply.password == password) {
 						res.writeHead(200);
-						let msg = 'logging you in';
+						let msg = 'Logging you in';
 						if (logged_in_elsewhere) {
-							msg += '. you\'ve been logged out of your other device';
+							msg += '. You\'ve been logged out of your other device';
 							delete lmp.logins[ip2];
 						}
-						lmp.handle_new_login(ip);
+						lmp.delete_user(ip, true);
 						lmp.logins[ip] = ply.username;
-						lmp.write_logins();
+						lmp.out_logins();
 						res.end(msg);
 					}
 					else if (ply.password != password) {
 						res.writeHead(400);
-						res.end('wrong pw');
+						res.end('Wrong pw');
 					}
 					else {
 						res.writeHead(400);
-						res.end('generic error');
+						res.end('Generic error');
 					}
 				}
 				else {
 					res.writeHead(400);
-					res.end('user not found');
+					res.end('User not found');
 				}
 
 			});
@@ -198,55 +198,53 @@ function init() {
 
 				console.log(body);
 
-				const regex = /[a-zA-Z]/;
+				const username = parsed.username;
+				const password = parsed.password;
 
-				const doesItHaveLetter = regex.test(parsed['username']);
+				const doesItHaveLetter = /[a-zA-Z]/.test(parsed['username']);
 
 				var letterNumber = /^[0-9a-zA-Z]+$/;
 
-				if (!parsed['username'].match(letterNumber)) {
+				if (lmp.has_user(username)) {
 					res.writeHead(400);
-					res.end('username not alpha numeric');
+					res.end(`Username taken`);
+				}
+				else if (!username.match(letterNumber)) {
+					res.writeHead(400);
+					res.end('Username not alpha numeric');
 				}
 				else if (!doesItHaveLetter) {
 					res.writeHead(400);
-					res.end('need at least one letter');
+					res.end('Need at least one letter');
 				}
-				else if (parsed['username'].length < 4) {
+				else if (username.length < 4) {
 					res.writeHead(400);
-					res.end('username too short (4 letters or more please)');
+					res.end('Username length must be 4 - 20');
 				}
-				else if (parsed['password'].length < 4 || parsed['password'].length > 20) {
+				else if (password.length < 4 || password.length > 20) {
 					res.writeHead(400);
-					res.end('password length (4 - 20)');
+					res.end('Password length 4 - 20');
 				}
-				else if (parsed['password'] != parsed['password-repeat']) {
+				else if (password != parsed['password-repeat']) {
 					res.writeHead(400);
-					res.end('your passwords arent the same');
+					res.end('Your passwords aren\'t the same');
 				}
 				else {
-					const username = parsed.username;
-					const password = parsed.password;
+					let ply = lmp.new_ply();
+					ply.guest = false;
+					ply.ip = 'N/A';
+					ply.username = username;
+					ply.password = password;
 
-					const path = lmp.user_path(username);
+					lmp.delete_user(ip, true);
+					lmp.users.push(username);
+					lmp.out_users();
+					lmp.table[username] = ply;
 
-					if (fs.existsSync(path)) {
-						res.writeHead(400);
-						res.end(`a player already exists with username ${username}. try logging in`);
-					}
-					else {
-						let ply = lmp.new_ply();
-						ply.guest = false;
-						ply.ip = 'N/A';
-						ply.username = username;
-						ply.password = password;
-						lmp.table[username] = ply;
-						
-						res.writeHead(200);
-						res.end(`congratulations, you've registered as ${username}. now login`);
+					res.writeHead(200);
+					res.end(`Congratulations, you've registered as ${username}. Now login`);
 
-						lmp.write_ply(ply);
-					}
+					lmp.out_ply(ply);
 				}
 			});
 
@@ -300,8 +298,12 @@ function init() {
 			return;
 		}
 		else if (req.url == '/guest') {
-			let guest = lmp.make_quest(ip);
-			res.end('1');
+			if (!lmp.logins[ip]) {
+				let guest = lmp.make_quest(ip);
+				res.end('true');
+			}
+			else
+				res.end('false');
 			return;
 		}
 		else if (req.url == '/purge') {
@@ -314,11 +316,14 @@ function init() {
 				let objects = session.grid.gather();
 				send_object(['astronomical objects', objects]);
 			}
+			else {
+				res.end('0');
+			}
 			return;
 		}
 		else if (req.url == '/logout') {
 			console.log('going to log you out');
-			
+
 			if (lmp.logins[ip]) {
 				const username = lmp.logins[ip];
 				const ply = lmp.table[username];
@@ -328,7 +333,7 @@ function init() {
 					}
 					else {
 						delete lmp.logins[ip];
-						lmp.write_logins();
+						lmp.out_logins();
 						send_object([true, `logging out ${username}`]);
 					}
 				}

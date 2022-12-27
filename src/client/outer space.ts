@@ -22,7 +22,7 @@ namespace outer_space {
 	export var stamp = 0;
 
 	export function init() {
-		renderer = document.getElementById("outer-space");
+		renderer = document.querySelector("outer-space");
 	}
 
 	var started;

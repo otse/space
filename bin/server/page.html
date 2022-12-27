@@ -17,23 +17,11 @@
 
 	<script type="text/javascript" src="bundle.js"></script>
 
-	<!-- https://google.github.io/material-design-icons/ --> 
-	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
 
 	<style>
-	.stats {
-			z-index: 2;
-			width: 300px;
-			position: absolute;
-			top: 0;
-			right: 0;
-			font-family: monospace;
-			text-align: right;
-			padding: 5px;
-			font-size: 11px;
-			color: white;
-			background: transparent !important;
-		}
+
 	</style>
 
 	<title>space</title>
@@ -47,26 +35,40 @@
 
 <body unselectable="on" class="unselectable">
 
-	<div id="message">boo</div>
+	<message>
+		<span class="material-icons" style="font-size: 11px;">info</span>
+		<span>message</span>
+	</message>
 
-	<div class="mission">
-		<span id="menu_button" class="material-icons" style="font-size: 24px;">
-			menu
-		</span>
-		<!--<span id="user_button" class="material-icons">
+	<nav-bar>
+		<left>
+			<span id="menu-button" class="material-symbols-outlined">
+				menu
+			</span>
+			<!--<span id="user_button" class="material-icons">
 			account_circle
 		</span>-->
-		<div class="logo">
-			<div class="text">space farers</div>
-		</div>
-		
-	</div>
-	
-	<div id="outer-space">
-		
-	</div>
-	
-	<div id="content">
+			<logo>
+				<!--<span class="material-symbols-outlined" style="font-size: 12px;">
+				grade
+			</span>-->
+				<span>Space</span>
+				<!--<span class="material-symbols-outlined" style="font-size: 12px;">
+				grade
+			</span>-->
+			</logo>
+		</left>
+		<userstatus>
+			
+		</userstatus>
+
+	</nav-bar>
+
+	<outer-space>
+
+	</outer-space>
+
+	<content>
 
 		<div id="main">
 
@@ -76,7 +78,7 @@
 			task ><input id="cli" type="text" name="cli" class="mono" autocomplete="off" size="30" />
 		</form>-->
 
-	</div>
+	</content>
 
 
 </body>

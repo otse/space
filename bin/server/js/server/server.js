@@ -54,7 +54,7 @@ function init() {
         console.log('added ply-ship to lod', ply.username);
     };
     for (let username of lost_minor_planet_1.default.users) {
-        let ply = lost_minor_planet_1.default.get_ply_from_table_or_fetch(username);
+        let ply = lost_minor_planet_1.default.get_ply_from_table_or_fetch(username, false);
         make_ship(ply);
     }
     //createLocationPersistence();
@@ -124,32 +124,32 @@ function init() {
                     }
                     if (lost_minor_planet_1.default.logins[ip] == username) {
                         res.writeHead(400);
-                        res.end(`you're already logged in with this user`);
+                        res.end(`You're already logged in with this user`);
                     }
                     else if (ply.password == password) {
                         res.writeHead(200);
-                        let msg = 'logging you in';
+                        let msg = 'Logging you in';
                         if (logged_in_elsewhere) {
-                            msg += '. you\'ve been logged out of your other device';
+                            msg += '. You\'ve been logged out of your other device';
                             delete lost_minor_planet_1.default.logins[ip2];
                         }
-                        lost_minor_planet_1.default.handle_new_login(ip);
+                        lost_minor_planet_1.default.delete_user(ip, true);
                         lost_minor_planet_1.default.logins[ip] = ply.username;
-                        lost_minor_planet_1.default.write_logins();
+                        lost_minor_planet_1.default.out_logins();
                         res.end(msg);
                     }
                     else if (ply.password != password) {
                         res.writeHead(400);
-                        res.end('wrong pw');
+                        res.end('Wrong pw');
                     }
                     else {
                         res.writeHead(400);
-                        res.end('generic error');
+                        res.end('Generic error');
                     }
                 }
                 else {
                     res.writeHead(400);
-                    res.end('user not found');
+                    res.end('User not found');
                 }
             });
             return;
@@ -162,48 +162,47 @@ function init() {
             req.on('end', function () {
                 const parsed = qs.parse(body);
                 console.log(body);
-                const regex = /[a-zA-Z]/;
-                const doesItHaveLetter = regex.test(parsed['username']);
+                const username = parsed.username;
+                const password = parsed.password;
+                const doesItHaveLetter = /[a-zA-Z]/.test(parsed['username']);
                 var letterNumber = /^[0-9a-zA-Z]+$/;
-                if (!parsed['username'].match(letterNumber)) {
+                if (lost_minor_planet_1.default.has_user(username)) {
                     res.writeHead(400);
-                    res.end('username not alpha numeric');
+                    res.end(`Username taken`);
+                }
+                else if (!username.match(letterNumber)) {
+                    res.writeHead(400);
+                    res.end('Username not alpha numeric');
                 }
                 else if (!doesItHaveLetter) {
                     res.writeHead(400);
-                    res.end('need at least one letter');
+                    res.end('Need at least one letter');
                 }
-                else if (parsed['username'].length < 4) {
+                else if (username.length < 4) {
                     res.writeHead(400);
-                    res.end('username too short (4 letters or more please)');
+                    res.end('Username length must be 4 - 20');
                 }
-                else if (parsed['password'].length < 4 || parsed['password'].length > 20) {
+                else if (password.length < 4 || password.length > 20) {
                     res.writeHead(400);
-                    res.end('password length (4 - 20)');
+                    res.end('Password length 4 - 20');
                 }
-                else if (parsed['password'] != parsed['password-repeat']) {
+                else if (password != parsed['password-repeat']) {
                     res.writeHead(400);
-                    res.end('your passwords arent the same');
+                    res.end('Your passwords aren\'t the same');
                 }
                 else {
-                    const username = parsed.username;
-                    const password = parsed.password;
-                    const path = lost_minor_planet_1.default.user_path(username);
-                    if (fs.existsSync(path)) {
-                        res.writeHead(400);
-                        res.end(`a player already exists with username ${username}. try logging in`);
-                    }
-                    else {
-                        let ply = lost_minor_planet_1.default.new_ply();
-                        ply.guest = false;
-                        ply.ip = 'N/A';
-                        ply.username = username;
-                        ply.password = password;
-                        lost_minor_planet_1.default.table[username] = ply;
-                        res.writeHead(200);
-                        res.end(`congratulations, you've registered as ${username}. now login`);
-                        lost_minor_planet_1.default.write_ply(ply);
-                    }
+                    let ply = lost_minor_planet_1.default.new_ply();
+                    ply.guest = false;
+                    ply.ip = 'N/A';
+                    ply.username = username;
+                    ply.password = password;
+                    lost_minor_planet_1.default.delete_user(ip, true);
+                    lost_minor_planet_1.default.users.push(username);
+                    lost_minor_planet_1.default.out_users();
+                    lost_minor_planet_1.default.table[username] = ply;
+                    res.writeHead(200);
+                    res.end(`Congratulations, you've registered as ${username}. Now login`);
+                    lost_minor_planet_1.default.out_ply(ply);
                 }
             });
             return;
@@ -248,8 +247,12 @@ function init() {
             return;
         }
         else if (req.url == '/guest') {
-            let guest = lost_minor_planet_1.default.make_quest(ip);
-            res.end('1');
+            if (!lost_minor_planet_1.default.logins[ip]) {
+                let guest = lost_minor_planet_1.default.make_quest(ip);
+                res.end('true');
+            }
+            else
+                res.end('false');
             return;
         }
         else if (req.url == '/purge') {
@@ -261,6 +264,9 @@ function init() {
             if (session) {
                 let objects = session.grid.gather();
                 send_object(['astronomical objects', objects]);
+            }
+            else {
+                res.end('0');
             }
             return;
         }
@@ -275,7 +281,7 @@ function init() {
                     }
                     else {
                         delete lost_minor_planet_1.default.logins[ip];
-                        lost_minor_planet_1.default.write_logins();
+                        lost_minor_planet_1.default.out_logins();
                         send_object([true, `logging out ${username}`]);
                     }
                 }
