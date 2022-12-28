@@ -30,7 +30,7 @@ canvas {
 /* nav bar */
 
 nav-bar {
-	z-index: 2;
+	z-index: 3;
     position: relative;
 	color: #e2e2e2;
 	height: 50px;

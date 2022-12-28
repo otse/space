@@ -18,11 +18,39 @@ namespace outer_space {
 
 	export var stamp = 0;
 
+	export function project(unit: vec2) {
+		const half = pts.divide(mapSize, 2);
+		let pos = pts.subtract(unit, center);
+		pos = pts.mult(pos, pixelMultiple);
+		pos = pts.add(pos, half);
+		return pos;
+	}
+
+	export function unproject(pixel: vec2) {
+		const half = pts.divide(mapSize, 2);
+		let pos = pts.subtract(pixel, half);
+		pos = pts.divide(pos, pixelMultiple);
+		pos = pts.add(pos, center);
+		return pos;
+	}
+
 	export function init() {
 		renderer = document.querySelector("outer-space");
 		zoomLevel = document.querySelector("outer-space zoom-level");
 
-		document.body.addEventListener('gesturechange', function(e) {
+		renderer.onclick = (event) => {
+			console.log(event);
+
+			let pixel = [event.clientX, event.clientY] as vec2;
+			
+			let unit = unproject(pixel);
+
+			//relative = pts.divide(relative, window.devicePixelRatio);
+			//relative = pts.add(relative, [2, -4]);
+			marker.pos = unit;
+		}
+
+		document.body.addEventListener('gesturechange', function (e) {
 			const ev = e as any;
 			if (ev.scale < 1.0) {
 				// User moved fingers closer together
@@ -36,6 +64,8 @@ namespace outer_space {
 
 	var started;
 	var fetcher;
+
+	var marker: ping;
 
 	var things: thing[] = []
 
@@ -69,6 +99,8 @@ namespace outer_space {
 		//you = new float(-1, center, 'you', 'you');
 		//you.stamp = -1;
 
+		marker = new ping();
+
 		let collision = new float(-1, [2, 1], 'collision', 'collision');
 		collision.stamp = -1;
 
@@ -79,7 +111,7 @@ namespace outer_space {
 			reg.stamp = -1
 		}
 	}
-	
+
 	function get_thing_by_id(id) {
 		for (const joint of things)
 			if (id == joint.id)
@@ -94,7 +126,7 @@ namespace outer_space {
 		}
 	}
 
-	export async function fetch() {		
+	export async function fetch() {
 		let tuple = <any>await space.make_request_json('GET', 'astronomical objects');
 		if (!tuple)
 			return;
@@ -130,7 +162,7 @@ namespace outer_space {
 			pixelMultiple += 5;
 		if (app.wheel == -1)
 			pixelMultiple -= 5;
-		
+
 		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
 
 		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(1)}`;
@@ -196,12 +228,9 @@ namespace outer_space {
 			this.append();
 		}
 		override stylize() {
-			const half = pts.divide(mapSize, 2);
-			let relative = pts.subtract(this.pos, center);
-			relative = pts.mult(relative, pixelMultiple);
-			relative = pts.add(relative, half);
-			this.element.style.top = relative[1];
-			this.element.style.left = relative[0];
+			let proj = project(this.pos);
+			this.element.style.top = proj[1];
+			this.element.style.left = proj[0];
 			//console.log('half', half);
 		}
 	}
@@ -219,15 +248,29 @@ namespace outer_space {
 			this.append();
 		}
 		override stylize() {
-			const half = pts.divide(mapSize, 2);
-			let relative = pts.subtract(this.pos, center);
-			relative = pts.mult(relative, pixelMultiple);
-			relative = pts.add(relative, half);
+			let proj = project(this.pos);
 			const radius = this.radius * pixelMultiple;
-			this.element.style.top = relative[1] - radius;
-			this.element.style.left = relative[0] - radius;
+			this.element.style.top = proj[1] - radius;
+			this.element.style.left = proj[0] - radius;
 			this.element.style.width = radius * 2;
 			this.element.style.height = radius * 2;
+		}
+	}
+
+	class ping extends thing {
+		constructor() {
+			super(-1, [0, 0]);
+			this.stamp = -1;
+			this.element = document.createElement("div");
+			this.element.classList.add('ping');
+			this.element.innerHTML = `<span></span>`;
+			this.stylize();
+			this.append();
+		}
+		override stylize() {
+			let proj = project(this.pos);
+			this.element.style.top = proj[1];
+			this.element.style.left = proj[0];
 		}
 	}
 }

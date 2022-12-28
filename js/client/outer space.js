@@ -17,9 +17,33 @@ var outer_space;
     outer_space.center = [0, -1];
     outer_space.pixelMultiple = 50;
     outer_space.stamp = 0;
+    function project(unit) {
+        const half = pts.divide(outer_space.mapSize, 2);
+        let pos = pts.subtract(unit, outer_space.center);
+        pos = pts.mult(pos, outer_space.pixelMultiple);
+        pos = pts.add(pos, half);
+        return pos;
+    }
+    outer_space.project = project;
+    function unproject(pixel) {
+        const half = pts.divide(outer_space.mapSize, 2);
+        let pos = pts.subtract(pixel, half);
+        pos = pts.divide(pos, outer_space.pixelMultiple);
+        pos = pts.add(pos, outer_space.center);
+        return pos;
+    }
+    outer_space.unproject = unproject;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
+        outer_space.renderer.onclick = (event) => {
+            console.log(event);
+            let pixel = [event.clientX, event.clientY];
+            let unit = unproject(pixel);
+            //relative = pts.divide(relative, window.devicePixelRatio);
+            //relative = pts.add(relative, [2, -4]);
+            marker.pos = unit;
+        };
         document.body.addEventListener('gesturechange', function (e) {
             const ev = e;
             if (ev.scale < 1.0) {
@@ -35,6 +59,7 @@ var outer_space;
     outer_space.init = init;
     var started;
     var fetcher;
+    var marker;
     var things = [];
     function start() {
         if (!started) {
@@ -62,6 +87,7 @@ var outer_space;
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
         //you = new float(-1, center, 'you', 'you');
         //you.stamp = -1;
+        marker = new ping();
         let collision = new float(-1, [2, 1], 'collision', 'collision');
         collision.stamp = -1;
         for (let blob of space.regions) {
@@ -175,12 +201,9 @@ var outer_space;
             this.append();
         }
         stylize() {
-            const half = pts.divide(outer_space.mapSize, 2);
-            let relative = pts.subtract(this.pos, outer_space.center);
-            relative = pts.mult(relative, outer_space.pixelMultiple);
-            relative = pts.add(relative, half);
-            this.element.style.top = relative[1];
-            this.element.style.left = relative[0];
+            let proj = project(this.pos);
+            this.element.style.top = proj[1];
+            this.element.style.left = proj[0];
             //console.log('half', half);
         }
     }
@@ -196,15 +219,28 @@ var outer_space;
             this.append();
         }
         stylize() {
-            const half = pts.divide(outer_space.mapSize, 2);
-            let relative = pts.subtract(this.pos, outer_space.center);
-            relative = pts.mult(relative, outer_space.pixelMultiple);
-            relative = pts.add(relative, half);
+            let proj = project(this.pos);
             const radius = this.radius * outer_space.pixelMultiple;
-            this.element.style.top = relative[1] - radius;
-            this.element.style.left = relative[0] - radius;
+            this.element.style.top = proj[1] - radius;
+            this.element.style.left = proj[0] - radius;
             this.element.style.width = radius * 2;
             this.element.style.height = radius * 2;
+        }
+    }
+    class ping extends thing {
+        constructor() {
+            super(-1, [0, 0]);
+            this.stamp = -1;
+            this.element = document.createElement("div");
+            this.element.classList.add('ping');
+            this.element.innerHTML = `<span></span>`;
+            this.stylize();
+            this.append();
+        }
+        stylize() {
+            let proj = project(this.pos);
+            this.element.style.top = proj[1];
+            this.element.style.left = proj[0];
         }
     }
 })(outer_space || (outer_space = {}));

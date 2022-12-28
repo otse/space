@@ -1,5 +1,5 @@
 outer-space {
-	z-index: 1;
+	z-index: 2;
 	position: absolute;
 	overflow: hidden;
 	top: 0;
@@ -13,14 +13,15 @@ outer-space {
 
 outer-space zoom-level {
 	font-family: 'Inconsolata';
-    display: block;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    padding: 5px;
-    margin: 10px;
-    box-shadow: 0px 0px 5px black;
-    background: #1a1a1a;
+	display: block;
+	z-index: 3;
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	padding: 5px;
+	margin: 10px;
+	box-shadow: 0px 0px 5px black;
+	background: #1a1a1a;
 }
 
 outer-space .float {
@@ -53,4 +54,43 @@ outer-space .region {
 	/*background: rgba(127, 127, 127, 0.05);*/
 	border-radius: 100%;
 	border: 2px dotted rgba(127, 127, 127, 0.1);
+	box-shadow: 0px 0px 50px hsl(0deg 0% 0% / 5%);
+}
+
+
+outer-space .ping {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	margin: -10px;
+	color: orange;
+	position: absolute;
+	/*background: rgba(127, 127, 127, 0.05);*/
+	border-radius: 20%;
+	border: 1px solid rgba(255, 255, 255, 0.5);
+	animation: 0.5s ease-in-out 0s infinite alternate ping-rotate, 1s ease-in-out 0s infinite alternate ping-glow;
+	transform: rotateZ(45deg);
+}
+
+@keyframes ping-rotate {
+	from {
+		transform: rotateZ(45deg);
+	}
+
+	to {
+		transform: rotateZ(-45deg);
+	}
+}
+
+@keyframes ping-glow {
+	from {
+		box-shadow: 0px 0px 5px white;
+	}
+
+	to {
+		box-shadow: 0px 0px 10px pink;
+	}
 }
