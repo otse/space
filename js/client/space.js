@@ -268,7 +268,6 @@ var space;
     function pin_message(message) {
         let element = document.querySelector("my-message");
         let span = document.querySelector("my-message span:nth-child(2)");
-        console.log(span);
         element.style.top = '0px';
         element.style.transition = 'none';
         span.innerHTML = message;

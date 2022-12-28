@@ -6,6 +6,7 @@ const stellar_objects_1 = require("./stellar objects");
 const lod_1 = require("./lod");
 const lost_minor_planet_1 = require("./lost minor planet");
 const session_1 = require("./session");
+const hooks_1 = require("../shared/hooks");
 var http = require('http');
 var https = require('https');
 const fs = require('fs');
@@ -42,21 +43,29 @@ function init() {
         rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
         lod_1.default.add(rock);
     }
-    lost_minor_planet_1.default.init();
     locations_1.locations.init();
-    const make_ship = (ply) => {
+    hooks_1.default.register('userMinted', (user) => {
+        console.log('userMinted', user.id);
+        user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
         let ship = new stellar_objects_1.default.ply_ship;
-        ship.plyId = ply.id;
-        ship.name = ply.username;
-        ship.pos = ply.pos;
+        ship.userId = user.id;
+        ship.name = user.username;
+        ship.pos = user.pos;
         ship.set();
         lod_1.default.add(ship);
-        console.log('added ply-ship to lod', ply.username);
-    };
-    for (let username of lost_minor_planet_1.default.users) {
-        let ply = lost_minor_planet_1.default.get_ply_from_table_or_fetch(username, false);
-        make_ship(ply);
-    }
+        return false;
+    });
+    hooks_1.default.register('userPurged', (user) => {
+        console.log('userPurged');
+        let ship = stellar_objects_1.default.get_ply_ship_by_user_id(user.id);
+        lod_1.default.remove(ship);
+        return false;
+    });
+    lost_minor_planet_1.default.init();
+    /*for (let username of lmp.users) {
+        let ply = lmp.get_user_from_table_or_fetch(username, false);
+        //make_ship(ply);
+    }*/
     //createLocationPersistence();
     //apiCall('https://api.steampowered.com/ISteamApps/GetAppList/v2');
     http.createServer(function (req, res) {
@@ -112,7 +121,7 @@ function init() {
                 // if (parsed['username'] == 'asdf')
                 //	console.log('this is not your windows frend');
                 if (lost_minor_planet_1.default.table[username] || lost_minor_planet_1.default.object_exists(lost_minor_planet_1.default.user_path(username))) {
-                    let ply = lost_minor_planet_1.default.get_ply_from_table_or_fetch(username);
+                    let ply = lost_minor_planet_1.default.get_user_from_table_or_fetch(username);
                     let logged_in_elsewhere = false;
                     let ip2;
                     for (ip2 in lost_minor_planet_1.default.logins) {
@@ -191,7 +200,7 @@ function init() {
                     res.end('Your passwords aren\'t the same');
                 }
                 else {
-                    let ply = lost_minor_planet_1.default.new_ply();
+                    let ply = lost_minor_planet_1.default.new_user();
                     ply.guest = false;
                     ply.ip = 'N/A';
                     ply.username = username;
@@ -202,7 +211,7 @@ function init() {
                     lost_minor_planet_1.default.table[username] = ply;
                     res.writeHead(200);
                     res.end(`Congratulations, you've registered as ${username}. Now login`);
-                    lost_minor_planet_1.default.out_ply(ply);
+                    lost_minor_planet_1.default.out_user(ply);
                 }
             });
             return;
@@ -212,7 +221,7 @@ function init() {
 
             sendSwhere();
         }*/
-        let ply = lost_minor_planet_1.default.get_ply_from_ip(req.socket.remoteAddress);
+        let ply = lost_minor_planet_1.default.get_user_from_ip(req.socket.remoteAddress);
         let session;
         if (ply) {
             session = new session_1.default;

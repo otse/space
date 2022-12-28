@@ -41,6 +41,7 @@ namespace outer_space {
 			let i = things.length;
 			while (i--)
 				things[i].remove();
+			you = undefined;
 			started = false;
 		}
 	}
@@ -55,7 +56,7 @@ namespace outer_space {
 		collision.stamp = -1;
 
 		for (let blob of space.regions) {
-			console.log('new region', blob.name);
+			//console.log('new region', blob.name);
 
 			let reg = new region(blob.center, blob.name, blob.radius);
 			reg.stamp = -1
@@ -70,13 +71,13 @@ namespace outer_space {
 
 	function handle_you(object, float) {
 		const [random] = object;
-		if (random.plyId == space.sply.id) {
+		if (random.userId == space.sply.id) {
 			console.log(`we're us`);
 			you = float;
 		}
 	}
 
-	export async function fetch() {
+	export async function fetch() {		
 		let tuple = <any>await space.make_request_json('GET', 'astronomical objects');
 		if (!tuple)
 			return;
@@ -96,6 +97,7 @@ namespace outer_space {
 			bee.stamp = outer_space.stamp;
 		}
 		thing.check();
+		console.log('fetched');
 		setTimeout(fetch, 2000);
 	}
 
@@ -135,7 +137,7 @@ namespace outer_space {
 		}
 		has_old_stamp() {
 			if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-				console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
+				console.log(` thing went out of lod ! `, this.stamp, outer_space.stamp);
 				return true;
 			}
 		}

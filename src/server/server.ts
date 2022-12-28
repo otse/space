@@ -5,6 +5,7 @@ import lod from "./lod";
 import lmp from "./lost minor planet";
 import short_lived from "./session";
 import { send } from "process";
+import hooks from "../shared/hooks";
 
 var http = require('http');
 var https = require('https');
@@ -55,23 +56,33 @@ function init() {
 		lod.add(rock);
 	}
 
-	lmp.init();
-
 	locations.init();
 
-	const make_ship = (ply) => {
+	hooks.register('userMinted', (user) => {
+		console.log('userMinted', user.id);
+		user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
 		let ship = new stellar_objects.ply_ship;
-		ship.plyId = ply.id;
-		ship.name = ply.username;
-		ship.pos = ply.pos;
+		ship.userId = user.id;
+		ship.name = user.username;
+		ship.pos = user.pos;
 		ship.set();
 		lod.add(ship);
-		console.log('added ply-ship to lod', ply.username);
-	}
-	for (let username of lmp.users) {
-		let ply = lmp.get_ply_from_table_or_fetch(username, false);
-		make_ship(ply);
-	}
+		return false;
+	});
+
+	hooks.register('userPurged', (user) => {
+		console.log('userPurged');
+		let ship = stellar_objects.get_ply_ship_by_user_id(user.id);
+		lod.remove(ship);
+		return false;
+	});
+
+	lmp.init();
+	
+	/*for (let username of lmp.users) {
+		let ply = lmp.get_user_from_table_or_fetch(username, false);
+		//make_ship(ply);
+	}*/
 
 	//createLocationPersistence();
 
@@ -141,7 +152,7 @@ function init() {
 				//	console.log('this is not your windows frend');
 
 				if (lmp.table[username] || lmp.object_exists(lmp.user_path(username))) {
-					let ply = lmp.get_ply_from_table_or_fetch(username);
+					let ply = lmp.get_user_from_table_or_fetch(username);
 					let logged_in_elsewhere = false;
 					let ip2;
 					for (ip2 in lmp.logins) {
@@ -230,7 +241,7 @@ function init() {
 					res.end('Your passwords aren\'t the same');
 				}
 				else {
-					let ply = lmp.new_ply();
+					let ply = lmp.new_user();
 					ply.guest = false;
 					ply.ip = 'N/A';
 					ply.username = username;
@@ -244,7 +255,7 @@ function init() {
 					res.writeHead(200);
 					res.end(`Congratulations, you've registered as ${username}. Now login`);
 
-					lmp.out_ply(ply);
+					lmp.out_user(ply);
 				}
 			});
 
@@ -257,7 +268,7 @@ function init() {
 			sendSwhere();
 		}*/
 
-		let ply = lmp.get_ply_from_ip(req.socket.remoteAddress);
+		let ply = lmp.get_user_from_ip(req.socket.remoteAddress);
 
 		let session: short_lived | undefined;
 

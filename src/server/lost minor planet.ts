@@ -1,5 +1,6 @@
 var fs = require('fs');
 
+import hooks from "../shared/hooks";
 import stellar_objects from "./stellar objects";
 
 
@@ -11,7 +12,7 @@ interface LostMinorPlanet {
 
 namespace lost_minor_planet {
 
-	export interface ply_json {
+	export interface user_json {
 		id: number
 		ip: string
 		guest: boolean
@@ -36,15 +37,7 @@ namespace lost_minor_planet {
 
 		let num = 0;
 		for (const username of users) {
-			let ply = get_ply_from_table_or_fetch(username);
-			if (ply) {
-				if (ply.dormant) {
-					delete table[username];
-				} else {
-					num++;
-					table[username] = ply;
-				}
-			}
+			let user = get_user_from_table_or_fetch(username, false);
 		}
 		console.log(`loaded ${num} non dormant users`);
 
@@ -81,9 +74,9 @@ namespace lost_minor_planet {
 		out_neat('users.json', users);
 	}
 
-	export function out_ply(ply: ply_json) {
-		console.log('out ply', ply.id);
-		out_neat(user_path(ply.username), ply);
+	export function out_user(user: user_json) {
+		console.log('out user', user.id);
+		out_neat(user_path(user.username), user);
 	}
 
 	export function clean_ip(ip: string) {
@@ -95,10 +88,10 @@ namespace lost_minor_planet {
 		return `users/${username}.json`;
 	}
 
-	export function new_ply() {
+	export function new_user() {
 		meta.users++;
 		out_meta();
-		let ply: ply_json = {
+		let user: user_json = {
 			id: meta.users,
 			ip: 'N/A',
 			guest: false,
@@ -108,7 +101,7 @@ namespace lost_minor_planet {
 			pos: [0, 0],
 			goto: [0, 0],
 		};
-		return ply;
+		return user;
 	}
 
 	export function handle_new_login(ip) {
@@ -122,9 +115,9 @@ namespace lost_minor_planet {
 	export function delete_user(ip, guest) {
 		const username = logins[ip];
 		if (username) {
-			const ply = get_ply_from_table_or_fetch(username);
-			if (ply) {
-				if (guest == ply.guest) {
+			const user = get_user_from_table_or_fetch(username);
+			if (user) {
+				if (guest == user.guest) {
 					delete logins[ip];
 					delete table[username];
 					fs.unlinkSync(user_path(username));
@@ -137,17 +130,19 @@ namespace lost_minor_planet {
 		}
 	}
 
-	export function get_ply_from_table_or_fetch(username, dormant = true) {
-		let ply = table[username];
-		if (ply)
-			return ply;
+	export function get_user_from_table_or_fetch(username, dormant = true) {
+		let user = table[username];
+		if (user)
+			return user;
 		else {
-			let ply = in_user(username);
-			if (ply.dormant && !dormant)
+			let user = in_user(username);
+			if (user.dormant && !dormant)
 				return;
-			if (ply)
-				table[username] = ply;
-			return ply;
+			if (user) {
+				table[username] = user;
+				hooks.call('userMinted', user);
+			}
+			return user;
 		}
 	}
 
@@ -158,24 +153,24 @@ namespace lost_minor_planet {
 
 	export function make_quest(ip) {
 		console.log('make new quest', meta.users);
-		let ply: ply_json;
-		ply = new_ply();
-		ply.username = `pilot#${meta.users}`;
-		ply.guest = true;
-		ply.ip = ip;
-		logins[ip] = ply.username;
-		users.push(ply.username);
-		out_ply(ply);
+		let user: user_json;
+		user = new_user();
+		user.username = `pilot#${meta.users}`;
+		user.guest = true;
+		user.ip = ip;
+		logins[ip] = user.username;
+		users.push(user.username);
+		out_user(user);
 		out_users();
 		out_logins();
-		return ply;
+		return user;
 	}
 
-	export function get_ply_from_ip(ip) {
+	export function get_user_from_ip(ip) {
 		if (logins[ip]) {
 			const username = logins[ip];
-			let ply = get_ply_from_table_or_fetch(username);
-			return ply;
+			let user = get_user_from_table_or_fetch(username);
+			return user;
 		}
 	}
 }

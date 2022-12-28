@@ -277,6 +277,7 @@ var space = (function () {
                 let i = things.length;
                 while (i--)
                     things[i].remove();
+                outer_space.you = undefined;
                 started = false;
             }
         }
@@ -288,7 +289,7 @@ var space = (function () {
             let collision = new float(-1, [2, 1], 'collision', 'collision');
             collision.stamp = -1;
             for (let blob of space$1.regions) {
-                console.log('new region', blob.name);
+                //console.log('new region', blob.name);
                 let reg = new region(blob.center, blob.name, blob.radius);
                 reg.stamp = -1;
             }
@@ -300,7 +301,7 @@ var space = (function () {
         }
         function handle_you(object, float) {
             const [random] = object;
-            if (random.plyId == space$1.sply.id) {
+            if (random.userId == space$1.sply.id) {
                 console.log(`we're us`);
                 outer_space.you = float;
             }
@@ -326,6 +327,7 @@ var space = (function () {
                     bee.stamp = outer_space.stamp;
                 }
                 thing.check();
+                console.log('fetched');
                 setTimeout(fetch, 2000);
             });
         }
@@ -360,7 +362,7 @@ var space = (function () {
             }
             has_old_stamp() {
                 if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-                    console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
+                    console.log(` thing went out of lod ! `, this.stamp, outer_space.stamp);
                     return true;
                 }
             }
@@ -606,7 +608,6 @@ var space = (function () {
         function pin_message(message) {
             let element = document.querySelector("my-message");
             let span = document.querySelector("my-message span:nth-child(2)");
-            console.log(span);
             element.style.top = '0px';
             element.style.transition = 'none';
             span.innerHTML = message;

@@ -38,6 +38,7 @@ var outer_space;
             let i = things.length;
             while (i--)
                 things[i].remove();
+            outer_space.you = undefined;
             started = false;
         }
     }
@@ -49,7 +50,7 @@ var outer_space;
         let collision = new float(-1, [2, 1], 'collision', 'collision');
         collision.stamp = -1;
         for (let blob of space.regions) {
-            console.log('new region', blob.name);
+            //console.log('new region', blob.name);
             let reg = new region(blob.center, blob.name, blob.radius);
             reg.stamp = -1;
         }
@@ -61,7 +62,7 @@ var outer_space;
     }
     function handle_you(object, float) {
         const [random] = object;
-        if (random.plyId == space.sply.id) {
+        if (random.userId == space.sply.id) {
             console.log(`we're us`);
             outer_space.you = float;
         }
@@ -87,6 +88,7 @@ var outer_space;
                 bee.stamp = outer_space.stamp;
             }
             thing.check();
+            console.log('fetched');
             setTimeout(fetch, 2000);
         });
     }
@@ -121,7 +123,7 @@ var outer_space;
         }
         has_old_stamp() {
             if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-                console.log(` joint went out of lod ! `, this.stamp, outer_space.stamp);
+                console.log(` thing went out of lod ! `, this.stamp, outer_space.stamp);
                 return true;
             }
         }
