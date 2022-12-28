@@ -24,11 +24,11 @@ var outer_space;
             const ev = e;
             if (ev.scale < 1.0) {
                 // User moved fingers closer together
-                outer_space.pixelMultiple += 1;
+                outer_space.pixelMultiple -= ev.scale;
             }
             else if (ev.scale > 1.0) {
                 // User moved fingers further apart
-                outer_space.pixelMultiple -= 1;
+                outer_space.pixelMultiple += ev.scale;
             }
         }, false);
     }
@@ -119,7 +119,7 @@ var outer_space;
         if (app.wheel == -1)
             outer_space.pixelMultiple -= 5;
         outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, 5, 120);
-        outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple}`;
+        outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
         thing.steps();
     }
     outer_space.step = step;

@@ -26,10 +26,10 @@ namespace outer_space {
 			const ev = e as any;
 			if (ev.scale < 1.0) {
 				// User moved fingers closer together
-				pixelMultiple += 1;
+				pixelMultiple -= ev.scale;
 			} else if (ev.scale > 1.0) {
 				// User moved fingers further apart
-				pixelMultiple -= 1;
+				pixelMultiple += ev.scale;
 			}
 		}, false);
 	}
@@ -133,7 +133,7 @@ namespace outer_space {
 		
 		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
 
-		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple}`;
+		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(1)}`;
 
 		thing.steps();
 	}
