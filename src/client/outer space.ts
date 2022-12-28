@@ -21,6 +21,17 @@ namespace outer_space {
 	export function init() {
 		renderer = document.querySelector("outer-space");
 		zoomLevel = document.querySelector("outer-space zoom-level");
+
+		document.body.addEventListener('gesturechange', function(e) {
+			const ev = e as any;
+			if (ev.scale < 1.0) {
+				// User moved fingers closer together
+				pixelMultiple += 1;
+			} else if (ev.scale > 1.0) {
+				// User moved fingers further apart
+				pixelMultiple -= 1;
+			}
+		}, false);
 	}
 
 	var started;
@@ -121,7 +132,7 @@ namespace outer_space {
 			pixelMultiple -= 5;
 		
 		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
-		
+
 		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple}`;
 
 		thing.steps();

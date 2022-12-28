@@ -20,6 +20,17 @@ var outer_space;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
+        document.body.addEventListener('gesturechange', function (e) {
+            const ev = e;
+            if (ev.scale < 1.0) {
+                // User moved fingers closer together
+                outer_space.pixelMultiple += 1;
+            }
+            else if (ev.scale > 1.0) {
+                // User moved fingers further apart
+                outer_space.pixelMultiple -= 1;
+            }
+        }, false);
     }
     outer_space.init = init;
     var started;

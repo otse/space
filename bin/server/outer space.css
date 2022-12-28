@@ -52,5 +52,5 @@ outer-space .region {
 	position: absolute;
 	/*background: rgba(127, 127, 127, 0.05);*/
 	border-radius: 100%;
-	border: 4px dotted rgba(127, 127, 127, 0.1);
+	border: 2px dotted rgba(127, 127, 127, 0.1);
 }
