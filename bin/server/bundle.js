@@ -259,9 +259,11 @@ var space = (function () {
         outer_space.stamp = 0;
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
+            outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
         }
         outer_space.init = init;
         var started;
+        var fetcher;
         var things = [];
         function start() {
             if (!started) {
@@ -279,6 +281,7 @@ var space = (function () {
                     things[i].remove();
                 outer_space.you = undefined;
                 started = false;
+                clearTimeout(fetcher);
             }
         }
         outer_space.stop = stop;
@@ -328,14 +331,14 @@ var space = (function () {
                 }
                 thing.check();
                 console.log('fetched');
-                setTimeout(fetch, 2000);
+                fetcher = setTimeout(fetch, 2000);
             });
         }
         outer_space.fetch = fetch;
         function step() {
             outer_space.mapSize = [window.innerWidth, window.innerHeight];
             if (outer_space.you) {
-                outer_space.you.pos = pts.add(outer_space.you.pos, [0.001, 0]);
+                //you.pos = pts.add(you.pos, [0.001, 0]);
                 outer_space.center = outer_space.you.pos;
             }
             if (app$1.wheel == 1)
@@ -343,6 +346,7 @@ var space = (function () {
             if (app$1.wheel == -1)
                 outer_space.pixelMultiple -= 5;
             outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, 5, 120);
+            outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple}`;
             thing.steps();
         }
         outer_space.step = step;

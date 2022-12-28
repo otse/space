@@ -4,7 +4,7 @@ import pts from "../shared/pts";
 
 namespace outer_space {
 
-	export var renderer
+	export var renderer, zoomLevel
 
 	export var mapSize: vec2 = [100, 100]
 
@@ -20,6 +20,7 @@ namespace outer_space {
 
 	export function init() {
 		renderer = document.querySelector("outer-space");
+		zoomLevel = document.querySelector("outer-space zoom-level");
 	}
 
 	var started;
@@ -43,7 +44,12 @@ namespace outer_space {
 				things[i].remove();
 			you = undefined;
 			started = false;
+			clearTimeout(fetcher);
 		}
+	}
+
+	function set_up_zoom_level() {
+
 	}
 
 	function statics() {
@@ -98,14 +104,14 @@ namespace outer_space {
 		}
 		thing.check();
 		console.log('fetched');
-		setTimeout(fetch, 2000);
+		fetcher = setTimeout(fetch, 2000);
 	}
 
 	export function step() {
 		mapSize = [window.innerWidth, window.innerHeight];
 
 		if (you) {
-			you.pos = pts.add(you.pos, [0.001, 0]);
+			//you.pos = pts.add(you.pos, [0.001, 0]);
 			center = you.pos;
 		}
 
@@ -113,8 +119,10 @@ namespace outer_space {
 			pixelMultiple += 5;
 		if (app.wheel == -1)
 			pixelMultiple -= 5;
-
+		
 		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
+		
+		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple}`;
 
 		thing.steps();
 	}

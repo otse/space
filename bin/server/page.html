@@ -27,15 +27,16 @@
 	<title>space</title>
 
 	<script>
-		window.addEventListener("load", (event) => {
+		//window.addEventListener("load", (event) => {
+		//	App.boot('ug');
+		//})
+		document.addEventListener('DOMContentLoaded', function (event) {
 			App.boot('ug');
-		})
+		});
 	</script>
 </head>
 
 <body unselectable="on" class="unselectable">
-
-
 
 	<nav-bar>
 		<nav-bar-left>
@@ -69,6 +70,7 @@
 	</my-message-container>
 
 	<outer-space>
+		<zoom-level></zoom-level>
 	</outer-space>
 
 	<content>

@@ -104,14 +104,6 @@ namespace lost_minor_planet {
 		return user;
 	}
 
-	export function handle_new_login(ip) {
-		delete_user(ip, true);
-	}
-
-	function splice_user(username) {
-		users.splice(users.indexOf(username), 1);
-	}
-
 	export function delete_user(ip, guest) {
 		const username = logins[ip];
 		if (username) {
@@ -120,13 +112,22 @@ namespace lost_minor_planet {
 				if (guest == user.guest) {
 					delete logins[ip];
 					delete table[username];
+					hooks.call('userPurged', user);
 					fs.unlinkSync(user_path(username));
-					splice_user(username);
+					users.splice(users.indexOf(username), 1);
 					out_logins();
 					out_users();
 					return true;
 				}
 			}
+		}
+	}
+
+	export function get_user_from_ip(ip) {
+		if (logins[ip]) {
+			const username = logins[ip];
+			let user = get_user_from_table_or_fetch(username);
+			return user;
 		}
 	}
 
@@ -162,16 +163,8 @@ namespace lost_minor_planet {
 		users.push(user.username);
 		out_user(user);
 		out_users();
-		out_logins();
+		get_user_from_table_or_fetch(user.username);
 		return user;
-	}
-
-	export function get_user_from_ip(ip) {
-		if (logins[ip]) {
-			const username = logins[ip];
-			let user = get_user_from_table_or_fetch(username);
-			return user;
-		}
 	}
 }
 

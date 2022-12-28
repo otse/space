@@ -1,14 +1,39 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stellar_objects = void 0;
+const hooks_1 = require("../shared/hooks");
 const lod_1 = require("./lod");
 var stellar_objects;
 (function (stellar_objects) {
     stellar_objects.ply_ships = {};
-    function get_ply_ship_by_user_id(user) {
-        return stellar_objects.ply_ships[user.id];
+    function init() {
+        hooks_1.default.register('userMinted', (user) => {
+            when_user_minted(user);
+            return false;
+        });
+        hooks_1.default.register('userPurged', (user) => {
+            when_user_purged(user);
+            return false;
+        });
     }
-    stellar_objects.get_ply_ship_by_user_id = get_ply_ship_by_user_id;
+    stellar_objects.init = init;
+    function when_user_minted(user) {
+        console.log('userMinted', user.id);
+        user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+        let ship = new stellar_objects.ply_ship;
+        ship.userId = user.id;
+        ship.name = user.username;
+        ship.pos = user.pos;
+        ship.set();
+        lod_1.default.add(ship);
+    }
+    stellar_objects.when_user_minted = when_user_minted;
+    function when_user_purged(user) {
+        let ship = stellar_objects.ply_ships[user.id];
+        if (ship)
+            lod_1.default.remove(ship);
+    }
+    stellar_objects.when_user_purged = when_user_purged;
     class ply_ship extends lod_1.default.obj {
         constructor() {
             super();

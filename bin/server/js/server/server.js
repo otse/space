@@ -6,7 +6,6 @@ const stellar_objects_1 = require("./stellar objects");
 const lod_1 = require("./lod");
 const lost_minor_planet_1 = require("./lost minor planet");
 const session_1 = require("./session");
-const hooks_1 = require("../shared/hooks");
 var http = require('http');
 var https = require('https');
 const fs = require('fs');
@@ -44,23 +43,7 @@ function init() {
         lod_1.default.add(rock);
     }
     locations_1.locations.init();
-    hooks_1.default.register('userMinted', (user) => {
-        console.log('userMinted', user.id);
-        user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-        let ship = new stellar_objects_1.default.ply_ship;
-        ship.userId = user.id;
-        ship.name = user.username;
-        ship.pos = user.pos;
-        ship.set();
-        lod_1.default.add(ship);
-        return false;
-    });
-    hooks_1.default.register('userPurged', (user) => {
-        console.log('userPurged');
-        let ship = stellar_objects_1.default.get_ply_ship_by_user_id(user.id);
-        lod_1.default.remove(ship);
-        return false;
-    });
+    stellar_objects_1.default.init();
     lost_minor_planet_1.default.init();
     /*for (let username of lmp.users) {
         let ply = lmp.get_user_from_table_or_fetch(username, false);

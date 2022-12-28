@@ -58,27 +58,10 @@ function init() {
 
 	locations.init();
 
-	hooks.register('userMinted', (user) => {
-		console.log('userMinted', user.id);
-		user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-		let ship = new stellar_objects.ply_ship;
-		ship.userId = user.id;
-		ship.name = user.username;
-		ship.pos = user.pos;
-		ship.set();
-		lod.add(ship);
-		return false;
-	});
-
-	hooks.register('userPurged', (user) => {
-		console.log('userPurged');
-		let ship = stellar_objects.get_ply_ship_by_user_id(user.id);
-		lod.remove(ship);
-		return false;
-	});
+	stellar_objects.init();
 
 	lmp.init();
-	
+
 	/*for (let username of lmp.users) {
 		let ply = lmp.get_user_from_table_or_fetch(username, false);
 		//make_ship(ply);

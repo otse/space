@@ -79,13 +79,6 @@ var lost_minor_planet;
         return user;
     }
     lost_minor_planet.new_user = new_user;
-    function handle_new_login(ip) {
-        delete_user(ip, true);
-    }
-    lost_minor_planet.handle_new_login = handle_new_login;
-    function splice_user(username) {
-        lost_minor_planet.users.splice(lost_minor_planet.users.indexOf(username), 1);
-    }
     function delete_user(ip, guest) {
         const username = lost_minor_planet.logins[ip];
         if (username) {
@@ -94,8 +87,9 @@ var lost_minor_planet;
                 if (guest == user.guest) {
                     delete lost_minor_planet.logins[ip];
                     delete lost_minor_planet.table[username];
+                    hooks_1.default.call('userPurged', user);
                     fs.unlinkSync(user_path(username));
-                    splice_user(username);
+                    lost_minor_planet.users.splice(lost_minor_planet.users.indexOf(username), 1);
                     out_logins();
                     out_users();
                     return true;
@@ -104,6 +98,14 @@ var lost_minor_planet;
         }
     }
     lost_minor_planet.delete_user = delete_user;
+    function get_user_from_ip(ip) {
+        if (lost_minor_planet.logins[ip]) {
+            const username = lost_minor_planet.logins[ip];
+            let user = get_user_from_table_or_fetch(username);
+            return user;
+        }
+    }
+    lost_minor_planet.get_user_from_ip = get_user_from_ip;
     function get_user_from_table_or_fetch(username, dormant = true) {
         let user = lost_minor_planet.table[username];
         if (user)
@@ -136,17 +138,9 @@ var lost_minor_planet;
         lost_minor_planet.users.push(user.username);
         out_user(user);
         out_users();
-        out_logins();
+        get_user_from_table_or_fetch(user.username);
         return user;
     }
     lost_minor_planet.make_quest = make_quest;
-    function get_user_from_ip(ip) {
-        if (lost_minor_planet.logins[ip]) {
-            const username = lost_minor_planet.logins[ip];
-            let user = get_user_from_table_or_fetch(username);
-            return user;
-        }
-    }
-    lost_minor_planet.get_user_from_ip = get_user_from_ip;
 })(lost_minor_planet || (lost_minor_planet = {}));
 exports.default = lost_minor_planet;

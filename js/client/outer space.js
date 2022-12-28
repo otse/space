@@ -19,6 +19,7 @@ var outer_space;
     outer_space.stamp = 0;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
+        outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
     }
     outer_space.init = init;
     var started;
@@ -40,9 +41,12 @@ var outer_space;
                 things[i].remove();
             outer_space.you = undefined;
             started = false;
+            clearTimeout(fetcher);
         }
     }
     outer_space.stop = stop;
+    function set_up_zoom_level() {
+    }
     function statics() {
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
         //you = new float(-1, center, 'you', 'you');
@@ -89,14 +93,14 @@ var outer_space;
             }
             thing.check();
             console.log('fetched');
-            setTimeout(fetch, 2000);
+            fetcher = setTimeout(fetch, 2000);
         });
     }
     outer_space.fetch = fetch;
     function step() {
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
         if (outer_space.you) {
-            outer_space.you.pos = pts.add(outer_space.you.pos, [0.001, 0]);
+            //you.pos = pts.add(you.pos, [0.001, 0]);
             outer_space.center = outer_space.you.pos;
         }
         if (app.wheel == 1)
@@ -104,6 +108,7 @@ var outer_space;
         if (app.wheel == -1)
             outer_space.pixelMultiple -= 5;
         outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, 5, 120);
+        outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple}`;
         thing.steps();
     }
     outer_space.step = step;

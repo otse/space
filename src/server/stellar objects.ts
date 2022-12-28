@@ -1,11 +1,37 @@
+import hooks from "../shared/hooks";
 import lod from "./lod"
 
 export namespace stellar_objects {
 
 	export var ply_ships = {};
 
-	export function get_ply_ship_by_user_id(user) {
-		return ply_ships[user.id];
+	export function init() {
+		hooks.register('userMinted', (user) => {
+			when_user_minted(user);
+			return false;
+		});
+
+		hooks.register('userPurged', (user) => {
+			when_user_purged(user);
+			return false;
+		});
+	}
+
+	export function when_user_minted(user) {
+		console.log('userMinted', user.id);
+		user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+		let ship = new stellar_objects.ply_ship;
+		ship.userId = user.id;
+		ship.name = user.username;
+		ship.pos = user.pos;
+		ship.set();
+		lod.add(ship);
+	}
+
+	export function when_user_purged(user) {
+		let ship = ply_ships[user.id];
+		if (ship)
+			lod.remove(ship);
 	}
 
 	export class ply_ship extends lod.obj {
@@ -17,6 +43,7 @@ export namespace stellar_objects {
 		set() {
 			this.random.userId = this.userId;
 			ply_ships[this.userId] = this;
+
 		}
 	}
 
