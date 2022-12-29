@@ -15,6 +15,9 @@ namespace space {
 		return val > max ? max : val < min ? min : val;
 	}
 
+	export var sideBar, sideBarContent, myContent, myTrivial, myLogo, menuButton;
+	export var sideBarCloseButton;
+
 	export var sply
 
 	export var regions, locations
@@ -68,16 +71,26 @@ namespace space {
 
 		app.mouse();
 
-		let menuButton = document.getElementById("menu-button")!;
+		sideBar = document.querySelector("side-bar");
+		sideBarContent = document.querySelector("side-bar-content");
+		sideBarCloseButton = document.querySelector("side-bar close-button");
+		myContent = document.querySelector("my-content");
+		myTrivial = document.querySelector("my-trivial");
+		menuButton = document.querySelector("menu-button");
+		myLogo = document.querySelector("nav-bar my-logo");
+
 		menuButton.onclick = function () {
-			show_account_bubbles();
+			toggle_side_bar();
 		}
 
-		let logo = document.querySelector("nav-bar logo") as HTMLElement;
-		logo.onclick = function () {
+		myLogo.onclick = function () {
 			if (!sply) {
 				show_landing_page();
 			}
+		}
+
+		sideBarCloseButton.onclick = function () {
+			toggle_side_bar();
 		}
 
 		//new aabb2([0,0],[0,0]);
@@ -104,48 +117,41 @@ namespace space {
 		console.log('asked initials');
 	}
 
-	function show_account_bubbles() {
+	export function update_side_bar() {
 		let text = '';
-
-		let main = document.getElementById("main")!;
-
-		if (sply) {
-			//text += post_login_notice();
-			text += addReturnOption();
-
-			//<div class="amenities">
+		if (sply && sply.guest)
 			text += `
-			`;
-			if (!sply || sply.guest)
-				text += `
-			Do you wish to
-			<span class="span-button" onclick="space.show_register()">register</span>
+		<span class="button" onclick="space.show_register(); space.toggle_side_bar()">Become a regular user</span>
+		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete guest account</span>
+		`;
+		if (sply && !sply.guest)
+			text += `
+			<span class="button" onclick="space.log_out(); space.toggle_side_bar()">Log out</span>
+			`
+		if (text == '')
+			text += `Nothing to see here`;
+		sideBarContent.innerHTML = text;
+	}
+
+	var sideBarOpen = false;
+	export function toggle_side_bar() {
+		sideBarOpen = !sideBarOpen;
+		if (sideBarOpen) {
+			sideBar.style.left = 0;
+
+			update_side_bar();
 			
-			<span class="span-button" onclick="space.show_login()">or login</span>
-			<p>
-			`;
-			if (!sply.guest)
-				text += `
-			Do you want to <span class="span-button" onclick="space.logout()">logout</span> ?
-			`;
-			if (sply.guest)
-				text += `
-			(Perhaps you want to
-			<span class="span-button" onclick="space.purge()">delete guest</span>)
-			`;
-			//</div>
-			main.innerHTML = text;
 		}
 		else {
-			show_landing_page();
+			sideBar.style.left = -300;
 		}
 	}
 
 	export function choose_layout() {
 		console.log('choose layout');
-
+		myTrivial.innerHTML = ``;
 		if (sply) {
-			layout_default();
+			
 		}
 		else {
 			show_landing_page();
@@ -158,12 +164,12 @@ namespace space {
 			console.warn('not sply');
 		sply = data;
 		if (sply) {
-			update_user_status();
 			outer_space.start();
 		}
 		else {
 			outer_space.stop();
 		}
+		update_user_status();
 	}
 
 	function receive_stuple(stuple) {
@@ -201,7 +207,19 @@ namespace space {
 			<span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span>
 			`;
 		}
+		else
+		{
+			text += `
+			<span onclick="space.start_playing()" class="start-playing">Start Playing</span>
+			or
+			<span onclick="space.show_login()" class="start-playing">Login</span>
+			`;
+		}
 		navBarRight.innerHTML = text;
+	}
+
+	export function start_playing() {
+		
 	}
 
 	function addFlightOption() {
@@ -218,93 +236,8 @@ namespace space {
 		return text;
 	}
 
-	function addReturnOption() {
-		let text = '';
-
-		text += `
-		<p>
-		<span class="span-button" onclick="space.choose_layout()"><</span>
-		<p>
-		`;
-
-		return text;
-
-	}
-
-	var activeTab = 'action';
-
-	function addTabs() {
-		let text = '';
-
-		text += `
-		<p>
-		<div class="tabbar">
-		<span class="tabbutton" onclick="space.chooseTabOne()">action</span>
-		<span class="tabbutton" onclick="space.chooseTabOne()">ship</span>
-		</div>
-		<div class="tabcontent">
-		<p>
-		`;
-
-		return text;
-	}
-
-	function endTabs() {
-		return "</div>";
-	}
-
-	function addLocationMeter() {
-		let text = '';
-
-		let position = `<span class="positionArray">
-		<span>${sply.position[0].toFixed(1)}</span>,
-		<span>${sply.position[1].toFixed(1)}</span>
-		</span>`;
-
-		text += `
-		<div class="positionMeter">position: ${position} km in ${sply.location}</div>
-		<p>
-		<br />
-		`;
-
-		return text;
-
-	}
-
-	function makeWhereabouts() {
-		for (let region of regions) {
-			let dist = pts.dist([1, 0], region.center);
-			if (dist < region.radius) {
-				console.log(`were in region ${region.name} dist ${dist}`);
-
-			}
-		}
-		let text = '';
-		text += `
-		<div id="whereabouts">
-		
-		<span class="sector">belt</span> ~>
-		<br />
-		
-		<span class="location" style="colors: inherit} ">
-		&nbsp;boop
-		<!--(crash)--></span>
-		</div>
-		`;
-
-		return text;
-	}
-
-	function layout_default() {
-		console.log('layout default');
-
-		let main = document.getElementById("main")!;
-		let text = ``;//post_login_notice();
-		main.innerHTML = text;
-	}
-
 	var message_timeout;
-	function pin_message(message) {
+	export function pin_message(message) {
 		let element = document.querySelector("my-message") as HTMLElement;
 		let span = document.querySelector("my-message span:nth-child(2)")!;
 		element.style.top = '0px';
@@ -318,38 +251,26 @@ namespace space {
 		return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';
 	}
 
-	export function show_logout_message() {
-		//let main = document.getElementById("main")!;
-
-		pin_message('You logged out');
-		//let text = `You logged out`;
-
-		//main.innerHTML = text;
-	}
-
 	export function show_landing_page() {
-		let main = document.getElementById("main")!;
 		let text = `
-		<intro>
-		<div id="welcome">
+		<my-intro>
+		<my-welcome>
 		<!--<h1>spAce</h1>-->
 		Web space sim that combines <span>real-time</span> with <span>text-based</span>.
 		<br />
 		<br />
 		<span class="colorful-button" onclick="space.play_as_guest()">Play as a guest</span>,
-		<span class="colorful-button" onclick="space.show_register()">register</span>
-		<span class="colorful-button" onclick="space.show_login()">or login</span>
-		</div>
+		<span class="colorful-button" onclick="space.show_register()">sign up</span>
+		<span class="colorful-button" onclick="space.show_login()">or log in</span>
+		</my-welcome>
 		<p>
 		</p>
-		</intro>
+		</my-intro>
 		`;
-		main.innerHTML = text;
+		myTrivial.innerHTML = text;
 	}
 
 	export function show_login() {
-		let textHead = document.getElementById("main")!;
-
 		let text = ``;
 		if (sply && sply.guest)
 			text += `
@@ -391,13 +312,10 @@ namespace space {
 		<span class="smallish">You will remain logged in until you logout.</span>
 		</div>
 		`;
-
-		textHead.innerHTML = text;
+		myTrivial.innerHTML = text;
 	}
 
 	export function show_register() {
-		let textHead = document.getElementById("main")!;
-
 		let text = `
 		<div id="forms">
 		<form action="register" method="post">
@@ -427,11 +345,10 @@ namespace space {
 		</form>
 		</div>
 		`;
-
-		textHead.innerHTML = text;
+		myTrivial.innerHTML = text;
 	}
 
-	export async function logout() {
+	export async function log_out() {
 		const data = <any>await make_request_json('GET', 'logout');
 		if (data[0]) {
 			//alert(data[1]);
@@ -439,7 +356,7 @@ namespace space {
 			sply = undefined;
 			outer_space.stop();
 			update_user_status();
-			show_logout_message();
+			pin_message('You logged out');
 			show_landing_page();
 		}
 		else {
@@ -468,6 +385,7 @@ namespace space {
 			pin_message('You\'re already a guest');
 		receive_sply(stuple);
 		choose_layout();
+		update_side_bar();
 		console.log('layout');
 	}
 

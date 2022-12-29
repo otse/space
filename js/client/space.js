@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 //import { rename } from "fs";
 import app from "./app";
 import outer_space from "./outer space";
-import pts from "../shared/pts";
 var space;
 (function (space) {
     function sample(a) {
@@ -64,15 +63,23 @@ var space;
         return __awaiter(this, void 0, void 0, function* () {
             outer_space.init();
             app.mouse();
-            let menuButton = document.getElementById("menu-button");
-            menuButton.onclick = function () {
-                show_account_bubbles();
+            space.sideBar = document.querySelector("side-bar");
+            space.sideBarContent = document.querySelector("side-bar-content");
+            space.sideBarCloseButton = document.querySelector("side-bar close-button");
+            space.myContent = document.querySelector("my-content");
+            space.myTrivial = document.querySelector("my-trivial");
+            space.menuButton = document.querySelector("menu-button");
+            space.myLogo = document.querySelector("nav-bar my-logo");
+            space.menuButton.onclick = function () {
+                toggle_side_bar();
             };
-            let logo = document.querySelector("nav-bar logo");
-            logo.onclick = function () {
+            space.myLogo.onclick = function () {
                 if (!space.sply) {
                     show_landing_page();
                 }
+            };
+            space.sideBarCloseButton.onclick = function () {
+                toggle_side_bar();
             };
             //new aabb2([0,0],[0,0]);
             if (document.cookie) {
@@ -97,43 +104,38 @@ var space;
             console.log('asked initials');
         });
     }
-    function show_account_bubbles() {
+    function update_side_bar() {
         let text = '';
-        let main = document.getElementById("main");
-        if (space.sply) {
-            //text += post_login_notice();
-            text += addReturnOption();
-            //<div class="amenities">
+        if (space.sply && space.sply.guest)
             text += `
+		<span class="button" onclick="space.show_register(); space.toggle_side_bar()">Become a regular user</span>
+		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete guest account</span>
+		`;
+        if (space.sply && !space.sply.guest)
+            text += `
+			<span class="button" onclick="space.log_out(); space.toggle_side_bar()">Log out</span>
 			`;
-            if (!space.sply || space.sply.guest)
-                text += `
-			Do you wish to
-			<span class="span-button" onclick="space.show_register()">register</span>
-			
-			<span class="span-button" onclick="space.show_login()">or login</span>
-			<p>
-			`;
-            if (!space.sply.guest)
-                text += `
-			Do you want to <span class="span-button" onclick="space.logout()">logout</span> ?
-			`;
-            if (space.sply.guest)
-                text += `
-			(Perhaps you want to
-			<span class="span-button" onclick="space.purge()">delete guest</span>)
-			`;
-            //</div>
-            main.innerHTML = text;
+        if (text == '')
+            text += `Nothing to see here`;
+        space.sideBarContent.innerHTML = text;
+    }
+    space.update_side_bar = update_side_bar;
+    var sideBarOpen = false;
+    function toggle_side_bar() {
+        sideBarOpen = !sideBarOpen;
+        if (sideBarOpen) {
+            space.sideBar.style.left = 0;
+            update_side_bar();
         }
         else {
-            show_landing_page();
+            space.sideBar.style.left = -300;
         }
     }
+    space.toggle_side_bar = toggle_side_bar;
     function choose_layout() {
         console.log('choose layout');
+        space.myTrivial.innerHTML = ``;
         if (space.sply) {
-            layout_default();
         }
         else {
             show_landing_page();
@@ -146,12 +148,12 @@ var space;
             console.warn('not sply');
         space.sply = data;
         if (space.sply) {
-            update_user_status();
             outer_space.start();
         }
         else {
             outer_space.stop();
         }
+        update_user_status();
     }
     function receive_stuple(stuple) {
         console.log('received stuple', stuple);
@@ -186,8 +188,18 @@ var space;
 			<span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span>
 			`;
         }
+        else {
+            text += `
+			<span onclick="space.start_playing()" class="start-playing">Start Playing</span>
+			or
+			<span onclick="space.show_login()" class="start-playing">Login</span>
+			`;
+        }
         navBarRight.innerHTML = text;
     }
+    function start_playing() {
+    }
+    space.start_playing = start_playing;
     function addFlightOption() {
         let textHead = document.getElementById("main");
         let text = '';
@@ -197,72 +209,6 @@ var space;
 		<span class="span-button" onclick="space.layoutFlightControls()">Flight Menu</span>
 		`;
         return text;
-    }
-    function addReturnOption() {
-        let text = '';
-        text += `
-		<p>
-		<span class="span-button" onclick="space.choose_layout()"><</span>
-		<p>
-		`;
-        return text;
-    }
-    var activeTab = 'action';
-    function addTabs() {
-        let text = '';
-        text += `
-		<p>
-		<div class="tabbar">
-		<span class="tabbutton" onclick="space.chooseTabOne()">action</span>
-		<span class="tabbutton" onclick="space.chooseTabOne()">ship</span>
-		</div>
-		<div class="tabcontent">
-		<p>
-		`;
-        return text;
-    }
-    function endTabs() {
-        return "</div>";
-    }
-    function addLocationMeter() {
-        let text = '';
-        let position = `<span class="positionArray">
-		<span>${space.sply.position[0].toFixed(1)}</span>,
-		<span>${space.sply.position[1].toFixed(1)}</span>
-		</span>`;
-        text += `
-		<div class="positionMeter">position: ${position} km in ${space.sply.location}</div>
-		<p>
-		<br />
-		`;
-        return text;
-    }
-    function makeWhereabouts() {
-        for (let region of space.regions) {
-            let dist = pts.dist([1, 0], region.center);
-            if (dist < region.radius) {
-                console.log(`were in region ${region.name} dist ${dist}`);
-            }
-        }
-        let text = '';
-        text += `
-		<div id="whereabouts">
-		
-		<span class="sector">belt</span> ~>
-		<br />
-		
-		<span class="location" style="colors: inherit} ">
-		&nbsp;boop
-		<!--(crash)--></span>
-		</div>
-		`;
-        return text;
-    }
-    function layout_default() {
-        console.log('layout default');
-        let main = document.getElementById("main");
-        let text = ``; //post_login_notice();
-        main.innerHTML = text;
     }
     var message_timeout;
     function pin_message(message) {
@@ -274,38 +220,30 @@ var space;
         clearTimeout(message_timeout);
         message_timeout = setTimeout(() => { element.style.transition = 'top 1s linear 0s'; element.style.top = '-110px'; }, 3000);
     }
+    space.pin_message = pin_message;
     function returnButton() {
         return '<p><span class="span-button" onclick="space.choose_layout()">Return</span><p>';
     }
-    function show_logout_message() {
-        //let main = document.getElementById("main")!;
-        pin_message('You logged out');
-        //let text = `You logged out`;
-        //main.innerHTML = text;
-    }
-    space.show_logout_message = show_logout_message;
     function show_landing_page() {
-        let main = document.getElementById("main");
         let text = `
-		<intro>
-		<div id="welcome">
+		<my-intro>
+		<my-welcome>
 		<!--<h1>spAce</h1>-->
 		Web space sim that combines <span>real-time</span> with <span>text-based</span>.
 		<br />
 		<br />
 		<span class="colorful-button" onclick="space.play_as_guest()">Play as a guest</span>,
-		<span class="colorful-button" onclick="space.show_register()">register</span>
-		<span class="colorful-button" onclick="space.show_login()">or login</span>
-		</div>
+		<span class="colorful-button" onclick="space.show_register()">sign up</span>
+		<span class="colorful-button" onclick="space.show_login()">or log in</span>
+		</my-welcome>
 		<p>
 		</p>
-		</intro>
+		</my-intro>
 		`;
-        main.innerHTML = text;
+        space.myTrivial.innerHTML = text;
     }
     space.show_landing_page = show_landing_page;
     function show_login() {
-        let textHead = document.getElementById("main");
         let text = ``;
         if (space.sply && space.sply.guest)
             text += `
@@ -347,11 +285,10 @@ var space;
 		<span class="smallish">You will remain logged in until you logout.</span>
 		</div>
 		`;
-        textHead.innerHTML = text;
+        space.myTrivial.innerHTML = text;
     }
     space.show_login = show_login;
     function show_register() {
-        let textHead = document.getElementById("main");
         let text = `
 		<div id="forms">
 		<form action="register" method="post">
@@ -381,10 +318,10 @@ var space;
 		</form>
 		</div>
 		`;
-        textHead.innerHTML = text;
+        space.myTrivial.innerHTML = text;
     }
     space.show_register = show_register;
-    function logout() {
+    function log_out() {
         return __awaiter(this, void 0, void 0, function* () {
             const data = yield make_request_json('GET', 'logout');
             if (data[0]) {
@@ -393,7 +330,7 @@ var space;
                 space.sply = undefined;
                 outer_space.stop();
                 update_user_status();
-                show_logout_message();
+                pin_message('You logged out');
                 show_landing_page();
             }
             else {
@@ -404,7 +341,7 @@ var space;
             //receive_stuple(three);
         });
     }
-    space.logout = logout;
+    space.log_out = log_out;
     function purge() {
         return __awaiter(this, void 0, void 0, function* () {
             const res = yield make_request_json('GET', 'purge');
@@ -426,6 +363,7 @@ var space;
                 pin_message('You\'re already a guest');
             receive_sply(stuple);
             choose_layout();
+            update_side_bar();
             console.log('layout');
         });
     }

@@ -4,11 +4,15 @@ import pts from "../shared/pts";
 
 namespace outer_space {
 
+	const deduct_nav_bar = 50;
+
 	export var renderer, zoomLevel
 
 	export var mapSize: vec2 = [100, 100]
 
 	export var locations: any[] = []
+
+	export var marker: ping | undefined
 
 	export var you: float | undefined
 
@@ -23,12 +27,14 @@ namespace outer_space {
 		let pos = pts.subtract(unit, center);
 		pos = pts.mult(pos, pixelMultiple);
 		pos = pts.add(pos, half);
+		pos = pts.add(pos, [0, deduct_nav_bar / 2]);
 		return pos;
 	}
 
 	export function unproject(pixel: vec2) {
 		const half = pts.divide(mapSize, 2);
 		let pos = pts.subtract(pixel, half);
+		pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
 		pos = pts.divide(pos, pixelMultiple);
 		pos = pts.add(pos, center);
 		return pos;
@@ -39,15 +45,12 @@ namespace outer_space {
 		zoomLevel = document.querySelector("outer-space zoom-level");
 
 		renderer.onclick = (event) => {
-			console.log(event);
-
+			if (!started)
+				return;
 			let pixel = [event.clientX, event.clientY] as vec2;
-			
 			let unit = unproject(pixel);
-
-			//relative = pts.divide(relative, window.devicePixelRatio);
-			//relative = pts.add(relative, [2, -4]);
-			marker.pos = unit;
+			marker!.pos = unit;
+			console.log('set marker', unit);
 		}
 
 		document.body.addEventListener('gesturechange', function (e) {
@@ -64,8 +67,6 @@ namespace outer_space {
 
 	var started;
 	var fetcher;
-
-	var marker: ping;
 
 	var things: thing[] = []
 
@@ -84,6 +85,7 @@ namespace outer_space {
 			while (i--)
 				things[i].remove();
 			you = undefined;
+			marker = undefined;
 			started = false;
 			clearTimeout(fetcher);
 		}
@@ -105,8 +107,6 @@ namespace outer_space {
 		collision.stamp = -1;
 
 		for (let blob of space.regions) {
-			//console.log('new region', blob.name);
-
 			let reg = new region(blob.center, blob.name, blob.radius);
 			reg.stamp = -1
 		}
@@ -202,8 +202,8 @@ namespace outer_space {
 			}
 		}
 		static steps() {
-			for (const joint of things)
-				joint.step();
+			for (const thing of things)
+				thing.step();
 		}
 		step() {
 			this.stylize();
@@ -221,7 +221,7 @@ namespace outer_space {
 		) {
 			super(id, pos);
 			console.log('new float');
-			this.element = document.createElement("div");
+			this.element = document.createElement('div');
 			this.element.classList.add('float');
 			this.element.innerHTML = `<span></span><span>${name}</span>`;
 			this.stylize();
@@ -241,7 +241,7 @@ namespace outer_space {
 			public name,
 			public radius) {
 			super(-1, pos);
-			this.element = document.createElement("div");
+			this.element = document.createElement('div');
 			this.element.classList.add('region');
 			this.element.innerHTML = `<span>${name}</span>`;
 			this.stylize();
@@ -261,13 +261,15 @@ namespace outer_space {
 		constructor() {
 			super(-1, [0, 0]);
 			this.stamp = -1;
-			this.element = document.createElement("div");
+			this.element = document.createElement('div');
 			this.element.classList.add('ping');
 			this.element.innerHTML = `<span></span>`;
 			this.stylize();
 			this.append();
 		}
 		override stylize() {
+			console.log('ping stylize');
+
 			let proj = project(this.pos);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];

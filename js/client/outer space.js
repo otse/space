@@ -12,6 +12,7 @@ import space from "./space";
 import pts from "../shared/pts";
 var outer_space;
 (function (outer_space) {
+    const deduct_nav_bar = 50;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
     outer_space.center = [0, -1];
@@ -22,12 +23,14 @@ var outer_space;
         let pos = pts.subtract(unit, outer_space.center);
         pos = pts.mult(pos, outer_space.pixelMultiple);
         pos = pts.add(pos, half);
+        pos = pts.add(pos, [0, deduct_nav_bar / 2]);
         return pos;
     }
     outer_space.project = project;
     function unproject(pixel) {
         const half = pts.divide(outer_space.mapSize, 2);
         let pos = pts.subtract(pixel, half);
+        pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
         pos = pts.divide(pos, outer_space.pixelMultiple);
         pos = pts.add(pos, outer_space.center);
         return pos;
@@ -37,12 +40,12 @@ var outer_space;
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
         outer_space.renderer.onclick = (event) => {
-            console.log(event);
+            if (!started)
+                return;
             let pixel = [event.clientX, event.clientY];
             let unit = unproject(pixel);
-            //relative = pts.divide(relative, window.devicePixelRatio);
-            //relative = pts.add(relative, [2, -4]);
-            marker.pos = unit;
+            outer_space.marker.pos = unit;
+            console.log('set marker', unit);
         };
         document.body.addEventListener('gesturechange', function (e) {
             const ev = e;
@@ -59,7 +62,6 @@ var outer_space;
     outer_space.init = init;
     var started;
     var fetcher;
-    var marker;
     var things = [];
     function start() {
         if (!started) {
@@ -76,6 +78,7 @@ var outer_space;
             while (i--)
                 things[i].remove();
             outer_space.you = undefined;
+            outer_space.marker = undefined;
             started = false;
             clearTimeout(fetcher);
         }
@@ -87,11 +90,10 @@ var outer_space;
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
         //you = new float(-1, center, 'you', 'you');
         //you.stamp = -1;
-        marker = new ping();
+        outer_space.marker = new ping();
         let collision = new float(-1, [2, 1], 'collision', 'collision');
         collision.stamp = -1;
         for (let blob of space.regions) {
-            //console.log('new region', blob.name);
             let reg = new region(blob.center, blob.name, blob.radius);
             reg.stamp = -1;
         }
@@ -179,8 +181,8 @@ var outer_space;
             }
         }
         static steps() {
-            for (const joint of things)
-                joint.step();
+            for (const thing of things)
+                thing.step();
         }
         step() {
             this.stylize();
@@ -194,7 +196,7 @@ var outer_space;
             this.type = type;
             this.name = name;
             console.log('new float');
-            this.element = document.createElement("div");
+            this.element = document.createElement('div');
             this.element.classList.add('float');
             this.element.innerHTML = `<span></span><span>${name}</span>`;
             this.stylize();
@@ -212,7 +214,7 @@ var outer_space;
             super(-1, pos);
             this.name = name;
             this.radius = radius;
-            this.element = document.createElement("div");
+            this.element = document.createElement('div');
             this.element.classList.add('region');
             this.element.innerHTML = `<span>${name}</span>`;
             this.stylize();
@@ -231,13 +233,14 @@ var outer_space;
         constructor() {
             super(-1, [0, 0]);
             this.stamp = -1;
-            this.element = document.createElement("div");
+            this.element = document.createElement('div');
             this.element.classList.add('ping');
             this.element.innerHTML = `<span></span>`;
             this.stylize();
             this.append();
         }
         stylize() {
+            console.log('ping stylize');
             let proj = project(this.pos);
             this.element.style.top = proj[1];
             this.element.style.left = proj[0];
