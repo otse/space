@@ -109,7 +109,7 @@ var space;
         if (space.sply && space.sply.guest)
             text += `
 		<span class="button" onclick="space.show_register(); space.toggle_side_bar()">Become a regular user</span>
-		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete guest account</span>
+		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete your guest account</span>
 		`;
         if (space.sply && !space.sply.guest)
             text += `
@@ -190,14 +190,15 @@ var space;
         }
         else {
             text += `
-			<span onclick="space.start_playing()" class="start-playing">Start Playing</span>
-			or
-			<span onclick="space.show_login()" class="start-playing">Login</span>
+			<span onclick="space.start_playing()" class="start-playing">Jump In</span>
+			<!--or
+			<span onclick="space.show_login()" class="start-playing">Login</span>-->
 			`;
         }
         navBarRight.innerHTML = text;
     }
     function start_playing() {
+        play_as_guest();
     }
     space.start_playing = start_playing;
     function addFlightOption() {
@@ -358,7 +359,7 @@ var space;
             const guest = yield make_request_json('GET', 'guest');
             const stuple = yield make_request_json('GET', 'ply');
             if (guest)
-                pin_message('Guest users have no limits, enjoy');
+                pin_message('Upgrade anytime to a full user');
             else
                 pin_message('You\'re already a guest');
             receive_sply(stuple);

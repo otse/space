@@ -253,10 +253,13 @@ var space = (function () {
     var outer_space;
     (function (outer_space) {
         const deduct_nav_bar = 50;
+        const zoom_min = 5;
+        const zoom_max = 120;
         outer_space.mapSize = [100, 100];
         outer_space.locations = [];
         outer_space.center = [0, -1];
         outer_space.pixelMultiple = 50;
+        outer_space.zoomLimits = [5, 120];
         outer_space.stamp = 0;
         function project(unit) {
             const half = pts.divide(outer_space.mapSize, 2);
@@ -289,13 +292,14 @@ var space = (function () {
             };
             document.body.addEventListener('gesturechange', function (e) {
                 const ev = e;
+                const multiplier = outer_space.pixelMultiple / 120;
                 if (ev.scale < 1.0) {
                     // User moved fingers closer together
-                    outer_space.pixelMultiple -= ev.scale;
+                    outer_space.pixelMultiple -= ev.scale * multiplier;
                 }
                 else if (ev.scale > 1.0) {
                     // User moved fingers further apart
-                    outer_space.pixelMultiple += ev.scale;
+                    outer_space.pixelMultiple += ev.scale * multiplier;
                 }
             }, false);
         }
@@ -375,16 +379,19 @@ var space = (function () {
         }
         outer_space.fetch = fetch;
         function step() {
+            if (!started)
+                return;
             outer_space.mapSize = [window.innerWidth, window.innerHeight];
             if (outer_space.you) {
                 //you.pos = pts.add(you.pos, [0.001, 0]);
                 outer_space.center = outer_space.you.pos;
             }
+            const multiplier = outer_space.pixelMultiple / zoom_max;
             if (app$1.wheel == 1)
-                outer_space.pixelMultiple += 5;
+                outer_space.pixelMultiple += 5 * multiplier;
             if (app$1.wheel == -1)
-                outer_space.pixelMultiple -= 5;
-            outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, 5, 120);
+                outer_space.pixelMultiple -= 5 * multiplier;
+            outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
             outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
             thing.steps();
         }
@@ -582,7 +589,7 @@ var space = (function () {
             if (space.sply && space.sply.guest)
                 text += `
 		<span class="button" onclick="space.show_register(); space.toggle_side_bar()">Become a regular user</span>
-		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete guest account</span>
+		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete your guest account</span>
 		`;
             if (space.sply && !space.sply.guest)
                 text += `
@@ -645,14 +652,15 @@ var space = (function () {
             }
             else {
                 text += `
-			<span onclick="space.start_playing()" class="start-playing">Start Playing</span>
-			or
-			<span onclick="space.show_login()" class="start-playing">Login</span>
+			<span onclick="space.start_playing()" class="start-playing">Jump In</span>
+			<!--or
+			<span onclick="space.show_login()" class="start-playing">Login</span>-->
 			`;
             }
             navBarRight.innerHTML = text;
         }
         function start_playing() {
+            play_as_guest();
         }
         space.start_playing = start_playing;
         var message_timeout;
@@ -800,7 +808,7 @@ var space = (function () {
                 const guest = yield make_request_json('GET', 'guest');
                 const stuple = yield make_request_json('GET', 'ply');
                 if (guest)
-                    pin_message('Guest users have no limits, enjoy');
+                    pin_message('Upgrade anytime to a full user');
                 else
                     pin_message('You\'re already a guest');
                 receive_sply(stuple);

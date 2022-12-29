@@ -5,6 +5,8 @@ import pts from "../shared/pts";
 namespace outer_space {
 
 	const deduct_nav_bar = 50;
+	const zoom_min = 5;
+	const zoom_max = 120;
 
 	export var renderer, zoomLevel
 
@@ -19,6 +21,8 @@ namespace outer_space {
 	export var center: vec2 = [0, -1]
 
 	export var pixelMultiple = 50
+
+	export var zoomLimits = [5, 120];
 
 	export var stamp = 0;
 
@@ -55,12 +59,13 @@ namespace outer_space {
 
 		document.body.addEventListener('gesturechange', function (e) {
 			const ev = e as any;
+			const multiplier = pixelMultiple / 120;
 			if (ev.scale < 1.0) {
 				// User moved fingers closer together
-				pixelMultiple -= ev.scale;
+				pixelMultiple -= ev.scale * multiplier;
 			} else if (ev.scale > 1.0) {
 				// User moved fingers further apart
-				pixelMultiple += ev.scale;
+				pixelMultiple += ev.scale * multiplier;
 			}
 		}, false);
 	}
@@ -151,6 +156,8 @@ namespace outer_space {
 	}
 
 	export function step() {
+		if (!started)
+			return;
 		mapSize = [window.innerWidth, window.innerHeight];
 
 		if (you) {
@@ -158,12 +165,14 @@ namespace outer_space {
 			center = you.pos;
 		}
 
-		if (app.wheel == 1)
-			pixelMultiple += 5;
-		if (app.wheel == -1)
-			pixelMultiple -= 5;
+		const multiplier = pixelMultiple / zoom_max;
 
-		pixelMultiple = space.clamp(pixelMultiple, 5, 120);
+		if (app.wheel == 1)
+			pixelMultiple += 5 * multiplier;
+		if (app.wheel == -1)
+			pixelMultiple -= 5 * multiplier;
+
+		pixelMultiple = space.clamp(pixelMultiple, zoom_min, zoom_max);
 
 		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(1)}`;
 

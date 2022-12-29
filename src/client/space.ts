@@ -122,7 +122,7 @@ namespace space {
 		if (sply && sply.guest)
 			text += `
 		<span class="button" onclick="space.show_register(); space.toggle_side_bar()">Become a regular user</span>
-		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete guest account</span>
+		<span class="button" onclick="space.purge(); space.toggle_side_bar()">Delete your guest account</span>
 		`;
 		if (sply && !sply.guest)
 			text += `
@@ -210,16 +210,16 @@ namespace space {
 		else
 		{
 			text += `
-			<span onclick="space.start_playing()" class="start-playing">Start Playing</span>
-			or
-			<span onclick="space.show_login()" class="start-playing">Login</span>
+			<span onclick="space.start_playing()" class="start-playing">Jump In</span>
+			<!--or
+			<span onclick="space.show_login()" class="start-playing">Login</span>-->
 			`;
 		}
 		navBarRight.innerHTML = text;
 	}
 
 	export function start_playing() {
-		
+		play_as_guest();
 	}
 
 	function addFlightOption() {
@@ -380,7 +380,7 @@ namespace space {
 		const guest = await make_request_json('GET', 'guest');
 		const stuple = await make_request_json('GET', 'ply');
 		if (guest)
-			pin_message('Guest users have no limits, enjoy');
+			pin_message('Upgrade anytime to a full user');
 		else
 			pin_message('You\'re already a guest');
 		receive_sply(stuple);

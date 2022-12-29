@@ -13,10 +13,13 @@ import pts from "../shared/pts";
 var outer_space;
 (function (outer_space) {
     const deduct_nav_bar = 50;
+    const zoom_min = 5;
+    const zoom_max = 120;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
     outer_space.center = [0, -1];
     outer_space.pixelMultiple = 50;
+    outer_space.zoomLimits = [5, 120];
     outer_space.stamp = 0;
     function project(unit) {
         const half = pts.divide(outer_space.mapSize, 2);
@@ -49,13 +52,14 @@ var outer_space;
         };
         document.body.addEventListener('gesturechange', function (e) {
             const ev = e;
+            const multiplier = outer_space.pixelMultiple / 120;
             if (ev.scale < 1.0) {
                 // User moved fingers closer together
-                outer_space.pixelMultiple -= ev.scale;
+                outer_space.pixelMultiple -= ev.scale * multiplier;
             }
             else if (ev.scale > 1.0) {
                 // User moved fingers further apart
-                outer_space.pixelMultiple += ev.scale;
+                outer_space.pixelMultiple += ev.scale * multiplier;
             }
         }, false);
     }
@@ -137,16 +141,19 @@ var outer_space;
     }
     outer_space.fetch = fetch;
     function step() {
+        if (!started)
+            return;
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
         if (outer_space.you) {
             //you.pos = pts.add(you.pos, [0.001, 0]);
             outer_space.center = outer_space.you.pos;
         }
+        const multiplier = outer_space.pixelMultiple / zoom_max;
         if (app.wheel == 1)
-            outer_space.pixelMultiple += 5;
+            outer_space.pixelMultiple += 5 * multiplier;
         if (app.wheel == -1)
-            outer_space.pixelMultiple -= 5;
-        outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, 5, 120);
+            outer_space.pixelMultiple -= 5 * multiplier;
+        outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
         outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
         thing.steps();
     }
