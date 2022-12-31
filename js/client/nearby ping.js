@@ -6,7 +6,7 @@ class nearby_ping extends right_bar.toggler_behavior {
         nearby_ping.instance = this;
     }
     on_open() {
-        this.toggler.content.innerHTML = 'on open cb';
+        this.toggler.content.innerHTML = 'n/a';
     }
     on_close() {
     }

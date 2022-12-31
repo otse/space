@@ -14,21 +14,27 @@ x-right-bar {
 
 	x-begin {
 		cursor: pointer;
-		font-family: 'Courier';
+		font-family: 'Inconsolata';
 		font-size: 14px;
 		bbackground: hsl(0deg 0% 50% / 20%);
+		margin: 2px;
 		display: flex;
 		flex-direction: column;
 
 		x-title {
-			padding: 5px;
-			background: hsl(0deg 0% 50% / 50%);
-
-			span:nth-of-type(1) {
-				/* padding-right: 1ch; */
-			}
+			padding: 8px;
+			background: hsl(0deg 0% 38% / 70%);
+			border-radius: 4px;
+			border-bottom: 1px solid #747474;
+			color: darkseagreen;
+			display: flex;
+			align-items: center;
 
 			span:nth-of-type(2) {
+				padding-left: 1ch;
+			}
+
+			span:nth-of-type(1) {
 				font-family: 'Material Symbols Outlined';
 				font-size: 14px;
 			}
@@ -37,7 +43,6 @@ x-right-bar {
 		x-content {
 			display: none;
 			width: 120px;
-			
 			padding: 5px;
 			background: hsl(0deg 0% 50% / 50%);
 		}
@@ -50,9 +55,11 @@ x-right-bar {
 
 		&.nearby-ping {
 			x-content {
+				width: 150px;
 				max-height: 200px;
 				overflow-y: scroll;
 				overflow-x: hidden;
+				bbackground: rgba(82, 82, 169, 0.5);
 			}
 		}
 	}

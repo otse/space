@@ -300,7 +300,8 @@ var space = (function () {
             right_bar.element.innerHTML = `
 		<x-begin>
 			<x-title>
-				<span>selected item</span> <span>info</span>
+				<span>rocket_launch</span>
+				<span>Selected Item</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -309,7 +310,8 @@ var space = (function () {
 		
 		<x-begin>
 			<x-title>
-				<span>ping list</span> <span>sort</span>
+			<span>sort</span>
+				<span>Ping List</span>
 			</x-title>
 			<x-content>
 				boo-ya
@@ -341,7 +343,7 @@ var space = (function () {
             nearby_ping.instance = this;
         }
         on_open() {
-            this.toggler.content.innerHTML = 'on open cb';
+            this.toggler.content.innerHTML = 'n/a';
         }
         on_close() {
         }
@@ -361,7 +363,7 @@ var space = (function () {
             selected_item.instance = this;
         }
         on_open() {
-            this.toggler.content.innerHTML = 'on open cb';
+            this.toggler.content.innerHTML = 'n/a';
         }
         on_close() {
         }
@@ -373,6 +375,9 @@ var space = (function () {
                 type: ${outer_space$1.thing.focus.tuple[3]}<br />
                 name: ${outer_space$1.thing.focus.tuple[4]}
 			`;
+            }
+            else {
+                text += 'n/a';
             }
             this.toggler.content.innerHTML = text;
         }
@@ -444,6 +449,8 @@ var space = (function () {
                 outer_space.marker.tuple[2] = unit;
                 outer_space.marker.enabled = true;
                 outer_space.marker.sticky = undefined;
+                selected_item.instance.toggler.close();
+                nearby_ping.instance.toggler.open();
                 //thing.focus = undefined;
                 console.log('set marker', unit);
             };
@@ -614,6 +621,7 @@ var space = (function () {
                     outer_space.marker.sticky = this;
                     outer_space.marker.tuple[2] = this.tuple[2];
                     selected_item.instance.toggler.open();
+                    nearby_ping.instance.toggler.close();
                     //marker!.enabled = false;
                     console.log('clicked thing');
                     //this.element.innerHTML = 'clicked';

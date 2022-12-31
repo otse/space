@@ -7,7 +7,7 @@ class selected_item extends right_bar.toggler_behavior {
         selected_item.instance = this;
     }
     on_open() {
-        this.toggler.content.innerHTML = 'on open cb';
+        this.toggler.content.innerHTML = 'n/a';
     }
     on_close() {
     }
@@ -19,6 +19,9 @@ class selected_item extends right_bar.toggler_behavior {
                 type: ${outer_space.thing.focus.tuple[3]}<br />
                 name: ${outer_space.thing.focus.tuple[4]}
 			`;
+        }
+        else {
+            text += 'n/a';
         }
         this.toggler.content.innerHTML = text;
     }

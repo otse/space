@@ -3,7 +3,7 @@ import right_bar from "./right bar";
 import selected_item from "./selected item";
 
 /*
-we had a circular dependency so we made a special consumer file
+i had a circular dependency so i made a special consumer file
 */
 
 right_bar;

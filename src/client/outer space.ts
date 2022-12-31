@@ -62,6 +62,8 @@ namespace outer_space {
 			marker!.tuple[2] = unit;
 			marker!.enabled = true;
 			marker!.sticky = undefined;
+			selected_item.instance.toggler.close();
+			nearby_ping.instance.toggler.open();
 			//thing.focus = undefined;
 			console.log('set marker', unit);
 		}
@@ -257,6 +259,7 @@ namespace outer_space {
 				marker!.sticky = this;
 				marker!.tuple[2] = this.tuple[2];
 				selected_item.instance.toggler.open();
+				nearby_ping.instance.toggler.close();
 				//marker!.enabled = false;
 				console.log('clicked thing');
 

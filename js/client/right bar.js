@@ -57,7 +57,8 @@ var right_bar;
         right_bar.element.innerHTML = `
 		<x-begin>
 			<x-title>
-				<span>selected item</span> <span>info</span>
+				<span>rocket_launch</span>
+				<span>Selected Item</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -66,7 +67,8 @@ var right_bar;
 		
 		<x-begin>
 			<x-title>
-				<span>ping list</span> <span>sort</span>
+			<span>sort</span>
+				<span>Ping List</span>
 			</x-title>
 			<x-content>
 				boo-ya
