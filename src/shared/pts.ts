@@ -15,10 +15,9 @@ class pts {
 		return [n, m];
 	}
 
-	static to_string(a: vec2 | vec3 | vec4) {
-		const pr = (b) => b != undefined ? `, ${b}` : '';
-
-		return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
+	static to_string(a: vec2, p) {
+		const e = (i) => a[i].toPrecision(p);
+		return `${e(0)}, ${e(1)}`
 	}
 
 	static fixed(a: vec2) {

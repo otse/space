@@ -3,9 +3,7 @@ import right_bar from "./right bar";
 
 class nearby_ping extends right_bar.toggler_behavior {
 	static instance: nearby_ping;
-	static make() {
-		right_bar.nearby_ping_toggler.behavior = new nearby_ping(right_bar.nearby_ping_toggler);
-	}
+
 	constructor(toggler: right_bar.toggler) {
 		super(toggler);
 		nearby_ping.instance = this;

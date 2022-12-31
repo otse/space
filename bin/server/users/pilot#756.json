@@ -1,9 +1,9 @@
 {
-    "id": 755,
-    "ip": "::ffff:192.168.2.16",
+    "id": 756,
+    "ip": "::1",
     "guest": true,
     "dormant": false,
-    "username": "pilot#755",
+    "username": "pilot#756",
     "password": "N/A",
     "pos": [
         0,

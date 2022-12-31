@@ -19,22 +19,28 @@ var right_bar;
             this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`);
             this.title = this.begin.querySelector('x-title');
             this.content = this.begin.querySelector('x-content');
+            this.begin.classList.add(name);
             this.title.onclick = () => {
-                var _a, _b;
                 this.opened = !this.opened;
-                if (this.opened)
-                    console.log('boo');
                 if (this.opened) {
-                    this.content.style.display = 'flex';
-                    (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_open();
+                    this.open();
                 }
                 else {
-                    this.content.style.display = 'none';
-                    (_b = this.behavior) === null || _b === void 0 ? void 0 : _b.on_close();
+                    this.close();
                 }
-                //this.content.style.height = '100';
-                //this.content.innerHTML = `wot up`;
             };
+        }
+        open() {
+            var _a;
+            this.opened = true;
+            this.content.style.display = 'flex';
+            (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_open();
+        }
+        close() {
+            var _a;
+            this.opened = false;
+            this.content.style.display = 'none';
+            (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_close();
         }
         step() {
             var _a;
@@ -51,7 +57,7 @@ var right_bar;
         right_bar.element.innerHTML = `
 		<x-begin>
 			<x-title>
-				<span>info</span> <span>info</span>
+				<span>selected item</span> <span>info</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -60,15 +66,15 @@ var right_bar;
 		
 		<x-begin>
 			<x-title>
-				<span>nearby ping</span> <span>sort</span>
+				<span>ping list</span> <span>sort</span>
 			</x-title>
 			<x-content>
 				boo-ya
 			</x-content>
 		</x-begin>
 		`;
-        right_bar.nearby_ping_toggler = new toggler('nearby ping', 1);
-        new toggler('info', 2);
+        right_bar.nearby_ping_toggler = new toggler('nearby-ping', 1);
+        right_bar.selected_item_toggler = new toggler('selected-item', 2);
         right_bar.element.style.visibility = 'visible';
     }
     right_bar.start = start;

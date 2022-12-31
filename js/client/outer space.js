@@ -12,6 +12,7 @@ import space from "./space";
 import pts from "../shared/pts";
 import right_bar from "./right bar";
 import right_bar_consumer from "./right bar consumer";
+import selected_item from "./selected item";
 var outer_space;
 (function (outer_space) {
     const deduct_nav_bar = 50 / 2;
@@ -43,7 +44,6 @@ var outer_space;
     outer_space.unproject = unproject;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
-        outer_space.clicker = document.querySelector("outer-space-clicker");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
         outer_space.renderer.onclick = (event) => {
             if (!started)
@@ -53,6 +53,8 @@ var outer_space;
             let unit = unproject(pixel);
             outer_space.marker.tuple[2] = unit;
             outer_space.marker.enabled = true;
+            outer_space.marker.sticky = undefined;
+            //thing.focus = undefined;
             console.log('set marker', unit);
         };
         document.body.addEventListener('gesturechange', function (e) {
@@ -201,6 +203,8 @@ var outer_space;
                 thing.step();
         }
         step() {
+            if (thing.focus == this && outer_space.marker.sticky == this)
+                outer_space.marker.tuple[2] = this.tuple[2];
             this.stylize();
         }
         stylize() {
@@ -218,13 +222,18 @@ var outer_space;
                 (_a = thing.focus) === null || _a === void 0 ? void 0 : _a.blur();
                 thing.focus = this;
                 this.focus();
-                outer_space.marker.enabled = false;
+                outer_space.marker.enabled = true;
+                outer_space.marker.sticky = this;
+                outer_space.marker.tuple[2] = this.tuple[2];
+                selected_item.instance.toggler.open();
+                //marker!.enabled = false;
                 console.log('clicked thing');
                 //this.element.innerHTML = 'clicked';
                 return true;
             };
         }
     }
+    outer_space.thing = thing;
     class float extends thing {
         constructor(tuple) {
             super(tuple);
@@ -243,6 +252,7 @@ var outer_space;
             //console.log('half', half);
         }
     }
+    outer_space.float = float;
     class region extends thing {
         constructor(tuple, radius) {
             super(tuple);
@@ -262,6 +272,7 @@ var outer_space;
             this.element.style.height = radius * 2;
         }
     }
+    outer_space.region = region;
     class ping extends thing {
         constructor() {
             super([{}, -1, [0, 0], 'ping', 'ping']);

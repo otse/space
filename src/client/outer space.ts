@@ -4,6 +4,7 @@ import pts from "../shared/pts";
 import nearby_ping from "./nearby ping";
 import right_bar from "./right bar";
 import right_bar_consumer from "./right bar consumer";
+import selected_item from "./selected item";
 
 namespace outer_space {
 
@@ -11,7 +12,7 @@ namespace outer_space {
 	const zoom_min = 5;
 	const zoom_max = 120;
 
-	export var renderer, clicker, zoomLevel;
+	export var renderer, zoomLevel;
 
 	export var mapSize: vec2 = [100, 100]
 
@@ -49,31 +50,32 @@ namespace outer_space {
 
 	export function init() {
 		renderer = document.querySelector("outer-space");
-		clicker = document.querySelector("outer-space-clicker");
 		zoomLevel = document.querySelector("outer-space zoom-level");
-		
+
 		renderer.onclick = (event) => {
 			if (!started)
-			return;
+				return;
 			console.log('clicked map');
-			
+
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
 			marker!.tuple[2] = unit;
 			marker!.enabled = true;
+			marker!.sticky = undefined;
+			//thing.focus = undefined;
 			console.log('set marker', unit);
 		}
-		
+
 		document.body.addEventListener('gesturechange', function (e) {
 			const ev = e as any;
 			const multiplier = pixelMultiple / 120;
 			const zoomAmount = 2 * multiplier;
 			if (ev.scale < 1.0)
-			pixelMultiple -= zoomAmount;
+				pixelMultiple -= zoomAmount;
 			else if (ev.scale > 1.0)
-			pixelMultiple += zoomAmount;
+				pixelMultiple += zoomAmount;
 		}, false);
-		
+
 		right_bar.init();
 		right_bar_consumer.init();
 	}
@@ -196,7 +198,7 @@ namespace outer_space {
 
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
-	class thing {
+	export class thing {
 		static focus?: thing
 		stamp = 0
 		element
@@ -232,6 +234,9 @@ namespace outer_space {
 				thing.step();
 		}
 		step() {
+			if (thing.focus == this && marker!.sticky == this)
+				marker!.tuple[2] = this.tuple[2];
+
 			this.stylize();
 		}
 		stylize() {
@@ -248,16 +253,20 @@ namespace outer_space {
 				thing.focus?.blur();
 				thing.focus = this;
 				this.focus();
-				marker!.enabled = false;
+				marker!.enabled = true;
+				marker!.sticky = this;
+				marker!.tuple[2] = this.tuple[2];
+				selected_item.instance.toggler.open();
+				//marker!.enabled = false;
 				console.log('clicked thing');
-				
+
 				//this.element.innerHTML = 'clicked';
 				return true;
 			}
 		}
 	}
 
-	class float extends thing {
+	export class float extends thing {
 		constructor(
 			tuple
 		) {
@@ -278,7 +287,7 @@ namespace outer_space {
 		}
 	}
 
-	class region extends thing {
+	export class region extends thing {
 		constructor(
 			tuple,
 			public radius) {
@@ -300,6 +309,7 @@ namespace outer_space {
 	}
 
 	class ping extends thing {
+		sticky?: float
 		enabled = false
 		constructor() {
 			super([{}, -1, [0, 0], 'ping', 'ping']);

@@ -4,6 +4,7 @@ namespace right_bar {
 	export var togglers: toggler[] = [];
 
 	export var nearby_ping_toggler: toggler;
+	export var selected_item_toggler: toggler;
 
 	export var element;
 
@@ -27,22 +28,28 @@ namespace right_bar {
 			this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`)!;
 			this.title = this.begin.querySelector('x-title')!;
 			this.content = this.begin.querySelector('x-content')!;
-
+			
+			this.begin.classList.add(name);
+			
 			this.title.onclick = () => {
 				this.opened = !this.opened;
-				if (this.opened)
-					console.log('boo');
 				if (this.opened) {
-					this.content.style.display = 'flex';
-					this.behavior?.on_open();
+					this.open();
 				}
 				else {
-					this.content.style.display = 'none';
-					this.behavior?.on_close();
+					this.close();
 				}
-				//this.content.style.height = '100';
-				//this.content.innerHTML = `wot up`;
 			}
+		}
+		open() {
+			this.opened = true;
+			this.content.style.display = 'flex';
+			this.behavior?.on_open();
+		}
+		close() {
+			this.opened = false;
+			this.content.style.display = 'none';
+			this.behavior?.on_close();
 		}
 		step() {
 			this.behavior?.on_step();
@@ -59,7 +66,7 @@ namespace right_bar {
 		element.innerHTML = `
 		<x-begin>
 			<x-title>
-				<span>info</span> <span>info</span>
+				<span>selected item</span> <span>info</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -68,7 +75,7 @@ namespace right_bar {
 		
 		<x-begin>
 			<x-title>
-				<span>nearby ping</span> <span>sort</span>
+				<span>ping list</span> <span>sort</span>
 			</x-title>
 			<x-content>
 				boo-ya
@@ -76,9 +83,8 @@ namespace right_bar {
 		</x-begin>
 		`;
 
-		nearby_ping_toggler = new toggler('nearby ping', 1);
-
-		new toggler('info', 2);
+		nearby_ping_toggler = new toggler('nearby-ping', 1);
+		selected_item_toggler = new toggler('selected-item', 2);
 
 		element.style.visibility = 'visible';
 	}

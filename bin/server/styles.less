@@ -37,11 +37,23 @@ x-right-bar {
 		x-content {
 			display: none;
 			width: 120px;
-			max-height: 200px;
-			overflow-y: scroll;
-			overflow-x: hidden;
+			
 			padding: 5px;
 			background: hsl(0deg 0% 50% / 50%);
+		}
+
+		&.selected-item {
+			x-content {
+				width: 200px;
+			}
+		}
+
+		&.nearby-ping {
+			x-content {
+				max-height: 200px;
+				overflow-y: scroll;
+				overflow-x: hidden;
+			}
 		}
 	}
 }

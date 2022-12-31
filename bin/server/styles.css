@@ -33,9 +33,14 @@ x-right-bar x-begin x-title span:nth-of-type(2) {
 x-right-bar x-begin x-content {
   display: none;
   width: 120px;
+  padding: 5px;
+  background: hsla(0, 0%, 50%, 0.5);
+}
+x-right-bar x-begin.selected-item x-content {
+  width: 200px;
+}
+x-right-bar x-begin.nearby-ping x-content {
   max-height: 200px;
   overflow-y: scroll;
   overflow-x: hidden;
-  padding: 5px;
-  background: hsla(0, 0%, 50%, 0.5);
 }

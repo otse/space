@@ -1,9 +1,6 @@
 import outer_space from "./outer space";
 import right_bar from "./right bar";
 class nearby_ping extends right_bar.toggler_behavior {
-    static make() {
-        right_bar.nearby_ping_toggler.behavior = new nearby_ping(right_bar.nearby_ping_toggler);
-    }
     constructor(toggler) {
         super(toggler);
         nearby_ping.instance = this;

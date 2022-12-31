@@ -125,9 +125,9 @@ var space = (function () {
         static make(n, m) {
             return [n, m];
         }
-        static to_string(a) {
-            const pr = (b) => b != undefined ? `, ${b}` : '';
-            return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
+        static to_string(a, p) {
+            const e = (i) => a[i].toPrecision(p);
+            return `${e(0)}, ${e(1)}`;
         }
         static fixed(a) {
             return [a[0]];
@@ -262,22 +262,28 @@ var space = (function () {
                 this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`);
                 this.title = this.begin.querySelector('x-title');
                 this.content = this.begin.querySelector('x-content');
+                this.begin.classList.add(name);
                 this.title.onclick = () => {
-                    var _a, _b;
                     this.opened = !this.opened;
-                    if (this.opened)
-                        console.log('boo');
                     if (this.opened) {
-                        this.content.style.display = 'flex';
-                        (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_open();
+                        this.open();
                     }
                     else {
-                        this.content.style.display = 'none';
-                        (_b = this.behavior) === null || _b === void 0 ? void 0 : _b.on_close();
+                        this.close();
                     }
-                    //this.content.style.height = '100';
-                    //this.content.innerHTML = `wot up`;
                 };
+            }
+            open() {
+                var _a;
+                this.opened = true;
+                this.content.style.display = 'flex';
+                (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_open();
+            }
+            close() {
+                var _a;
+                this.opened = false;
+                this.content.style.display = 'none';
+                (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_close();
             }
             step() {
                 var _a;
@@ -294,7 +300,7 @@ var space = (function () {
             right_bar.element.innerHTML = `
 		<x-begin>
 			<x-title>
-				<span>info</span> <span>info</span>
+				<span>selected item</span> <span>info</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -303,15 +309,15 @@ var space = (function () {
 		
 		<x-begin>
 			<x-title>
-				<span>nearby ping</span> <span>sort</span>
+				<span>ping list</span> <span>sort</span>
 			</x-title>
 			<x-content>
 				boo-ya
 			</x-content>
 		</x-begin>
 		`;
-            right_bar.nearby_ping_toggler = new toggler('nearby ping', 1);
-            new toggler('info', 2);
+            right_bar.nearby_ping_toggler = new toggler('nearby-ping', 1);
+            right_bar.selected_item_toggler = new toggler('selected-item', 2);
             right_bar.element.style.visibility = 'visible';
         }
         right_bar.start = start;
@@ -330,9 +336,6 @@ var space = (function () {
     var right_bar$1 = right_bar;
 
     class nearby_ping extends right_bar$1.toggler_behavior {
-        static make() {
-            right_bar$1.nearby_ping_toggler.behavior = new nearby_ping(right_bar$1.nearby_ping_toggler);
-        }
         constructor(toggler) {
             super(toggler);
             nearby_ping.instance = this;
@@ -352,6 +355,29 @@ var space = (function () {
         }
     }
 
+    class selected_item extends right_bar$1.toggler_behavior {
+        constructor(toggler) {
+            super(toggler);
+            selected_item.instance = this;
+        }
+        on_open() {
+            this.toggler.content.innerHTML = 'on open cb';
+        }
+        on_close() {
+        }
+        on_step() {
+            let text = '';
+            if (outer_space$1.thing.focus) {
+                text += `
+                pos: ${pts.to_string(outer_space$1.thing.focus.tuple[2], 2)}<br />
+                type: ${outer_space$1.thing.focus.tuple[3]}<br />
+                name: ${outer_space$1.thing.focus.tuple[4]}
+			`;
+            }
+            this.toggler.content.innerHTML = text;
+        }
+    }
+
     var right_bar_consumer;
     (function (right_bar_consumer) {
         function init() {
@@ -359,6 +385,7 @@ var space = (function () {
         right_bar_consumer.init = init;
         function start() {
             new nearby_ping(right_bar$1.nearby_ping_toggler);
+            new selected_item(right_bar$1.selected_item_toggler);
         }
         right_bar_consumer.start = start;
         function stop() {
@@ -407,7 +434,6 @@ var space = (function () {
         outer_space.unproject = unproject;
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
-            outer_space.clicker = document.querySelector("outer-space-clicker");
             outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
             outer_space.renderer.onclick = (event) => {
                 if (!started)
@@ -417,6 +443,8 @@ var space = (function () {
                 let unit = unproject(pixel);
                 outer_space.marker.tuple[2] = unit;
                 outer_space.marker.enabled = true;
+                outer_space.marker.sticky = undefined;
+                //thing.focus = undefined;
                 console.log('set marker', unit);
             };
             document.body.addEventListener('gesturechange', function (e) {
@@ -563,6 +591,8 @@ var space = (function () {
                     thing.step();
             }
             step() {
+                if (thing.focus == this && outer_space.marker.sticky == this)
+                    outer_space.marker.tuple[2] = this.tuple[2];
                 this.stylize();
             }
             stylize() {
@@ -580,13 +610,18 @@ var space = (function () {
                     (_a = thing.focus) === null || _a === void 0 ? void 0 : _a.blur();
                     thing.focus = this;
                     this.focus();
-                    outer_space.marker.enabled = false;
+                    outer_space.marker.enabled = true;
+                    outer_space.marker.sticky = this;
+                    outer_space.marker.tuple[2] = this.tuple[2];
+                    selected_item.instance.toggler.open();
+                    //marker!.enabled = false;
                     console.log('clicked thing');
                     //this.element.innerHTML = 'clicked';
                     return true;
                 };
             }
         }
+        outer_space.thing = thing;
         class float extends thing {
             constructor(tuple) {
                 super(tuple);
@@ -605,6 +640,7 @@ var space = (function () {
                 //console.log('half', half);
             }
         }
+        outer_space.float = float;
         class region extends thing {
             constructor(tuple, radius) {
                 super(tuple);
@@ -624,6 +660,7 @@ var space = (function () {
                 this.element.style.height = radius * 2;
             }
         }
+        outer_space.region = region;
         class ping extends thing {
             constructor() {
                 super([{}, -1, [0, 0], 'ping', 'ping']);
