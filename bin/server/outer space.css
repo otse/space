@@ -1,3 +1,13 @@
+outer-space-clicker {
+	z-index: 2;
+	position: absolute;
+	overflow: hidden;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
 outer-space {
 	z-index: 2;
 	position: absolute;
@@ -24,9 +34,14 @@ outer-space zoom-level {
 	background: #1a1a1a;
 }
 
+outer-space .float.focus {
+	text-decoration: underline;
+}
+
 outer-space .float {
 	display: inline-flex;
 	position: absolute;
+	user-select: none;
 }
 
 outer-space .float span:nth-child(1) {
@@ -41,6 +56,12 @@ outer-space .float span:nth-child(1) {
 outer-space .float span:nth-child(2) {
 	padding: 0 3;
 	border-radius: 2px;
+	/* border: 1px solid rgba(255, 255, 255, 0.5); */
+}
+
+outer-space .float span:nth-child(2):hover {
+	padding: 0 3;
+	color: lightgreen;
 	/* border: 1px solid rgba(255, 255, 255, 0.5); */
 }
 

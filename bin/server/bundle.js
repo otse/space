@@ -244,19 +244,16 @@ var space = (function () {
     var right_bar;
     (function (right_bar) {
         right_bar.togglers = [];
-        class section_behavior {
+        class toggler_behavior {
             constructor(toggler) {
                 this.toggler = toggler;
+                toggler.behavior = this;
             }
-            /* override these methods */
-            on_open() {
-            }
-            on_close() {
-            }
-            step() {
-            }
+            on_open() { }
+            on_close() { }
+            on_step() { }
         }
-        right_bar.section_behavior = section_behavior;
+        right_bar.toggler_behavior = toggler_behavior;
         class toggler {
             constructor(name, from_top) {
                 this.name = name;
@@ -284,7 +281,7 @@ var space = (function () {
             }
             step() {
                 var _a;
-                (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.step();
+                (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_step();
             }
         }
         right_bar.toggler = toggler;
@@ -332,7 +329,7 @@ var space = (function () {
     })(right_bar || (right_bar = {}));
     var right_bar$1 = right_bar;
 
-    class nearby_ping extends right_bar$1.section_behavior {
+    class nearby_ping extends right_bar$1.toggler_behavior {
         static make() {
             right_bar$1.nearby_ping_toggler.behavior = new nearby_ping(right_bar$1.nearby_ping_toggler);
         }
@@ -345,7 +342,7 @@ var space = (function () {
         }
         on_close() {
         }
-        step() {
+        on_step() {
             let text = '';
             for (const thing of outer_space$1.things)
                 text += `
@@ -361,7 +358,7 @@ var space = (function () {
         }
         right_bar_consumer.init = init;
         function start() {
-            right_bar$1.nearby_ping_toggler.behavior = new nearby_ping(right_bar$1.nearby_ping_toggler);
+            new nearby_ping(right_bar$1.nearby_ping_toggler);
         }
         right_bar_consumer.start = start;
         function stop() {
@@ -410,13 +407,16 @@ var space = (function () {
         outer_space.unproject = unproject;
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
+            outer_space.clicker = document.querySelector("outer-space-clicker");
             outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
             outer_space.renderer.onclick = (event) => {
                 if (!started)
                     return;
+                console.log('clicked map');
                 let pixel = [event.clientX, event.clientY];
                 let unit = unproject(pixel);
                 outer_space.marker.tuple[2] = unit;
+                outer_space.marker.enabled = true;
                 console.log('set marker', unit);
             };
             document.body.addEventListener('gesturechange', function (e) {
@@ -567,6 +567,25 @@ var space = (function () {
             }
             stylize() {
             }
+            focus() {
+                this.element.classList.add('focus');
+            }
+            blur() {
+                this.element.classList.remove('focus');
+            }
+            handle_onclick() {
+                this.element.onclick = (event) => {
+                    var _a;
+                    event.stopPropagation();
+                    (_a = thing.focus) === null || _a === void 0 ? void 0 : _a.blur();
+                    thing.focus = this;
+                    this.focus();
+                    outer_space.marker.enabled = false;
+                    console.log('clicked thing');
+                    //this.element.innerHTML = 'clicked';
+                    return true;
+                };
+            }
         }
         class float extends thing {
             constructor(tuple) {
@@ -575,6 +594,7 @@ var space = (function () {
                 this.element = document.createElement('div');
                 this.element.classList.add('float');
                 this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
+                this.handle_onclick();
                 this.stylize();
                 this.append();
             }
@@ -607,6 +627,7 @@ var space = (function () {
         class ping extends thing {
             constructor() {
                 super([{}, -1, [0, 0], 'ping', 'ping']);
+                this.enabled = false;
                 this.stamp = -1;
                 this.element = document.createElement('div');
                 this.element.classList.add('ping');
@@ -619,6 +640,7 @@ var space = (function () {
                 let proj = project(this.tuple[2]);
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
+                this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
             }
         }
     })(outer_space || (outer_space = {}));

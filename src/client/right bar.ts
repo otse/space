@@ -7,20 +7,13 @@ namespace right_bar {
 
 	export var element;
 
-	export class section_behavior {
+	export class toggler_behavior {
 		constructor(public readonly toggler: toggler) {
-
+			toggler.behavior = this;
 		}
-		/* override these methods */
-		on_open() {
-
-		}
-		on_close() {
-
-		}
-		step() {
-
-		}
+		on_open() { }
+		on_close() { }
+		on_step() { }
 	}
 
 	export class toggler {
@@ -28,7 +21,7 @@ namespace right_bar {
 		begin: HTMLElement
 		title: HTMLElement
 		content: HTMLElement
-		behavior?: section_behavior
+		behavior?: toggler_behavior
 		constructor(public readonly name, from_top: number) {
 			togglers.push(this);
 			this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`)!;
@@ -52,7 +45,7 @@ namespace right_bar {
 			}
 		}
 		step() {
-			this.behavior?.step();
+			this.behavior?.on_step();
 		}
 	}
 

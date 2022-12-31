@@ -1,6 +1,6 @@
 import outer_space from "./outer space";
 import right_bar from "./right bar";
-class nearby_ping extends right_bar.section_behavior {
+class nearby_ping extends right_bar.toggler_behavior {
     static make() {
         right_bar.nearby_ping_toggler.behavior = new nearby_ping(right_bar.nearby_ping_toggler);
     }
@@ -13,7 +13,7 @@ class nearby_ping extends right_bar.section_behavior {
     }
     on_close() {
     }
-    step() {
+    on_step() {
         let text = '';
         for (const thing of outer_space.things)
             text += `

@@ -11,7 +11,7 @@ var right_bar_consumer;
     }
     right_bar_consumer.init = init;
     function start() {
-        right_bar.nearby_ping_toggler.behavior = new nearby_ping(right_bar.nearby_ping_toggler);
+        new nearby_ping(right_bar.nearby_ping_toggler);
     }
     right_bar_consumer.start = start;
     function stop() {

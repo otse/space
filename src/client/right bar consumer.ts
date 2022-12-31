@@ -13,8 +13,7 @@ namespace right_bar_consumer {
 
 	}
 	export function start() {
-		right_bar.nearby_ping_toggler.behavior = new nearby_ping(right_bar.nearby_ping_toggler);
-
+		new nearby_ping(right_bar.nearby_ping_toggler);
 	}
 	export function stop() {
 

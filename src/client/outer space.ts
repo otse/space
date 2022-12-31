@@ -11,7 +11,7 @@ namespace outer_space {
 	const zoom_min = 5;
 	const zoom_max = 120;
 
-	export var renderer, zoomLevel
+	export var renderer, clicker, zoomLevel;
 
 	export var mapSize: vec2 = [100, 100]
 
@@ -49,14 +49,18 @@ namespace outer_space {
 
 	export function init() {
 		renderer = document.querySelector("outer-space");
+		clicker = document.querySelector("outer-space-clicker");
 		zoomLevel = document.querySelector("outer-space zoom-level");
 		
 		renderer.onclick = (event) => {
 			if (!started)
 			return;
+			console.log('clicked map');
+			
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
 			marker!.tuple[2] = unit;
+			marker!.enabled = true;
 			console.log('set marker', unit);
 		}
 		
@@ -193,6 +197,7 @@ namespace outer_space {
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
 	class thing {
+		static focus?: thing
 		stamp = 0
 		element
 		constructor(
@@ -231,6 +236,25 @@ namespace outer_space {
 		}
 		stylize() {
 		}
+		focus() {
+			this.element.classList.add('focus');
+		}
+		blur() {
+			this.element.classList.remove('focus');
+		}
+		handle_onclick() {
+			this.element.onclick = (event) => {
+				event.stopPropagation();
+				thing.focus?.blur();
+				thing.focus = this;
+				this.focus();
+				marker!.enabled = false;
+				console.log('clicked thing');
+				
+				//this.element.innerHTML = 'clicked';
+				return true;
+			}
+		}
 	}
 
 	class float extends thing {
@@ -242,6 +266,7 @@ namespace outer_space {
 			this.element = document.createElement('div');
 			this.element.classList.add('float');
 			this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
+			this.handle_onclick();
 			this.stylize();
 			this.append();
 		}
@@ -275,6 +300,7 @@ namespace outer_space {
 	}
 
 	class ping extends thing {
+		enabled = false
 		constructor() {
 			super([{}, -1, [0, 0], 'ping', 'ping']);
 			this.stamp = -1;
@@ -289,6 +315,7 @@ namespace outer_space {
 			let proj = project(this.tuple[2]);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
+			this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
 		}
 	}
 }

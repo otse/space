@@ -1,19 +1,16 @@
 var right_bar;
 (function (right_bar) {
     right_bar.togglers = [];
-    class section_behavior {
+    class toggler_behavior {
         constructor(toggler) {
             this.toggler = toggler;
+            toggler.behavior = this;
         }
-        /* override these methods */
-        on_open() {
-        }
-        on_close() {
-        }
-        step() {
-        }
+        on_open() { }
+        on_close() { }
+        on_step() { }
     }
-    right_bar.section_behavior = section_behavior;
+    right_bar.toggler_behavior = toggler_behavior;
     class toggler {
         constructor(name, from_top) {
             this.name = name;
@@ -41,7 +38,7 @@ var right_bar;
         }
         step() {
             var _a;
-            (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.step();
+            (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_step();
         }
     }
     right_bar.toggler = toggler;

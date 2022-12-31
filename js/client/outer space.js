@@ -43,13 +43,16 @@ var outer_space;
     outer_space.unproject = unproject;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
+        outer_space.clicker = document.querySelector("outer-space-clicker");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
         outer_space.renderer.onclick = (event) => {
             if (!started)
                 return;
+            console.log('clicked map');
             let pixel = [event.clientX, event.clientY];
             let unit = unproject(pixel);
             outer_space.marker.tuple[2] = unit;
+            outer_space.marker.enabled = true;
             console.log('set marker', unit);
         };
         document.body.addEventListener('gesturechange', function (e) {
@@ -202,6 +205,25 @@ var outer_space;
         }
         stylize() {
         }
+        focus() {
+            this.element.classList.add('focus');
+        }
+        blur() {
+            this.element.classList.remove('focus');
+        }
+        handle_onclick() {
+            this.element.onclick = (event) => {
+                var _a;
+                event.stopPropagation();
+                (_a = thing.focus) === null || _a === void 0 ? void 0 : _a.blur();
+                thing.focus = this;
+                this.focus();
+                outer_space.marker.enabled = false;
+                console.log('clicked thing');
+                //this.element.innerHTML = 'clicked';
+                return true;
+            };
+        }
     }
     class float extends thing {
         constructor(tuple) {
@@ -210,6 +232,7 @@ var outer_space;
             this.element = document.createElement('div');
             this.element.classList.add('float');
             this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
+            this.handle_onclick();
             this.stylize();
             this.append();
         }
@@ -242,6 +265,7 @@ var outer_space;
     class ping extends thing {
         constructor() {
             super([{}, -1, [0, 0], 'ping', 'ping']);
+            this.enabled = false;
             this.stamp = -1;
             this.element = document.createElement('div');
             this.element.classList.add('ping');
@@ -254,6 +278,7 @@ var outer_space;
             let proj = project(this.tuple[2]);
             this.element.style.top = proj[1];
             this.element.style.left = proj[0];
+            this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
         }
     }
 })(outer_space || (outer_space = {}));
