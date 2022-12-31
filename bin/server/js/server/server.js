@@ -66,6 +66,12 @@ function init() {
             res.end(style);
             return;
         }
+        else if (req.url == '/styles.css') {
+            let style = fs.readFileSync('styles.css');
+            res.writeHead(200, { CONTENT_TYPE: "text/css" });
+            res.end(style);
+            return;
+        }
         else if (req.url == '/outer%20space.css') {
             let style = fs.readFileSync('outer space.css');
             res.writeHead(200, { CONTENT_TYPE: "text/css" });

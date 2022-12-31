@@ -241,6 +241,135 @@ var space = (function () {
         ;
     }
 
+    var right_bar;
+    (function (right_bar) {
+        right_bar.togglers = [];
+        class section_behavior {
+            constructor(toggler) {
+                this.toggler = toggler;
+            }
+            /* override these methods */
+            on_open() {
+            }
+            on_close() {
+            }
+            step() {
+            }
+        }
+        right_bar.section_behavior = section_behavior;
+        class toggler {
+            constructor(name, from_top) {
+                this.name = name;
+                this.opened = false;
+                right_bar.togglers.push(this);
+                this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`);
+                this.title = this.begin.querySelector('x-title');
+                this.content = this.begin.querySelector('x-content');
+                this.title.onclick = () => {
+                    var _a, _b;
+                    this.opened = !this.opened;
+                    if (this.opened)
+                        console.log('boo');
+                    if (this.opened) {
+                        this.content.style.display = 'flex';
+                        (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_open();
+                    }
+                    else {
+                        this.content.style.display = 'none';
+                        (_b = this.behavior) === null || _b === void 0 ? void 0 : _b.on_close();
+                    }
+                    //this.content.style.height = '100';
+                    //this.content.innerHTML = `wot up`;
+                };
+            }
+            step() {
+                var _a;
+                (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.step();
+            }
+        }
+        right_bar.toggler = toggler;
+        function init() {
+            right_bar.element = document.querySelector('x-right-bar');
+            stop();
+        }
+        right_bar.init = init;
+        function start() {
+            right_bar.element.innerHTML = `
+		<x-begin>
+			<x-title>
+				<span>info</span> <span>info</span>
+			</x-title>
+			<x-content>
+				nothing to see here
+			</x-content>
+		</x-begin>
+		
+		<x-begin>
+			<x-title>
+				<span>nearby ping</span> <span>sort</span>
+			</x-title>
+			<x-content>
+				boo-ya
+			</x-content>
+		</x-begin>
+		`;
+            right_bar.nearby_ping_toggler = new toggler('nearby ping', 1);
+            new toggler('info', 2);
+            right_bar.element.style.visibility = 'visible';
+        }
+        right_bar.start = start;
+        function stop() {
+            right_bar.element.style.visibility = 'hidden';
+            right_bar.togglers = [];
+        }
+        right_bar.stop = stop;
+        function step() {
+            for (const toggler of right_bar.togglers) {
+                toggler.step();
+            }
+        }
+        right_bar.step = step;
+    })(right_bar || (right_bar = {}));
+    var right_bar$1 = right_bar;
+
+    class nearby_ping extends right_bar$1.section_behavior {
+        static make() {
+            right_bar$1.nearby_ping_toggler.behavior = new nearby_ping(right_bar$1.nearby_ping_toggler);
+        }
+        constructor(toggler) {
+            super(toggler);
+            nearby_ping.instance = this;
+        }
+        on_open() {
+            this.toggler.content.innerHTML = 'on open cb';
+        }
+        on_close() {
+        }
+        step() {
+            let text = '';
+            for (const thing of outer_space$1.things)
+                text += `
+				${thing.tuple[4]}<br />
+			`;
+            this.toggler.content.innerHTML = text;
+        }
+    }
+
+    var right_bar_consumer;
+    (function (right_bar_consumer) {
+        function init() {
+        }
+        right_bar_consumer.init = init;
+        function start() {
+            right_bar$1.nearby_ping_toggler.behavior = new nearby_ping(right_bar$1.nearby_ping_toggler);
+        }
+        right_bar_consumer.start = start;
+        function stop() {
+        }
+        right_bar_consumer.stop = stop;
+    })(right_bar_consumer || (right_bar_consumer = {}));
+    var right_bar_consumer$1 = right_bar_consumer;
+
     var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
@@ -252,7 +381,7 @@ var space = (function () {
     };
     var outer_space;
     (function (outer_space) {
-        const deduct_nav_bar = 50;
+        const deduct_nav_bar = 50 / 2;
         const zoom_min = 5;
         const zoom_max = 120;
         outer_space.mapSize = [100, 100];
@@ -266,14 +395,14 @@ var space = (function () {
             let pos = pts.subtract(unit, outer_space.center);
             pos = pts.mult(pos, outer_space.pixelMultiple);
             pos = pts.add(pos, half);
-            pos = pts.add(pos, [0, deduct_nav_bar / 2]);
+            pos = pts.add(pos, [0, deduct_nav_bar]);
             return pos;
         }
         outer_space.project = project;
         function unproject(pixel) {
             const half = pts.divide(outer_space.mapSize, 2);
             let pos = pts.subtract(pixel, half);
-            pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
+            pos = pts.subtract(pos, [0, deduct_nav_bar]);
             pos = pts.divide(pos, outer_space.pixelMultiple);
             pos = pts.add(pos, outer_space.center);
             return pos;
@@ -287,44 +416,47 @@ var space = (function () {
                     return;
                 let pixel = [event.clientX, event.clientY];
                 let unit = unproject(pixel);
-                outer_space.marker.pos = unit;
+                outer_space.marker.tuple[2] = unit;
                 console.log('set marker', unit);
             };
             document.body.addEventListener('gesturechange', function (e) {
                 const ev = e;
                 const multiplier = outer_space.pixelMultiple / 120;
-                if (ev.scale < 1.0) {
-                    // User moved fingers closer together
-                    outer_space.pixelMultiple -= ev.scale * multiplier;
-                }
-                else if (ev.scale > 1.0) {
-                    // User moved fingers further apart
-                    outer_space.pixelMultiple += ev.scale * multiplier;
-                }
+                const zoomAmount = 2 * multiplier;
+                if (ev.scale < 1.0)
+                    outer_space.pixelMultiple -= zoomAmount;
+                else if (ev.scale > 1.0)
+                    outer_space.pixelMultiple += zoomAmount;
             }, false);
+            right_bar$1.init();
+            right_bar_consumer$1.init();
         }
         outer_space.init = init;
         var started;
         var fetcher;
-        var things = [];
+        outer_space.things = [];
         function start() {
             if (!started) {
                 console.log(' outer space start ');
                 statics();
                 fetch();
+                right_bar$1.start();
+                right_bar_consumer$1.start();
                 started = true;
             }
         }
         outer_space.start = start;
         function stop() {
             if (started) {
-                let i = things.length;
+                let i = outer_space.things.length;
                 while (i--)
-                    things[i].remove();
+                    outer_space.things[i].remove();
                 outer_space.you = undefined;
                 outer_space.marker = undefined;
                 started = false;
                 clearTimeout(fetcher);
+                right_bar$1.stop();
+                right_bar_consumer$1.stop();
             }
         }
         outer_space.stop = stop;
@@ -333,16 +465,16 @@ var space = (function () {
             //you = new float(-1, center, 'you', 'you');
             //you.stamp = -1;
             outer_space.marker = new ping();
-            let collision = new float(-1, [2, 1], 'collision', 'collision');
+            let collision = new float([{}, -1, [2, 1], 'collision', 'collision']);
             collision.stamp = -1;
             for (let blob of space$1.regions) {
-                let reg = new region(blob.center, blob.name, blob.radius);
+                let reg = new region([{}, -1, blob.center, 'region', blob.name], blob.radius);
                 reg.stamp = -1;
             }
         }
         function get_thing_by_id(id) {
-            for (const joint of things)
-                if (id == joint.id)
+            for (const joint of outer_space.things)
+                if (id == joint.tuple[1])
                     return joint;
         }
         function handle_you(object, float) {
@@ -363,11 +495,11 @@ var space = (function () {
                     const [random, id, pos, type, name] = object;
                     let bee = get_thing_by_id(id);
                     if (bee) {
-                        bee.pos = pos;
+                        bee.tuple[2] = pos;
                         bee.stylize();
                     }
                     else {
-                        bee = new float(id, pos, type, name);
+                        bee = new float(object);
                         handle_you(object, bee);
                     }
                     bee.stamp = outer_space.stamp;
@@ -384,30 +516,31 @@ var space = (function () {
             outer_space.mapSize = [window.innerWidth, window.innerHeight];
             if (outer_space.you) {
                 //you.pos = pts.add(you.pos, [0.001, 0]);
-                outer_space.center = outer_space.you.pos;
+                outer_space.center = outer_space.you.tuple[2];
             }
             const multiplier = outer_space.pixelMultiple / zoom_max;
+            const increment = 10 * multiplier;
             if (app$1.wheel == 1)
-                outer_space.pixelMultiple += 5 * multiplier;
+                outer_space.pixelMultiple += increment;
             if (app$1.wheel == -1)
-                outer_space.pixelMultiple -= 5 * multiplier;
+                outer_space.pixelMultiple -= increment;
             outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
             outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
             thing.steps();
+            right_bar$1.step();
         }
         outer_space.step = step;
         class thing {
-            constructor(id, pos) {
-                this.id = id;
-                this.pos = pos;
+            constructor(tuple) {
+                this.tuple = tuple;
                 this.stamp = 0;
-                things.push(this);
+                outer_space.things.push(this);
             }
             append() {
                 outer_space.renderer.append(this.element);
             }
             remove() {
-                things.splice(things.indexOf(this), 1);
+                outer_space.things.splice(outer_space.things.indexOf(this), 1);
                 this.element.remove();
             }
             has_old_stamp() {
@@ -417,16 +550,16 @@ var space = (function () {
                 }
             }
             static check() {
-                let i = things.length;
+                let i = outer_space.things.length;
                 while (i--) {
-                    const joint = things[i];
+                    const joint = outer_space.things[i];
                     if (joint.has_old_stamp()) {
                         joint.remove();
                     }
                 }
             }
             static steps() {
-                for (const thing of things)
+                for (const thing of outer_space.things)
                     thing.step();
             }
             step() {
@@ -436,37 +569,34 @@ var space = (function () {
             }
         }
         class float extends thing {
-            constructor(id, pos, type, name) {
-                super(id, pos);
-                this.type = type;
-                this.name = name;
+            constructor(tuple) {
+                super(tuple);
                 console.log('new float');
                 this.element = document.createElement('div');
                 this.element.classList.add('float');
-                this.element.innerHTML = `<span></span><span>${name}</span>`;
+                this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
                 this.stylize();
                 this.append();
             }
             stylize() {
-                let proj = project(this.pos);
+                let proj = project(this.tuple[2]);
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
                 //console.log('half', half);
             }
         }
         class region extends thing {
-            constructor(pos, name, radius) {
-                super(-1, pos);
-                this.name = name;
+            constructor(tuple, radius) {
+                super(tuple);
                 this.radius = radius;
                 this.element = document.createElement('div');
                 this.element.classList.add('region');
-                this.element.innerHTML = `<span>${name}</span>`;
+                this.element.innerHTML = `<span>${this.tuple[4]}</span>`;
                 this.stylize();
                 this.append();
             }
             stylize() {
-                let proj = project(this.pos);
+                let proj = project(this.tuple[2]);
                 const radius = this.radius * outer_space.pixelMultiple;
                 this.element.style.top = proj[1] - radius;
                 this.element.style.left = proj[0] - radius;
@@ -476,7 +606,7 @@ var space = (function () {
         }
         class ping extends thing {
             constructor() {
-                super(-1, [0, 0]);
+                super([{}, -1, [0, 0], 'ping', 'ping']);
                 this.stamp = -1;
                 this.element = document.createElement('div');
                 this.element.classList.add('ping');
@@ -485,8 +615,8 @@ var space = (function () {
                 this.append();
             }
             stylize() {
-                console.log('ping stylize');
-                let proj = project(this.pos);
+                // console.log('ping stylize');
+                let proj = project(this.tuple[2]);
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
             }
@@ -652,7 +782,10 @@ var space = (function () {
             }
             else {
                 text += `
-			<span onclick="space.start_playing()" class="start-playing">Jump In</span>
+			<span onclick="space.start_playing()" class="start-playing">
+				<!--Let's Sci-fi!-->
+				Play Now
+			</span>
 			<!--or
 			<span onclick="space.show_login()" class="start-playing">Login</span>-->
 			`;
@@ -680,14 +813,15 @@ var space = (function () {
 		<my-welcome>
 		<!--<h1>spAce</h1>-->
 		Web space sim that combines <span>real-time</span> with <span>text-based</span>.
-		<br />
-		<br />
+		<p>
+		Optimized for mobile.
+		</p>
+		<p>
 		<span class="colorful-button" onclick="space.play_as_guest()">Play as a guest</span>,
 		<span class="colorful-button" onclick="space.show_register()">sign up</span>
 		<span class="colorful-button" onclick="space.show_login()">or log in</span>
-		</my-welcome>
-		<p>
 		</p>
+		</my-welcome>
 		</my-intro>
 		`;
             space.myTrivial.innerHTML = text;

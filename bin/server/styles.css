@@ -1,0 +1,38 @@
+/* lessc styles.less styles.css */
+x-right-bar {
+  z-index: 3;
+  position: absolute;
+  bottom: 50;
+  right: 0;
+  margin: 20px;
+  bbackground: hsla(0, 0%, 50%, 0.5);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+x-right-bar x-begin {
+  cursor: pointer;
+  font-family: 'Inconsolata';
+  font-size: 16px;
+  bbackground: hsla(0, 0%, 50%, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+x-right-bar x-begin x-title {
+  padding: 5px;
+  background: hsla(0, 0%, 50%, 0.2);
+}
+x-right-bar x-begin x-title span:nth-of-type(1) {
+  /* padding-right: 1ch; */
+}
+x-right-bar x-begin x-title span:nth-of-type(2) {
+  font-family: 'Material Symbols Outlined';
+  font-size: 14px;
+}
+x-right-bar x-begin x-content {
+  display: none;
+  width: 300px;
+  padding: 5px;
+  background: hsla(0, 0%, 50%, 0.4);
+}

@@ -192,10 +192,11 @@ my-welcome {
 	color: #0060ca;
 	transform: rotateY(4deg);
 	padding: 20px;
+	margin: 20px;
 	box-sizing: border-box;
-	bborder: 3px solid #19325e;
 	border-radius: 4px;
-	text-shadow: 0 0 5px;
+	bborder: 3px solid #19325e;
+	ttext-shadow: 0 0 5px;
 }
 
 my-welcome h1 {

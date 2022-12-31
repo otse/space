@@ -1,10 +1,13 @@
 import app from "./app";
 import space from "./space";
 import pts from "../shared/pts";
+import nearby_ping from "./nearby ping";
+import right_bar from "./right bar";
+import right_bar_consumer from "./right bar consumer";
 
 namespace outer_space {
 
-	const deduct_nav_bar = 50;
+	const deduct_nav_bar = 50 / 2;
 	const zoom_min = 5;
 	const zoom_max = 120;
 
@@ -31,14 +34,14 @@ namespace outer_space {
 		let pos = pts.subtract(unit, center);
 		pos = pts.mult(pos, pixelMultiple);
 		pos = pts.add(pos, half);
-		pos = pts.add(pos, [0, deduct_nav_bar / 2]);
+		pos = pts.add(pos, [0, deduct_nav_bar]);
 		return pos;
 	}
 
 	export function unproject(pixel: vec2) {
 		const half = pts.divide(mapSize, 2);
 		let pos = pts.subtract(pixel, half);
-		pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
+		pos = pts.subtract(pos, [0, deduct_nav_bar]);
 		pos = pts.divide(pos, pixelMultiple);
 		pos = pts.add(pos, center);
 		return pos;
@@ -47,39 +50,42 @@ namespace outer_space {
 	export function init() {
 		renderer = document.querySelector("outer-space");
 		zoomLevel = document.querySelector("outer-space zoom-level");
-
+		
 		renderer.onclick = (event) => {
 			if (!started)
-				return;
+			return;
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
-			marker!.pos = unit;
+			marker!.tuple[2] = unit;
 			console.log('set marker', unit);
 		}
-
+		
 		document.body.addEventListener('gesturechange', function (e) {
 			const ev = e as any;
 			const multiplier = pixelMultiple / 120;
-			if (ev.scale < 1.0) {
-				// User moved fingers closer together
-				pixelMultiple -= ev.scale * multiplier;
-			} else if (ev.scale > 1.0) {
-				// User moved fingers further apart
-				pixelMultiple += ev.scale * multiplier;
-			}
+			const zoomAmount = 2 * multiplier;
+			if (ev.scale < 1.0)
+			pixelMultiple -= zoomAmount;
+			else if (ev.scale > 1.0)
+			pixelMultiple += zoomAmount;
 		}, false);
+		
+		right_bar.init();
+		right_bar_consumer.init();
 	}
 
 	var started;
 	var fetcher;
 
-	var things: thing[] = []
+	export var things: thing[] = []
 
 	export function start() {
 		if (!started) {
 			console.log(' outer space start ');
 			statics();
 			fetch();
+			right_bar.start();
+			right_bar_consumer.start();
 			started = true;
 		}
 	}
@@ -93,6 +99,8 @@ namespace outer_space {
 			marker = undefined;
 			started = false;
 			clearTimeout(fetcher);
+			right_bar.stop();
+			right_bar_consumer.stop();
 		}
 	}
 
@@ -108,18 +116,18 @@ namespace outer_space {
 
 		marker = new ping();
 
-		let collision = new float(-1, [2, 1], 'collision', 'collision');
+		let collision = new float([{}, -1, [2, 1], 'collision', 'collision']);
 		collision.stamp = -1;
 
 		for (let blob of space.regions) {
-			let reg = new region(blob.center, blob.name, blob.radius);
+			let reg = new region([{}, -1, blob.center, 'region', blob.name], blob.radius);
 			reg.stamp = -1
 		}
 	}
 
 	function get_thing_by_id(id) {
 		for (const joint of things)
-			if (id == joint.id)
+			if (id == joint.tuple[1])
 				return joint;
 	}
 
@@ -141,11 +149,11 @@ namespace outer_space {
 			const [random, id, pos, type, name] = object;
 			let bee = get_thing_by_id(id);
 			if (bee) {
-				bee.pos = pos;
+				bee.tuple[2] = pos;
 				bee.stylize();
 			}
 			else {
-				bee = new float(id, pos, type, name);
+				bee = new float(object);
 				handle_you(object, bee);
 			}
 			bee.stamp = outer_space.stamp;
@@ -162,29 +170,33 @@ namespace outer_space {
 
 		if (you) {
 			//you.pos = pts.add(you.pos, [0.001, 0]);
-			center = you.pos;
+			center = you.tuple[2];
 		}
 
 		const multiplier = pixelMultiple / zoom_max;
+		const increment = 10 * multiplier;
 
 		if (app.wheel == 1)
-			pixelMultiple += 5 * multiplier;
+			pixelMultiple += increment;
 		if (app.wheel == -1)
-			pixelMultiple -= 5 * multiplier;
+			pixelMultiple -= increment;
 
 		pixelMultiple = space.clamp(pixelMultiple, zoom_min, zoom_max);
 
 		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(1)}`;
 
 		thing.steps();
+
+		right_bar.step();
 	}
+
+	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
 	class thing {
 		stamp = 0
 		element
 		constructor(
-			public id: number,
-			public pos: vec2,
+			public tuple: tuple,
 		) {
 			things.push(this);
 		}
@@ -223,21 +235,18 @@ namespace outer_space {
 
 	class float extends thing {
 		constructor(
-			id: number,
-			pos: vec2,
-			public type: string,
-			public name: string,
+			tuple
 		) {
-			super(id, pos);
+			super(tuple);
 			console.log('new float');
 			this.element = document.createElement('div');
 			this.element.classList.add('float');
-			this.element.innerHTML = `<span></span><span>${name}</span>`;
+			this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
 			this.stylize();
 			this.append();
 		}
 		override stylize() {
-			let proj = project(this.pos);
+			let proj = project(this.tuple[2]);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 			//console.log('half', half);
@@ -246,18 +255,17 @@ namespace outer_space {
 
 	class region extends thing {
 		constructor(
-			pos,
-			public name,
+			tuple,
 			public radius) {
-			super(-1, pos);
+			super(tuple);
 			this.element = document.createElement('div');
 			this.element.classList.add('region');
-			this.element.innerHTML = `<span>${name}</span>`;
+			this.element.innerHTML = `<span>${this.tuple[4]}</span>`;
 			this.stylize();
 			this.append();
 		}
 		override stylize() {
-			let proj = project(this.pos);
+			let proj = project(this.tuple[2]);
 			const radius = this.radius * pixelMultiple;
 			this.element.style.top = proj[1] - radius;
 			this.element.style.left = proj[0] - radius;
@@ -268,7 +276,7 @@ namespace outer_space {
 
 	class ping extends thing {
 		constructor() {
-			super(-1, [0, 0]);
+			super([{}, -1, [0, 0], 'ping', 'ping']);
 			this.stamp = -1;
 			this.element = document.createElement('div');
 			this.element.classList.add('ping');
@@ -277,9 +285,8 @@ namespace outer_space {
 			this.append();
 		}
 		override stylize() {
-			console.log('ping stylize');
-
-			let proj = project(this.pos);
+			// console.log('ping stylize');
+			let proj = project(this.tuple[2]);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 		}

@@ -1,0 +1,44 @@
+/* lessc styles.less styles.css */
+
+x-right-bar {
+	z-index: 3;
+	position: absolute;
+	bottom: 50;
+	right: 0;
+	margin: 20px;
+	bbackground: hsl(0deg 0% 50% / 50%);
+	border-radius: 5px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+
+	x-begin {
+		cursor: pointer;
+		font-family: 'Inconsolata';
+		font-size: 16px;
+		bbackground: hsl(0deg 0% 50% / 20%);
+		display: flex;
+		flex-direction: column;
+
+		x-title {
+			padding: 5px;
+			background: hsl(0deg 0% 50% / 20%);
+
+			span:nth-of-type(1) {
+				/* padding-right: 1ch; */
+			}
+
+			span:nth-of-type(2) {
+				font-family: 'Material Symbols Outlined';
+				font-size: 14px;
+			}
+		}
+
+		x-content {
+			display: none;
+			width: 300px;
+			padding: 5px;
+			background: hsl(0deg 0% 50% / 40%);
+		}
+	}
+}

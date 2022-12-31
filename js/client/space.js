@@ -190,7 +190,10 @@ var space;
         }
         else {
             text += `
-			<span onclick="space.start_playing()" class="start-playing">Jump In</span>
+			<span onclick="space.start_playing()" class="start-playing">
+				<!--Let's Sci-fi!-->
+				Play Now
+			</span>
 			<!--or
 			<span onclick="space.show_login()" class="start-playing">Login</span>-->
 			`;
@@ -231,14 +234,15 @@ var space;
 		<my-welcome>
 		<!--<h1>spAce</h1>-->
 		Web space sim that combines <span>real-time</span> with <span>text-based</span>.
-		<br />
-		<br />
+		<p>
+		Optimized for mobile.
+		</p>
+		<p>
 		<span class="colorful-button" onclick="space.play_as_guest()">Play as a guest</span>,
 		<span class="colorful-button" onclick="space.show_register()">sign up</span>
 		<span class="colorful-button" onclick="space.show_login()">or log in</span>
-		</my-welcome>
-		<p>
 		</p>
+		</my-welcome>
 		</my-intro>
 		`;
         space.myTrivial.innerHTML = text;
