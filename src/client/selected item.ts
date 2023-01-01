@@ -10,7 +10,7 @@ class selected_item extends right_bar.toggler_behavior {
         selected_item.instance = this;
     }
     override on_open() {
-        this.toggler.content.innerHTML = 'n/a';
+        //this.toggler.content.innerHTML = 'n/a';
     }
     override on_close() {
 
@@ -19,7 +19,7 @@ class selected_item extends right_bar.toggler_behavior {
         let text = '';
         if (outer_space.thing.focus) {
             text += `
-                pos: ${pts.to_string(outer_space.thing.focus!.tuple[2], 2)}<br />
+                pos: [ ${pts.to_string(outer_space.thing.focus!.tuple[2], 2)} ]<br />
                 type: ${outer_space.thing.focus!.tuple[3]}<br />
                 name: ${outer_space.thing.focus!.tuple[4]}
 			`;

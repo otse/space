@@ -30,6 +30,7 @@ outer-space .float.focus {
 
 outer-space .float {
 	z-index: 2;
+	text-transform: capitalize;
 	user-select: none;
 	position: absolute;
 	margin-top: -0.5ex;

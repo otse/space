@@ -126,7 +126,7 @@ var space = (function () {
             return [n, m];
         }
         static to_string(a, p) {
-            const e = (i) => a[i].toPrecision(p);
+            const e = (i) => a[i].toFixed(p);
             return `${e(0)}, ${e(1)}`;
         }
         static fixed(a) {
@@ -251,15 +251,16 @@ var space = (function () {
             }
             on_open() { }
             on_close() { }
+            on_fetch() { }
             on_step() { }
         }
         right_bar.toggler_behavior = toggler_behavior;
         class toggler {
-            constructor(name, from_top) {
+            constructor(name, index) {
                 this.name = name;
                 this.opened = false;
                 right_bar.togglers.push(this);
-                this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`);
+                this.begin = document.querySelector(`x-right-bar x-begin:nth-of-type(${index})`);
                 this.title = this.begin.querySelector('x-title');
                 this.content = this.begin.querySelector('x-content');
                 this.begin.classList.add(name);
@@ -284,6 +285,10 @@ var space = (function () {
                 this.opened = false;
                 this.content.style.display = 'none';
                 (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_close();
+            }
+            fetch() {
+                var _a;
+                (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_fetch();
             }
             step() {
                 var _a;
@@ -311,15 +316,15 @@ var space = (function () {
 		<x-begin>
 			<x-title>
 			<span>sort</span>
-				<span>Ping List</span>
+				<span>Overview</span>
 			</x-title>
 			<x-content>
 				boo-ya
 			</x-content>
 		</x-begin>
 		`;
-            right_bar.nearby_ping_toggler = new toggler('nearby-ping', 1);
-            right_bar.selected_item_toggler = new toggler('selected-item', 2);
+            right_bar.selected_item_toggler = new toggler('selected-item', 1);
+            right_bar.nearby_ping_toggler = new toggler('overview', 2);
             right_bar.element.style.visibility = 'visible';
         }
         right_bar.start = start;
@@ -330,30 +335,82 @@ var space = (function () {
         right_bar.stop = stop;
         function step() {
             for (const toggler of right_bar.togglers) {
-                toggler.step();
+                if (toggler.opened) {
+                    toggler.step();
+                }
             }
         }
         right_bar.step = step;
+        function on_fetch() {
+            for (const toggler of right_bar.togglers) {
+                if (toggler.opened) {
+                    toggler.fetch();
+                }
+            }
+        }
+        right_bar.on_fetch = on_fetch;
     })(right_bar || (right_bar = {}));
     var right_bar$1 = right_bar;
 
-    class nearby_ping extends right_bar$1.toggler_behavior {
+    class item {
+        constructor(thing) {
+            this.thing = thing;
+            this.faded = false;
+        }
+    }
+    function truncate(string, limit) {
+        if (string.length <= limit)
+            return string;
+        return string.slice(0, limit) + '...';
+    }
+    class overview extends right_bar$1.toggler_behavior {
         constructor(toggler) {
             super(toggler);
-            nearby_ping.instance = this;
+            this.items = [];
+            overview.instance = this;
         }
         on_open() {
-            this.toggler.content.innerHTML = 'n/a';
+            this.on_fetch();
         }
         on_close() {
+            this.items = [];
         }
-        on_step() {
+        on_fetch() {
+            // <x-horizontal-rule></x-horizontal-rule>
             let text = '';
-            for (const thing of outer_space$1.things)
+            text += `
+			<table>
+			<thead>
+			<tr>
+			<td>dist</td>
+			<td>name</td>
+			<td>type</td>
+			</tr>
+			</thead>
+			<tbody>
+		`;
+            for (const thing of outer_space$1.things) {
                 text += `
-				${thing.tuple[4]}<br />
+				<tr>
+				<td>1km</td>
+				<td>${truncate(thing.tuple[4], 10)}</td>
+				<td>${thing.tuple[3]}</td>
+				</tr>
 			`;
+                //console.log('woo', thing.tuple[4]);
+                //this.do_once = false;
+            }
+            text += `
+			</tbody>
+			</table>
+		`;
             this.toggler.content.innerHTML = text;
+        }
+        produce_items() {
+            for (const thing of outer_space$1.things) {
+                let ite = new item(thing);
+                this.items.push(ite);
+            }
         }
     }
 
@@ -363,7 +420,7 @@ var space = (function () {
             selected_item.instance = this;
         }
         on_open() {
-            this.toggler.content.innerHTML = 'n/a';
+            //this.toggler.content.innerHTML = 'n/a';
         }
         on_close() {
         }
@@ -371,7 +428,7 @@ var space = (function () {
             let text = '';
             if (outer_space$1.thing.focus) {
                 text += `
-                pos: ${pts.to_string(outer_space$1.thing.focus.tuple[2], 2)}<br />
+                pos: [ ${pts.to_string(outer_space$1.thing.focus.tuple[2], 2)} ]<br />
                 type: ${outer_space$1.thing.focus.tuple[3]}<br />
                 name: ${outer_space$1.thing.focus.tuple[4]}
 			`;
@@ -389,7 +446,7 @@ var space = (function () {
         }
         right_bar_consumer.init = init;
         function start() {
-            new nearby_ping(right_bar$1.nearby_ping_toggler);
+            new overview(right_bar$1.nearby_ping_toggler);
             new selected_item(right_bar$1.selected_item_toggler);
         }
         right_bar_consumer.start = start;
@@ -449,8 +506,8 @@ var space = (function () {
                 outer_space.marker.tuple[2] = unit;
                 outer_space.marker.enabled = true;
                 outer_space.marker.sticky = undefined;
-                selected_item.instance.toggler.close();
-                nearby_ping.instance.toggler.open();
+                //selected_item.instance.toggler.close();
+                //overview.instance.toggler.open();
                 //thing.focus = undefined;
                 console.log('set marker', unit);
             };
@@ -530,7 +587,8 @@ var space = (function () {
                     const [random, id, pos, type, name] = object;
                     let bee = get_thing_by_id(id);
                     if (bee) {
-                        bee.tuple[2] = pos;
+                        //bee.tuple[2] = pos;
+                        bee.tween_pos = pos;
                         bee.stylize();
                     }
                     else {
@@ -540,6 +598,7 @@ var space = (function () {
                     bee.stamp = outer_space.stamp;
                 }
                 thing.check();
+                right_bar$1.on_fetch();
                 console.log('fetched');
                 fetcher = setTimeout(fetch, 2000);
             });
@@ -569,6 +628,7 @@ var space = (function () {
             constructor(tuple) {
                 this.tuple = tuple;
                 this.stamp = 0;
+                this.tween_pos = [0, 0];
                 outer_space.things.push(this);
             }
             append() {
@@ -587,9 +647,9 @@ var space = (function () {
             static check() {
                 let i = outer_space.things.length;
                 while (i--) {
-                    const joint = outer_space.things[i];
-                    if (joint.has_old_stamp()) {
-                        joint.remove();
+                    const thing = outer_space.things[i];
+                    if (thing.has_old_stamp()) {
+                        thing.remove();
                     }
                 }
             }
@@ -600,6 +660,11 @@ var space = (function () {
             step() {
                 if (thing.focus == this && outer_space.marker.sticky == this)
                     outer_space.marker.tuple[2] = this.tuple[2];
+                if (!pts.together(this.tween_pos))
+                    this.tween_pos = this.tuple[2];
+                const factor = app$1.delta / 2;
+                let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+                this.tuple[2] = pts.add(this.tuple[2], tween);
                 this.stylize();
             }
             stylize() {
@@ -621,7 +686,7 @@ var space = (function () {
                     outer_space.marker.sticky = this;
                     outer_space.marker.tuple[2] = this.tuple[2];
                     selected_item.instance.toggler.open();
-                    nearby_ping.instance.toggler.close();
+                    //overview.instance.toggler.close();
                     //marker!.enabled = false;
                     console.log('clicked thing');
                     //this.element.innerHTML = 'clicked';
@@ -686,6 +751,9 @@ var space = (function () {
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
                 this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
+            }
+            step() {
+                this.stylize();
             }
         }
     })(outer_space || (outer_space = {}));

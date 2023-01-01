@@ -40,18 +40,18 @@ process.on('SIGINT', exit);
 }*/
 
 export function tick() {
-
+	lod.chunk.tick();
 }
 
 function init() {
 
-	setInterval(tick, 1000);
+	setInterval(tick, lod.tick_rate * 1000);
 
-	new lod.galaxy;
+	new lod.universe;
 
 	for (let i = 0; i < 5; i++) {
-		let rock = new lod.obj;
-		rock.type = 'rock';
+		let rock = new stellar_objects.tp_rock;
+		//rock.type = 'rock';
 		rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
 		lod.add(rock);
 	}
@@ -264,9 +264,9 @@ function init() {
 		if (ply) {
 			session = new short_lived;
 			session.ply = ply;
-			session.grid = new lod.grid(lod.ggalaxy, 2);
-			session.grid.big = lod.galaxy.big(ply.pos);
-			lod.ggalaxy.update_grid(session.grid, ply.pos);
+			session.observer = new lod.observer(lod.guniverse, 2);
+			session.observer.big = lod.universe.big(ply.pos);
+			lod.guniverse.update_observer(session.observer, ply.pos);
 		}
 		const send_sply = function (ply) {
 			let reduced: any = {
@@ -313,7 +313,7 @@ function init() {
 		}
 		else if (req.url == '/astronomical%20objects') {
 			if (session) {
-				let objects = session.grid.gather();
+				let objects = session.observer.gather();
 				send_object(['astronomical objects', objects]);
 			}
 			else {

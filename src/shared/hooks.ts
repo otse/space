@@ -1,6 +1,9 @@
 
 // inspired by gmod lua !
 
+// it is useful to e.g. prevent circular dependencies
+// and to prevent import hell
+
 type func = (any) => boolean
 
 export class hooks<T = never> {

@@ -44,7 +44,26 @@ var stellar_objects;
             this.random.userId = this.userId;
             stellar_objects.ply_ships[this.userId] = this;
         }
+        tick() {
+            super.tick();
+            //this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+            this.decay = 10;
+            lod_1.default.chunk.swap(this);
+        }
     }
     stellar_objects.ply_ship = ply_ship;
+    class tp_rock extends lod_1.default.obj {
+        constructor() {
+            super();
+            this.type = 'rock';
+        }
+        tick() {
+            super.tick();
+            this.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
+            lod_1.default.chunk.swap(this);
+            //console.log('tickk');
+        }
+    }
+    stellar_objects.tp_rock = tp_rock;
 })(stellar_objects = exports.stellar_objects || (exports.stellar_objects = {}));
 exports.default = stellar_objects;

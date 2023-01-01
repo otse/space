@@ -1,18 +1,18 @@
-import nearby_ping from "./nearby ping";
+import overview from "./overview";
 import right_bar from "./right bar";
 import selected_item from "./selected item";
 /*
 i had a circular dependency so i made a special consumer file
 */
 right_bar;
-nearby_ping;
+overview;
 var right_bar_consumer;
 (function (right_bar_consumer) {
     function init() {
     }
     right_bar_consumer.init = init;
     function start() {
-        new nearby_ping(right_bar.nearby_ping_toggler);
+        new overview(right_bar.nearby_ping_toggler);
         new selected_item(right_bar.selected_item_toggler);
     }
     right_bar_consumer.start = start;

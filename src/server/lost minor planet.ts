@@ -123,6 +123,7 @@ namespace lost_minor_planet {
 		}
 	}
 
+	/// used by server session
 	export function get_user_from_ip(ip) {
 		if (logins[ip]) {
 			const username = logins[ip];
@@ -131,15 +132,16 @@ namespace lost_minor_planet {
 		}
 	}
 
+	/// powerful function used obliquely
 	export function get_user_from_table_or_fetch(username, dormant = true) {
 		let user = table[username];
 		if (user)
 			return user;
 		else {
 			let user = in_user(username);
-			if (user.dormant && !dormant)
-				return;
 			if (user) {
+				if (user.dormant && !dormant)
+					return;
 				table[username] = user;
 				hooks.call('userMinted', user);
 			}
@@ -147,7 +149,8 @@ namespace lost_minor_planet {
 		}
 	}
 
-	export function in_user(username) {
+	/// can return undefined
+	function in_user(username) {
 		if (object_exists(user_path(username)))
 			return object_from_file(user_path(username));
 	}

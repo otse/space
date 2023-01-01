@@ -14,6 +14,7 @@ namespace right_bar {
 		}
 		on_open() { }
 		on_close() { }
+		on_fetch() { }
 		on_step() { }
 	}
 
@@ -23,14 +24,14 @@ namespace right_bar {
 		title: HTMLElement
 		content: HTMLElement
 		behavior?: toggler_behavior
-		constructor(public readonly name, from_top: number) {
+		constructor(public readonly name, index: number) {
 			togglers.push(this);
-			this.begin = document.querySelector(`x-right-bar x-begin:nth-last-of-type(${from_top})`)!;
+			this.begin = document.querySelector(`x-right-bar x-begin:nth-of-type(${index})`)!;
 			this.title = this.begin.querySelector('x-title')!;
 			this.content = this.begin.querySelector('x-content')!;
-			
+
 			this.begin.classList.add(name);
-			
+
 			this.title.onclick = () => {
 				this.opened = !this.opened;
 				if (this.opened) {
@@ -50,6 +51,9 @@ namespace right_bar {
 			this.opened = false;
 			this.content.style.display = 'none';
 			this.behavior?.on_close();
+		}
+		fetch() {
+			this.behavior?.on_fetch();
 		}
 		step() {
 			this.behavior?.on_step();
@@ -77,7 +81,7 @@ namespace right_bar {
 		<x-begin>
 			<x-title>
 			<span>sort</span>
-				<span>Ping List</span>
+				<span>Overview</span>
 			</x-title>
 			<x-content>
 				boo-ya
@@ -85,8 +89,8 @@ namespace right_bar {
 		</x-begin>
 		`;
 
-		nearby_ping_toggler = new toggler('nearby-ping', 1);
-		selected_item_toggler = new toggler('selected-item', 2);
+		selected_item_toggler = new toggler('selected-item', 1);
+		nearby_ping_toggler = new toggler('overview', 2);
 
 		element.style.visibility = 'visible';
 	}
@@ -98,7 +102,17 @@ namespace right_bar {
 
 	export function step() {
 		for (const toggler of togglers) {
-			toggler.step();
+			if (toggler.opened) {
+				toggler.step();
+			}
+		}
+	}
+
+	export function on_fetch() {
+		for (const toggler of togglers) {
+			if (toggler.opened) {
+				toggler.fetch();
+			}
 		}
 	}
 }

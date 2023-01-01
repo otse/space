@@ -10,7 +10,7 @@ class pts {
         return [n, m];
     }
     static to_string(a, p) {
-        const e = (i) => a[i].toPrecision(p);
+        const e = (i) => a[i].toFixed(p);
         return `${e(0)}, ${e(1)}`;
     }
     static fixed(a) {

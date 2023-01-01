@@ -45,6 +45,26 @@ export namespace stellar_objects {
 			ply_ships[this.userId] = this;
 
 		}
+		override tick() {
+			super.tick();
+			//this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+			this.decay = 10;
+			lod.chunk.swap(this);
+		}
+	}
+
+	export class tp_rock extends lod.obj {
+		constructor() {
+			super();
+			this.type = 'rock';
+		}
+		override tick() {
+			super.tick();
+			this.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
+			lod.chunk.swap(this);
+			//console.log('tickk');
+			
+		}
 	}
 
 }

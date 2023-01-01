@@ -1,12 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const hooks_1 = require("../shared/hooks");
 const pts_1 = require("../shared/pts");
+class toggle {
+    constructor() {
+        this.active = false;
+    }
+    isActive() { return this.active; }
+    ;
+    on() {
+        if (this.active)
+            return true;
+        this.active = true;
+        return false;
+    }
+    off() {
+        if (!this.active)
+            return true;
+        this.active = false;
+        return false;
+    }
+}
 var lod;
 (function (lod) {
+    const chunk_span = 3;
+    const chunk_default_decay = 8;
+    const obj_default_decay = 16;
     const grid_makes_sectors = true;
-    lod.ChunkSpan = 3;
+    lod.tick_rate = 1;
     function add(obj) {
-        let chunk = lod.ggalaxy.at(lod.galaxy.big(pts_1.default.round(obj.pos)));
+        let chunk = lod.guniverse.at(lod.universe.big(obj.pos));
         chunk.add(obj);
     }
     lod.add = add;
@@ -17,14 +40,15 @@ var lod;
         }
     }
     lod.remove = remove;
-    class galaxy {
+    class universe {
         constructor() {
             this.arrays = [];
-            lod.ggalaxy = this;
+            this.chunks = [];
+            lod.guniverse = this;
         }
-        update_grid(grid, wpos) {
-            grid.big = lod.galaxy.big(wpos);
-            grid.discovery();
+        update_observer(observer, pos) {
+            observer.big = lod.universe.big(pos);
+            observer.observe();
         }
         lookup(big) {
             if (this.arrays[big[1]] == undefined)
@@ -35,22 +59,25 @@ var lod;
             return this.lookup(big) || this.make(big);
         }
         make(big) {
-            let c = this.lookup(big);
-            if (c)
-                return c;
-            c = this.arrays[big[1]][big[0]] = new chunk(big, this);
-            return c;
+            let hun = this.lookup(big);
+            if (hun)
+                return hun;
+            hun = this.arrays[big[1]][big[0]] = new chunk(big, this);
+            this.chunks.push(hun);
+            return hun;
         }
         static big(units) {
-            return pts_1.default.floor(pts_1.default.divide(units, lod.ChunkSpan));
+            return pts_1.default.floor(pts_1.default.divide(units, chunk_span));
         }
     }
-    lod.galaxy = galaxy;
-    class chunk {
+    lod.universe = universe;
+    class chunk extends toggle {
         constructor(big, galaxy) {
+            super();
             this.big = big;
             this.galaxy = galaxy;
             this.objs = [];
+            this.decay = chunk_default_decay;
             //galaxy.arrays[this.big[1]][this.big[0]] = this;
         }
         dist(grid) {
@@ -58,10 +85,11 @@ var lod;
         }
         static swap(obj) {
             let oldChunk = obj.chunk;
-            let newChunk = oldChunk.galaxy.at(lod.galaxy.big(pts_1.default.round(obj.pos)));
+            let newChunk = oldChunk.galaxy.at(lod.universe.big(obj.pos));
             if (oldChunk != newChunk) {
                 oldChunk.remove(obj);
                 newChunk.add(obj);
+                newChunk.renew();
             }
         }
         add(obj) {
@@ -84,39 +112,78 @@ var lod;
                 objects.push(obj.gather());
             return objects;
         }
+        renew() {
+            this.decay = chunk_default_decay;
+            if (this.on())
+                return;
+            chunk.actives.push(this);
+            hooks_1.default.call('chunkRenew', this);
+        }
+        expire() {
+            if (this.off())
+                return;
+            hooks_1.default.call('chunkExpire', this);
+            console.log('expire');
+        }
+        tick() {
+            hooks_1.default.call('chunkTick', this);
+            //for (const obj of this.objs)
+            //	obj.tick();
+            this.decay -= lod.tick_rate;
+        }
+        static tick() {
+            // todo move this to universe
+            this.list = [];
+            for (const chunk of this.actives)
+                this.list = this.list.concat(chunk.objs);
+            // todo sort visibles
+            for (const obj of this.list)
+                obj.tick();
+            let i = chunk.actives.length;
+            while (i--) {
+                const chunk = this.actives[i];
+                chunk.tick();
+                if (chunk.decay <= 0) {
+                    this.actives.splice(i, 1);
+                    chunk.expire();
+                }
+            }
+        }
     }
+    chunk.actives = [];
+    chunk.list = [];
     lod.chunk = chunk;
-    class grid {
+    class observer {
         constructor(galaxy, spread) {
             this.galaxy = galaxy;
             this.spread = spread;
             this.big = [0, 0];
-            this.shown = [];
+            this.grid = [];
         }
         visible(chunk) {
             return chunk.dist(this) < this.spread;
         }
-        discovery() {
+        observe() {
             for (let y = -this.spread; y < this.spread + 1; y++) {
                 for (let x = -this.spread; x < this.spread + 1; x++) {
                     let pos = pts_1.default.add(this.big, [x, y]);
                     let chunk = grid_makes_sectors ? this.galaxy.at(pos) : this.galaxy.lookup(pos);
                     if (!chunk)
                         continue;
-                    if (this.shown.indexOf(chunk) == -1) {
-                        this.shown.push(chunk);
-                    }
+                    if (this.grid.indexOf(chunk) == -1)
+                        this.grid.push(chunk);
+                    chunk.renew();
                 }
             }
         }
         gather() {
             let objects = [];
-            for (let chunk of this.shown)
+            for (let chunk of this.grid)
                 objects = objects.concat(chunk.gather(this));
             return objects;
         }
     }
-    lod.grid = grid;
+    lod.observer = observer;
     class obj {
         constructor() {
             this.id = 0;
@@ -125,11 +192,16 @@ var lod;
             this.pos = [0, 0];
             this.chunk = null;
             this.random = {};
+            this.decay = obj_default_decay;
             this.id = obj.ids++;
         }
         gather() {
             let sent = [this.random, this.id, this.pos, this.type, this.name];
             return sent;
+        }
+        tick() {
+            // override me
+            this.decay -= lod.tick_rate;
         }
     }
     obj.ids = 1;

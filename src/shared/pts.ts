@@ -16,7 +16,7 @@ class pts {
 	}
 
 	static to_string(a: vec2, p) {
-		const e = (i) => a[i].toPrecision(p);
+		const e = (i) => a[i].toFixed(p);
 		return `${e(0)}, ${e(1)}`
 	}
 

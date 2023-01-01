@@ -31,14 +31,15 @@ process.on('SIGINT', exit);
             return region;
 }*/
 function tick() {
+    lod_1.default.chunk.tick();
 }
 exports.tick = tick;
 function init() {
-    setInterval(tick, 1000);
-    new lod_1.default.galaxy;
+    setInterval(tick, lod_1.default.tick_rate * 1000);
+    new lod_1.default.universe;
     for (let i = 0; i < 5; i++) {
-        let rock = new lod_1.default.obj;
-        rock.type = 'rock';
+        let rock = new stellar_objects_1.default.tp_rock;
+        //rock.type = 'rock';
         rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
         lod_1.default.add(rock);
     }
@@ -215,9 +216,9 @@ function init() {
         if (ply) {
             session = new session_1.default;
             session.ply = ply;
-            session.grid = new lod_1.default.grid(lod_1.default.ggalaxy, 2);
-            session.grid.big = lod_1.default.galaxy.big(ply.pos);
-            lod_1.default.ggalaxy.update_grid(session.grid, ply.pos);
+            session.observer = new lod_1.default.observer(lod_1.default.guniverse, 2);
+            session.observer.big = lod_1.default.universe.big(ply.pos);
+            lod_1.default.guniverse.update_observer(session.observer, ply.pos);
         }
         const send_sply = function (ply) {
             let reduced = {
@@ -260,7 +261,7 @@ function init() {
         }
         else if (req.url == '/astronomical%20objects') {
             if (session) {
-                let objects = session.grid.gather();
+                let objects = session.observer.gather();
                 send_object(['astronomical objects', objects]);
             }
             else {

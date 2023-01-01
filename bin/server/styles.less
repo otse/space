@@ -6,11 +6,13 @@ x-right-bar {
 	bottom: 50;
 	right: 0;
 	margin: 20px;
+	margin-right: 0;
 	bbackground: hsl(0deg 0% 50% / 50%);
 	border-radius: 5px;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
+	user-select: none;
 
 	x-begin {
 		cursor: pointer;
@@ -23,10 +25,10 @@ x-right-bar {
 
 		x-title {
 			padding: 8px;
-			background: hsl(0deg 0% 38% / 70%);
-			border-radius: 4px;
-			border-bottom: 1px solid #747474;
+			-webkit-backdrop-filter: blur(2px);
+			backdrop-filter: blur(2px);
 			color: darkseagreen;
+			color: #85c685;
 			display: flex;
 			align-items: center;
 
@@ -41,10 +43,41 @@ x-right-bar {
 		}
 
 		x-content {
-			display: none;
-			width: 120px;
 			padding: 5px;
-			background: hsl(0deg 0% 50% / 50%);
+			background: rgb(77 77 77 / 20%);
+			-webkit-backdrop-filter: blur(2px);
+			backdrop-filter: blur(2px);
+			display: none;
+			flex-direction: column;
+
+			x-horizontal-rule {
+				display: block;
+				margin: 5px;
+				border-bottom: 1px solid darkgray;
+				border-bottom: 1px solid gray;
+			}
+
+			x-tab {
+				display: flex;
+			}
+
+			table {
+				border-spacing: 0px;
+			}
+
+			td {
+				padding: 2px;
+			}
+			
+			thead td {
+				padding: 5px;
+				border-right: 1px solid gray;
+				border-bottom: 1px solid gray;
+			}
+
+			tr:hover {
+				background: rgb(139 139 139 / 20%);
+			}
 		}
 
 		&.selected-item {
@@ -53,9 +86,9 @@ x-right-bar {
 			}
 		}
 
-		&.nearby-ping {
+		&.overview {
 			x-content {
-				width: 150px;
+				wwidth: 150px;
 				max-height: 200px;
 				overflow-y: scroll;
 				overflow-x: hidden;

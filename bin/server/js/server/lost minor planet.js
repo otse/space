@@ -98,6 +98,7 @@ var lost_minor_planet;
         }
     }
     lost_minor_planet.delete_user = delete_user;
+    /// used by server session
     function get_user_from_ip(ip) {
         if (lost_minor_planet.logins[ip]) {
             const username = lost_minor_planet.logins[ip];
@@ -106,15 +107,16 @@ var lost_minor_planet;
         }
     }
     lost_minor_planet.get_user_from_ip = get_user_from_ip;
+    /// powerful function used obliquely
     function get_user_from_table_or_fetch(username, dormant = true) {
         let user = lost_minor_planet.table[username];
         if (user)
             return user;
         else {
             let user = in_user(username);
-            if (user.dormant && !dormant)
-                return;
             if (user) {
+                if (user.dormant && !dormant)
+                    return;
                 lost_minor_planet.table[username] = user;
                 hooks_1.default.call('userMinted', user);
             }
@@ -122,11 +124,11 @@ var lost_minor_planet;
         }
     }
     lost_minor_planet.get_user_from_table_or_fetch = get_user_from_table_or_fetch;
+    /// can return undefined
     function in_user(username) {
         if (object_exists(user_path(username)))
             return object_from_file(user_path(username));
     }
-    lost_minor_planet.in_user = in_user;
     function make_quest(ip) {
         console.log('make new quest', lost_minor_planet.meta.users);
         let user;

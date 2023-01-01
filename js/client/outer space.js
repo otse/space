@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import app from "./app";
 import space from "./space";
 import pts from "../shared/pts";
-import nearby_ping from "./nearby ping";
 import right_bar from "./right bar";
 import right_bar_consumer from "./right bar consumer";
 import selected_item from "./selected item";
@@ -55,8 +54,8 @@ var outer_space;
             outer_space.marker.tuple[2] = unit;
             outer_space.marker.enabled = true;
             outer_space.marker.sticky = undefined;
-            selected_item.instance.toggler.close();
-            nearby_ping.instance.toggler.open();
+            //selected_item.instance.toggler.close();
+            //overview.instance.toggler.open();
             //thing.focus = undefined;
             console.log('set marker', unit);
         };
@@ -138,7 +137,8 @@ var outer_space;
                 const [random, id, pos, type, name] = object;
                 let bee = get_thing_by_id(id);
                 if (bee) {
-                    bee.tuple[2] = pos;
+                    //bee.tuple[2] = pos;
+                    bee.tween_pos = pos;
                     bee.stylize();
                 }
                 else {
@@ -148,6 +148,7 @@ var outer_space;
                 bee.stamp = outer_space.stamp;
             }
             thing.check();
+            right_bar.on_fetch();
             console.log('fetched');
             fetcher = setTimeout(fetch, 2000);
         });
@@ -177,6 +178,7 @@ var outer_space;
         constructor(tuple) {
             this.tuple = tuple;
             this.stamp = 0;
+            this.tween_pos = [0, 0];
             outer_space.things.push(this);
         }
         append() {
@@ -195,9 +197,9 @@ var outer_space;
         static check() {
             let i = outer_space.things.length;
             while (i--) {
-                const joint = outer_space.things[i];
-                if (joint.has_old_stamp()) {
-                    joint.remove();
+                const thing = outer_space.things[i];
+                if (thing.has_old_stamp()) {
+                    thing.remove();
                 }
             }
         }
@@ -208,6 +210,11 @@ var outer_space;
         step() {
             if (thing.focus == this && outer_space.marker.sticky == this)
                 outer_space.marker.tuple[2] = this.tuple[2];
+            if (!pts.together(this.tween_pos))
+                this.tween_pos = this.tuple[2];
+            const factor = app.delta / 2;
+            let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+            this.tuple[2] = pts.add(this.tuple[2], tween);
             this.stylize();
         }
         stylize() {
@@ -229,7 +236,7 @@ var outer_space;
                 outer_space.marker.sticky = this;
                 outer_space.marker.tuple[2] = this.tuple[2];
                 selected_item.instance.toggler.open();
-                nearby_ping.instance.toggler.close();
+                //overview.instance.toggler.close();
                 //marker!.enabled = false;
                 console.log('clicked thing');
                 //this.element.innerHTML = 'clicked';
@@ -294,6 +301,9 @@ var outer_space;
             this.element.style.top = proj[1];
             this.element.style.left = proj[0];
             this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
+        }
+        step() {
+            this.stylize();
         }
     }
 })(outer_space || (outer_space = {}));
