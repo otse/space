@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stellar_objects = void 0;
 const hooks_1 = require("../shared/hooks");
+const pts_1 = require("../shared/pts");
 const lod_1 = require("./lod");
 var stellar_objects;
 (function (stellar_objects) {
@@ -55,11 +56,19 @@ var stellar_objects;
     class tp_rock extends lod_1.default.obj {
         constructor() {
             super();
+            this.angle = 0;
+            this.name = 'rock';
             this.type = 'rock';
+            this.angle = Math.random() * Math.PI;
         }
         tick() {
             super.tick();
-            this.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
+            if (this.expired())
+                return;
+            const speed = 0.3;
+            let x = speed * Math.sin(this.angle);
+            let y = speed * Math.cos(this.angle);
+            this.pos = pts_1.default.add(this.pos, [x, y]);
             lod_1.default.chunk.swap(this);
             //console.log('tickk');
         }

@@ -22,9 +22,9 @@ namespace lod {
 
 	const chunk_span = 3;
 
-	const chunk_default_decay = 8;
+	const chunk_default_lifetime = 24;
 
-	const obj_default_decay = 16;
+	const obj_default_lifetime = 16;
 
 	const grid_makes_sectors = true;
 
@@ -32,9 +32,10 @@ namespace lod {
 
 	export var guniverse: universe
 
-	export function add(obj: obj) {
-		let chunk = guniverse.at(lod.universe.big(obj.pos));
+	export function add(obj: obj): chunk {
+		let chunk = guniverse.chart(lod.universe.big(obj.pos));
 		chunk.add(obj);
+		return chunk;
 	}
 
 	export function remove(obj: obj) {
@@ -46,7 +47,6 @@ namespace lod {
 
 	export class universe {
 		readonly arrays: chunk[][] = []
-		readonly chunks: chunk[] = []
 		constructor() {
 			guniverse = this;
 		}
@@ -59,16 +59,15 @@ namespace lod {
 				this.arrays[big[1]] = [];
 			return this.arrays[big[1]][big[0]];
 		}
-		at(big: vec2): chunk {
+		chart(big: vec2): chunk {
 			return this.lookup(big) || this.make(big);
 		}
 		protected make(big): chunk {
-			let hun = this.lookup(big);
-			if (hun)
-				return hun;
-			hun = this.arrays[big[1]][big[0]] = new chunk(big, this);
-			this.chunks.push(hun);
-			return hun;
+			let hunk = this.lookup(big);
+			if (hunk)
+				return hunk;
+			hunk = this.arrays[big[1]][big[0]] = new chunk(big, this);
+			return hunk;
 		}
 		static big(units: vec2): vec2 {
 			return pts.floor(pts.divide(units, chunk_span));
@@ -93,20 +92,19 @@ namespace lod {
 		static actives: chunk[] = []
 		static list: obj[] = []
 		readonly objs: obj[] = []
-		decay = chunk_default_decay
+		decay = chunk_default_lifetime
 		constructor(
-			public readonly big: vec2,
+			readonly big: vec2,
 			readonly galaxy: universe
 		) {
 			super();
-			//galaxy.arrays[this.big[1]][this.big[0]] = this;
 		}
 		dist(grid: observer) {
 			return pts.distsimple(this.big, grid.big);
 		}
 		static swap(obj: obj) {
 			let oldChunk = obj.chunk!;
-			let newChunk = oldChunk.galaxy.at(lod.universe.big(obj.pos));
+			let newChunk = oldChunk.galaxy.chart(lod.universe.big(obj.pos));
 			if (oldChunk != newChunk) {
 				oldChunk.remove(obj);
 				newChunk.add(obj);
@@ -133,8 +131,13 @@ namespace lod {
 				objects.push(obj.gather());
 			return objects;
 		}
+		observe() {
+			for (const obj of this.objs) {
+				obj.observe();
+			}
+		}
 		renew() {
-			this.decay = chunk_default_decay;
+			this.decay = chunk_default_lifetime;
 			if (this.on())
 				return;
 			chunk.actives.push(this);
@@ -144,7 +147,7 @@ namespace lod {
 			if (this.off())
 				return;
 			hooks.call('chunkExpire', this);
-			console.log('expire');
+			//console.log('expire');
 		}
 		tick() {
 			hooks.call('chunkTick', this);
@@ -155,11 +158,13 @@ namespace lod {
 		static tick() {
 			// todo move this to universe
 			this.list = [];
-			for (const chunk of this.actives)
+			for (const chunk of this.actives) {
 				this.list = this.list.concat(chunk.objs);
+			}
 			// todo sort visibles
-			for (const obj of this.list)
+			for (const obj of this.list) {
 				obj.tick();
+			}
 			let i = chunk.actives.length;
 			while (i--) {
 				const chunk = this.actives[i];
@@ -187,19 +192,21 @@ namespace lod {
 			for (let y = -this.spread; y < this.spread + 1; y++) {
 				for (let x = -this.spread; x < this.spread + 1; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let chunk = grid_makes_sectors ? this.galaxy.at(pos) : this.galaxy.lookup(pos);
+					let chunk = grid_makes_sectors ? this.galaxy.chart(pos) : this.galaxy.lookup(pos);
 					if (!chunk)
 						continue;
 					if (this.grid.indexOf(chunk) == -1)
 						this.grid.push(chunk);
 					chunk.renew();
+					chunk.observe();
 				}
 			}
 		}
 		gather() {
 			let objects: object[] = [];
-			for (let chunk of this.grid)
+			for (let chunk of this.grid) {
 				objects = objects.concat(chunk.gather(this));
+			}
 			return objects;
 		}
 	}
@@ -208,20 +215,33 @@ namespace lod {
 		static ids = 1
 		id = 0
 		type = 'an obj'
-		name = 'rock'
+		name = 'some obj'
 		pos: vec2 = [0, 0]
 		chunk: chunk | null = null
 		random: any = {}
-		decay = obj_default_decay
+		decay = 0
+		lifetime = obj_default_lifetime
 		constructor() {
 			this.id = obj.ids++;
+			this.observe();
 		}
 		gather() {
 			let sent = [this.random, this.id, this.pos, this.type, this.name];
 			return sent;
 		}
+		observe() {
+			this.decay = this.lifetime;
+		}
+		expired() {
+			if (this.decay <= 0) {
+				lod.remove(this);
+				console.log(` ${this.type} expired into intergalactic space `);
+				return true;
+			}
+			return false;
+		}
 		tick() {
-			// override me
+			/// override
 			this.decay -= tick_rate;
 		}
 	}

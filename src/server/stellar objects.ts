@@ -1,4 +1,5 @@
 import hooks from "../shared/hooks";
+import pts from "../shared/pts";
 import lod from "./lod"
 
 export namespace stellar_objects {
@@ -54,16 +55,23 @@ export namespace stellar_objects {
 	}
 
 	export class tp_rock extends lod.obj {
+		angle = 0
 		constructor() {
 			super();
+			this.name = 'rock';
 			this.type = 'rock';
+			this.angle = Math.random() * Math.PI;
 		}
 		override tick() {
 			super.tick();
-			this.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
+			if (this.expired())
+				return;
+			const speed = 0.3;
+			let x = speed * Math.sin(this.angle);
+			let y = speed * Math.cos(this.angle);
+			this.pos = pts.add(this.pos, [x, y]);
 			lod.chunk.swap(this);
 			//console.log('tickk');
-			
 		}
 	}
 

@@ -166,6 +166,7 @@ namespace lost_minor_planet {
 		users.push(user.username);
 		out_user(user);
 		out_users();
+		out_logins();
 		get_user_from_table_or_fetch(user.username);
 		return user;
 	}

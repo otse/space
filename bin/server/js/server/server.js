@@ -37,11 +37,13 @@ exports.tick = tick;
 function init() {
     setInterval(tick, lod_1.default.tick_rate * 1000);
     new lod_1.default.universe;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
         let rock = new stellar_objects_1.default.tp_rock;
+        rock.name = `rock ${i}`;
         //rock.type = 'rock';
         rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
-        lod_1.default.add(rock);
+        const chunk = lod_1.default.add(rock);
+        chunk.renew();
     }
     locations_1.locations.init();
     stellar_objects_1.default.init();
