@@ -59,12 +59,12 @@ var stellar_objects;
             this.angle = 0;
             this.name = 'rock';
             this.type = 'rock';
-            this.angle = Math.random() * Math.PI;
+            this.angle = Math.random() * Math.PI * 2;
         }
         tick() {
-            super.tick();
-            if (this.expired())
+            if (this.pretick())
                 return;
+            super.tick();
             const speed = 0.3;
             let x = speed * Math.sin(this.angle);
             let y = speed * Math.cos(this.angle);

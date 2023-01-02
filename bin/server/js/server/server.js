@@ -6,6 +6,7 @@ const stellar_objects_1 = require("./stellar objects");
 const lod_1 = require("./lod");
 const lost_minor_planet_1 = require("./lost minor planet");
 const session_1 = require("./session");
+const hooks_1 = require("../shared/hooks");
 var http = require('http');
 var https = require('https');
 const fs = require('fs');
@@ -39,12 +40,21 @@ function init() {
     new lod_1.default.universe;
     for (let i = 0; i < 10; i++) {
         let rock = new stellar_objects_1.default.tp_rock;
-        rock.name = `rock ${i}`;
+        //rock.name = `rock ${i}`;
         //rock.type = 'rock';
         rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
         const chunk = lod_1.default.add(rock);
-        chunk.renew();
+        chunk.renew(rock);
     }
+    hooks_1.default.register('lodTick', (x) => {
+        let rock = new stellar_objects_1.default.tp_rock;
+        rock.name = 'Debris';
+        rock.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+        rock.lifetime = 2;
+        const chunk = lod_1.default.add(rock);
+        chunk.renew(rock);
+        return false;
+    });
     locations_1.locations.init();
     stellar_objects_1.default.init();
     lost_minor_planet_1.default.init();

@@ -81,6 +81,8 @@ namespace app {
 		if (!last)
 			last = current;
 		delta = (current - last) / 1000;
+		if (delta > 1 / 30)
+			delta = 1 / 30;
 		last = current;
 		space.step();
 		wheel = 0;

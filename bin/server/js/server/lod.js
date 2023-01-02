@@ -24,7 +24,7 @@ class toggle {
 var lod;
 (function (lod) {
     const chunk_span = 3;
-    const chunk_default_lifetime = 24;
+    const chunk_minimum_lifetime = 10;
     const obj_default_lifetime = 16;
     const grid_makes_sectors = true;
     lod.tick_rate = 1;
@@ -76,7 +76,7 @@ var lod;
             this.big = big;
             this.galaxy = galaxy;
             this.objs = [];
-            this.decay = chunk_default_lifetime;
+            this.decay = chunk_minimum_lifetime;
         }
         dist(grid) {
             return pts_1.default.distsimple(this.big, grid.big);
@@ -87,7 +87,7 @@ var lod;
             if (oldChunk != newChunk) {
                 oldChunk.remove(obj);
                 newChunk.add(obj);
-                newChunk.renew();
+                newChunk.renew(obj);
             }
         }
         add(obj) {
@@ -106,8 +106,9 @@ var lod;
         }
         gather(grid) {
             let objects = [];
-            for (let obj of this.objs)
+            for (let obj of this.objs) {
                 objects.push(obj.gather());
+            }
             return objects;
         }
         observe() {
@@ -115,18 +116,22 @@ var lod;
                 obj.observe();
             }
         }
-        renew() {
-            this.decay = chunk_default_lifetime;
+        renew(obj) {
+            const chunk_decay_padding = 2;
+            if (obj)
+                this.decay = Math.max(obj.decay + chunk_decay_padding, chunk_minimum_lifetime);
+            else
+                this.decay = chunk_minimum_lifetime;
             if (this.on())
                 return;
             chunk.actives.push(this);
-            hooks_1.default.call('chunkRenew', this);
+            // hooks.call('chunkRenew', this);
         }
         expire() {
             if (this.off())
                 return;
             hooks_1.default.call('chunkExpire', this);
-            //console.log('expire');
+            console.log('chunk expire');
         }
         tick() {
             hooks_1.default.call('chunkTick', this);
@@ -135,7 +140,9 @@ var lod;
             this.decay -= lod.tick_rate;
         }
         static tick() {
-            // todo move this to universe
+            hooks_1.default.call('lodTick', this);
+            // todo move this to universe ?
+            chunk.decays();
             this.list = [];
             for (const chunk of this.actives) {
                 this.list = this.list.concat(chunk.objs);
@@ -144,7 +151,9 @@ var lod;
             for (const obj of this.list) {
                 obj.tick();
             }
-            let i = chunk.actives.length;
+        }
+        static decays() {
+            let i = this.actives.length;
             while (i--) {
                 const chunk = this.actives[i];
                 chunk.tick();
@@ -177,7 +186,7 @@ var lod;
                         continue;
                     if (this.grid.indexOf(chunk) == -1)
                         this.grid.push(chunk);
-                    chunk.renew();
+                    chunk.renew(null);
                     chunk.observe();
                 }
             }
@@ -211,7 +220,7 @@ var lod;
         observe() {
             this.decay = this.lifetime;
         }
-        expired() {
+        pretick() {
             if (this.decay <= 0) {
                 lod.remove(this);
                 console.log(` ${this.type} expired into intergalactic space `);

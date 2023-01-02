@@ -99,6 +99,8 @@ var space = (function () {
             if (!last)
                 last = current;
             app.delta = (current - last) / 1000;
+            if (app.delta > 1 / 30)
+                app.delta = 1 / 30;
             last = current;
             space$1.step();
             app.wheel = 0;

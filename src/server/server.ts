@@ -51,12 +51,22 @@ function init() {
 
 	for (let i = 0; i < 10; i++) {
 		let rock = new stellar_objects.tp_rock;
-		rock.name = `rock ${i}`;
+		//rock.name = `rock ${i}`;
 		//rock.type = 'rock';
 		rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
 		const chunk = lod.add(rock);
-		chunk.renew();
+		chunk.renew(rock);
 	}
+
+	hooks.register('lodTick', (x) => {
+		let rock = new stellar_objects.tp_rock;
+		rock.name = 'Debris';
+		rock.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+		rock.lifetime = 2;
+		const chunk = lod.add(rock);
+		chunk.renew(rock);
+		return false;
+	});
 
 	locations.init();
 

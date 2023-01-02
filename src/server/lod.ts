@@ -22,8 +22,8 @@ namespace lod {
 
 	const chunk_span = 3;
 
-	const chunk_default_lifetime = 24;
-
+	const chunk_minimum_lifetime = 10;
+	
 	const obj_default_lifetime = 16;
 
 	const grid_makes_sectors = true;
@@ -92,7 +92,7 @@ namespace lod {
 		static actives: chunk[] = []
 		static list: obj[] = []
 		readonly objs: obj[] = []
-		decay = chunk_default_lifetime
+		decay = chunk_minimum_lifetime
 		constructor(
 			readonly big: vec2,
 			readonly galaxy: universe
@@ -108,7 +108,7 @@ namespace lod {
 			if (oldChunk != newChunk) {
 				oldChunk.remove(obj);
 				newChunk.add(obj);
-				newChunk.renew();
+				newChunk.renew(obj);
 			}
 		}
 		add(obj: obj) {
@@ -127,8 +127,9 @@ namespace lod {
 		}
 		gather(grid: observer) {
 			let objects: object[] = [];
-			for (let obj of this.objs)
+			for (let obj of this.objs) {
 				objects.push(obj.gather());
+			}
 			return objects;
 		}
 		observe() {
@@ -136,18 +137,23 @@ namespace lod {
 				obj.observe();
 			}
 		}
-		renew() {
-			this.decay = chunk_default_lifetime;
+		renew(obj: obj | null) {
+			const chunk_decay_padding = 2;
+			if (obj)
+				this.decay = Math.max(obj.decay + chunk_decay_padding, chunk_minimum_lifetime);
+			else
+				this.decay = chunk_minimum_lifetime;
 			if (this.on())
 				return;
 			chunk.actives.push(this);
-			hooks.call('chunkRenew', this);
+			// hooks.call('chunkRenew', this);
 		}
 		expire() {
 			if (this.off())
 				return;
 			hooks.call('chunkExpire', this);
-			//console.log('expire');
+			console.log('chunk expire');
+			
 		}
 		tick() {
 			hooks.call('chunkTick', this);
@@ -156,7 +162,9 @@ namespace lod {
 			this.decay -= tick_rate;
 		}
 		static tick() {
-			// todo move this to universe
+			hooks.call('lodTick', this);
+			// todo move this to universe ?
+			chunk.decays();
 			this.list = [];
 			for (const chunk of this.actives) {
 				this.list = this.list.concat(chunk.objs);
@@ -165,7 +173,9 @@ namespace lod {
 			for (const obj of this.list) {
 				obj.tick();
 			}
-			let i = chunk.actives.length;
+		}
+		static decays() {
+			let i = this.actives.length;
 			while (i--) {
 				const chunk = this.actives[i];
 				chunk.tick();
@@ -197,7 +207,7 @@ namespace lod {
 						continue;
 					if (this.grid.indexOf(chunk) == -1)
 						this.grid.push(chunk);
-					chunk.renew();
+					chunk.renew(null);
 					chunk.observe();
 				}
 			}
@@ -232,7 +242,7 @@ namespace lod {
 		observe() {
 			this.decay = this.lifetime;
 		}
-		expired() {
+		pretick() {
 			if (this.decay <= 0) {
 				lod.remove(this);
 				console.log(` ${this.type} expired into intergalactic space `);
