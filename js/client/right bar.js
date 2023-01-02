@@ -72,7 +72,7 @@ var right_bar;
 		
 		<x-begin>
 			<x-title>
-			<span>sort</span>
+				<span>sort</span>
 				<span>Overview</span>
 			</x-title>
 			<x-content>

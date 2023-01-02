@@ -131,7 +131,7 @@ var lod;
             if (this.off())
                 return;
             hooks_1.default.call('chunkExpire', this);
-            console.log('chunk expire');
+            //console.log('chunk expire');
         }
         tick() {
             hooks_1.default.call('chunkTick', this);
@@ -139,10 +139,20 @@ var lod;
             //	obj.tick();
             this.decay -= lod.tick_rate;
         }
+        static decays() {
+            let i = this.actives.length;
+            while (i--) {
+                const chunk = this.actives[i];
+                if (chunk.decay <= 0) {
+                    this.actives.splice(i, 1);
+                    chunk.expire();
+                }
+                chunk.tick();
+            }
+        }
         static tick() {
-            hooks_1.default.call('lodTick', this);
-            // todo move this to universe ?
             chunk.decays();
+            hooks_1.default.call('lodTick', this);
             this.list = [];
             for (const chunk of this.actives) {
                 this.list = this.list.concat(chunk.objs);
@@ -150,17 +160,6 @@ var lod;
             // todo sort visibles
             for (const obj of this.list) {
                 obj.tick();
-            }
-        }
-        static decays() {
-            let i = this.actives.length;
-            while (i--) {
-                const chunk = this.actives[i];
-                chunk.tick();
-                if (chunk.decay <= 0) {
-                    this.actives.splice(i, 1);
-                    chunk.expire();
-                }
             }
         }
     }

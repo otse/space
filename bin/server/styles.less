@@ -57,8 +57,41 @@ x-right-bar {
 				border-bottom: 1px solid gray;
 			}
 
+			x-tabs {
+				display: flex;
+			}
+
 			x-tab {
 				display: flex;
+				padding: 4px;
+				border: 1px solid #ffffff54;
+				border-top-left-radius: 3px;
+				border-top-right-radius: 3px;
+
+				&:hover {
+					bbackground: rgb(81 88 121 / 30%);
+				}
+
+				&.selected {
+					border-top: 1px solid #ffffff54;
+					border-bottom: 1px solid transparent;
+				}
+
+				&:not(.selected) {
+					border: 1px solid transparent;
+					border-bottom: 1px solid #ffffff54;
+				}
+			}
+
+			x-inner-content {
+				display: flex;
+				width: 200px;
+				padding: 5px;
+				border: 1px solid #ffffff54;
+				border-top: none;
+				max-height: 200px;
+				overflow-y: scroll;
+				overflow-x: hidden;
 			}
 
 			table {
@@ -70,9 +103,13 @@ x-right-bar {
 			}
 			
 			thead td {
-				padding: 5px;
-				border-right: 1px solid gray;
-				border-bottom: 1px solid gray;
+				padding: 2px;
+				bborder-left: 1px solid rgb(171, 171, 171);
+				border-bottom: 1px solid rgb(171, 171, 171);
+			}
+			
+			tbody td {
+				bborder-right: 1px solid rgb(171, 171, 171);
 			}
 
 			tr:hover {
@@ -89,9 +126,7 @@ x-right-bar {
 		&.overview {
 			x-content {
 				wwidth: 150px;
-				max-height: 200px;
-				overflow-y: scroll;
-				overflow-x: hidden;
+				
 				bbackground: rgba(82, 82, 169, 0.5);
 			}
 		}

@@ -52,8 +52,36 @@ x-right-bar x-begin x-content x-horizontal-rule {
   border-bottom: 1px solid darkgray;
   border-bottom: 1px solid gray;
 }
+x-right-bar x-begin x-content x-tabs {
+  display: flex;
+}
 x-right-bar x-begin x-content x-tab {
   display: flex;
+  padding: 4px;
+  border: 1px solid #ffffff54;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+x-right-bar x-begin x-content x-tab:hover {
+  background: rgba(81, 88, 121, 0.3);
+}
+x-right-bar x-begin x-content x-tab.selected {
+  border-top: 1px solid #ffffff54;
+  border-bottom: 1px solid transparent;
+}
+x-right-bar x-begin x-content x-tab:not(.selected) {
+  border: 1px solid transparent;
+  border-bottom: 1px solid #ffffff54;
+}
+x-right-bar x-begin x-content x-inner-content {
+  display: flex;
+  width: 200px;
+  padding: 5px;
+  border: 1px solid #ffffff54;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 x-right-bar x-begin x-content table {
   border-spacing: 0px;
@@ -62,9 +90,12 @@ x-right-bar x-begin x-content td {
   padding: 2px;
 }
 x-right-bar x-begin x-content thead td {
-  padding: 5px;
-  border-right: 1px solid gray;
-  border-bottom: 1px solid gray;
+  padding: 2px;
+  bborder-left: 1px solid #ababab;
+  border-bottom: 1px solid #ababab;
+}
+x-right-bar x-begin x-content tbody td {
+  bborder-right: 1px solid #ababab;
 }
 x-right-bar x-begin x-content tr:hover {
   background: rgba(139, 139, 139, 0.2);
@@ -74,8 +105,5 @@ x-right-bar x-begin.selected-item x-content {
 }
 x-right-bar x-begin.overview x-content {
   wwidth: 150px;
-  max-height: 200px;
-  overflow-y: scroll;
-  overflow-x: hidden;
   bbackground: rgba(82, 82, 169, 0.5);
 }

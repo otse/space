@@ -317,7 +317,7 @@ var space = (function () {
 		
 		<x-begin>
 			<x-title>
-			<span>sort</span>
+				<span>sort</span>
 				<span>Overview</span>
 			</x-title>
 			<x-content>
@@ -372,7 +372,42 @@ var space = (function () {
             overview.instance = this;
         }
         on_open() {
-            this.on_fetch();
+            //this.on_fetch();
+            let text = '';
+            text += `
+			<x-tabs>
+				<x-tab>
+					General
+				</x-tab>
+				<x-tab>
+					Mining
+				</x-tab>
+			</x-tabs>
+			<x-inner-content>
+				Nothing here yet
+			</x-inner-content>
+		`;
+            this.toggler.content.innerHTML = text;
+            this.tabs = this.toggler.content.querySelector('x-tabs');
+            this.inner_content = this.toggler.content.querySelector('x-inner-content');
+            this.general = this.toggler.content.querySelector('x-tab:nth-of-type(1)');
+            this.mining = this.toggler.content.querySelector('x-tab:nth-of-type(2)');
+            this.setup_tab(this.general);
+            this.setup_tab(this.mining);
+            this.select_tab(this.general);
+            console.log('x-tabs', this.tabs);
+            console.log('x-inner-content', this.inner_content);
+        }
+        setup_tab(element) {
+            element.onclick = () => {
+                this.select_tab(element);
+            };
+        }
+        select_tab(element) {
+            if (this.active_tab)
+                this.active_tab.classList.remove('selected');
+            this.active_tab = element;
+            this.active_tab.classList.add('selected');
         }
         on_close() {
             this.items = [];
@@ -406,7 +441,7 @@ var space = (function () {
 			</tbody>
 			</table>
 		`;
-            this.toggler.content.innerHTML = text;
+            this.inner_content.innerHTML = text;
         }
         produce_items() {
             for (const thing of outer_space$1.things) {

@@ -23,7 +23,7 @@ namespace lod {
 	const chunk_span = 3;
 
 	const chunk_minimum_lifetime = 10;
-	
+
 	const obj_default_lifetime = 16;
 
 	const grid_makes_sectors = true;
@@ -152,8 +152,7 @@ namespace lod {
 			if (this.off())
 				return;
 			hooks.call('chunkExpire', this);
-			console.log('chunk expire');
-			
+			//console.log('chunk expire');
 		}
 		tick() {
 			hooks.call('chunkTick', this);
@@ -161,10 +160,20 @@ namespace lod {
 			//	obj.tick();
 			this.decay -= tick_rate;
 		}
+		static decays() {
+			let i = this.actives.length;
+			while (i--) {
+				const chunk = this.actives[i];
+				if (chunk.decay <= 0) {
+					this.actives.splice(i, 1);
+					chunk.expire();
+				}
+				chunk.tick();
+			}
+		}
 		static tick() {
-			hooks.call('lodTick', this);
-			// todo move this to universe ?
 			chunk.decays();
+			hooks.call('lodTick', this);
 			this.list = [];
 			for (const chunk of this.actives) {
 				this.list = this.list.concat(chunk.objs);
@@ -172,17 +181,6 @@ namespace lod {
 			// todo sort visibles
 			for (const obj of this.list) {
 				obj.tick();
-			}
-		}
-		static decays() {
-			let i = this.actives.length;
-			while (i--) {
-				const chunk = this.actives[i];
-				chunk.tick();
-				if (chunk.decay <= 0) {
-					this.actives.splice(i, 1);
-					chunk.expire();
-				}
 			}
 		}
 	}
