@@ -482,6 +482,7 @@ var space = (function () {
     class selected_item extends right_bar$1.toggler_behavior {
         constructor(toggler) {
             super(toggler);
+            this.built = false;
             selected_item.instance = this;
         }
         on_open() {
@@ -498,6 +499,8 @@ var space = (function () {
             const obj = outer_space$1.obj.focus;
             if (obj && obj.lost)
                 this.build_lost();
+            else if (this.built_obj != obj)
+                this.build_once();
             this.update_pos();
         }
         update_pos() {
@@ -516,12 +519,11 @@ var space = (function () {
         build_once() {
             let text = '';
             const obj = outer_space$1.obj.focus;
+            this.built_obj = obj;
             if (obj) {
                 const is_minable = obj.is_type(['rock', 'debris']);
                 if (obj.lost) {
-                    text += ` 
-					~~ Lost ~~
-				`;
+                    text += `~~ Lost ~~`;
                 }
                 else {
                     text += `
@@ -537,13 +539,13 @@ var space = (function () {
                     text += `</x-buttons>`;
                     this.toggler.content.innerHTML = text;
                     //this.update_pos();
-                    const x_follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
-                    x_follow_button.onclick = () => {
-                        console.log('yeah');
+                    const follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
+                    follow_button.onclick = () => {
+                        space$1.action_follow_target(obj);
                     };
                     if (is_minable) {
-                        const x_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
-                        x_button.onclick = () => {
+                        const mine_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
+                        mine_button.onclick = () => {
                             console.log('yeah');
                         };
                     }
@@ -1024,6 +1026,12 @@ var space = (function () {
             }
         }
         space.choose_layout = choose_layout;
+        function action_follow_target(obj) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield make_request_json('GET', 'follow?id=' + obj.tuple[1]);
+            });
+        }
+        space.action_follow_target = action_follow_target;
         function action_begin_mine_target(obj) {
         }
         space.action_begin_mine_target = action_begin_mine_target;

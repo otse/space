@@ -1,9 +1,11 @@
 import pts from "../shared/pts";
 import outer_space from "./outer space";
 import right_bar from "./right bar";
+import space from "./space";
 class selected_item extends right_bar.toggler_behavior {
     constructor(toggler) {
         super(toggler);
+        this.built = false;
         selected_item.instance = this;
     }
     on_open() {
@@ -20,6 +22,8 @@ class selected_item extends right_bar.toggler_behavior {
         const obj = outer_space.obj.focus;
         if (obj && obj.lost)
             this.build_lost();
+        else if (this.built_obj != obj)
+            this.build_once();
         this.update_pos();
     }
     update_pos() {
@@ -38,12 +42,11 @@ class selected_item extends right_bar.toggler_behavior {
     build_once() {
         let text = '';
         const obj = outer_space.obj.focus;
+        this.built_obj = obj;
         if (obj) {
             const is_minable = obj.is_type(['rock', 'debris']);
             if (obj.lost) {
-                text += ` 
-					~~ Lost ~~
-				`;
+                text += `~~ Lost ~~`;
             }
             else {
                 text += `
@@ -59,13 +62,13 @@ class selected_item extends right_bar.toggler_behavior {
                 text += `</x-buttons>`;
                 this.toggler.content.innerHTML = text;
                 //this.update_pos();
-                const x_follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
-                x_follow_button.onclick = () => {
-                    console.log('yeah');
+                const follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
+                follow_button.onclick = () => {
+                    space.action_follow_target(obj);
                 };
                 if (is_minable) {
-                    const x_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
-                    x_button.onclick = () => {
+                    const mine_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
+                    mine_button.onclick = () => {
                         console.log('yeah');
                     };
                 }

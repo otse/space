@@ -142,6 +142,12 @@ var space;
         }
     }
     space.choose_layout = choose_layout;
+    function action_follow_target(obj) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = yield make_request_json('GET', 'follow?id=' + obj.tuple[1]);
+        });
+    }
+    space.action_follow_target = action_follow_target;
     function action_begin_mine_target(obj) {
     }
     space.action_begin_mine_target = action_begin_mine_target;

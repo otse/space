@@ -131,7 +131,7 @@ x-right-bar x-begin x-content tr:hover {
   background: rgba(139, 139, 139, 0.2);
 }
 x-right-bar x-begin.selected-item x-content {
-  width: 200px;
+  min-width: 200px;
 }
 x-right-bar x-begin.overview x-content {
   wwidth: 150px;

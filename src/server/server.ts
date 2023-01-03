@@ -6,6 +6,7 @@ import lmp from "./lost minor planet";
 import short_lived from "./session";
 import { send } from "process";
 import hooks from "../shared/hooks";
+import actions from "./actions";
 
 var http = require('http');
 var https = require('https');
@@ -354,8 +355,13 @@ function init() {
 			}
 			return;
 		}
+		else if (actions.handle(req, res))
+		{
+			
+		}
 		else {
-			res.end('unhandled resource');
+			console.log('unhandled');
+			res.end('0');
 		}
 
 	}).listen(port);

@@ -140,7 +140,7 @@ namespace space {
 			sideBar.style.left = 0;
 
 			update_side_bar();
-			
+
 		}
 		else {
 			sideBar.style.left = -300;
@@ -151,15 +151,20 @@ namespace space {
 		console.log('choose layout');
 		myTrivial.innerHTML = ``;
 		if (sply) {
-			
+
 		}
 		else {
 			show_landing_page();
 		}
 	}
 
+	export async function action_follow_target(obj: outer_space.obj) {
+		const res = await make_request_json('GET', 'follow?id=' + obj.tuple[1]);
+
+	}
+
 	export function action_begin_mine_target(obj: outer_space.obj) {
-		
+
 	}
 
 	function receive_sply(stuple) {
@@ -211,8 +216,7 @@ namespace space {
 			<span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span>
 			`;
 		}
-		else
-		{
+		else {
 			text += `
 			<span onclick="space.start_playing()" class="start-playing">
 				<!--Let's Sci-fi!-->

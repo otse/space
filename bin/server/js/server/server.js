@@ -7,6 +7,7 @@ const lod_1 = require("./lod");
 const lost_minor_planet_1 = require("./lost minor planet");
 const session_1 = require("./session");
 const hooks_1 = require("../shared/hooks");
+const actions_1 = require("./actions");
 var http = require('http');
 var https = require('https');
 const fs = require('fs');
@@ -301,8 +302,11 @@ function init() {
             }
             return;
         }
+        else if (actions_1.default.handle(req, res)) {
+        }
         else {
-            res.end('unhandled resource');
+            console.log('unhandled');
+            res.end('0');
         }
     }).listen(port);
 }
