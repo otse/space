@@ -142,6 +142,9 @@ var space;
         }
     }
     space.choose_layout = choose_layout;
+    function action_begin_mine_target(obj) {
+    }
+    space.action_begin_mine_target = action_begin_mine_target;
     function receive_sply(stuple) {
         const [type, data] = stuple;
         if (type != 'sply')

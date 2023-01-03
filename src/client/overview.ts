@@ -83,7 +83,7 @@ class overview extends right_bar.toggler_behavior {
 		this.items = [];
 	}
 	override on_fetch() {
-		// <x-horizontal-rule></x-horizontal-rule>
+		// 
 		let text = '';
 		text += `
 			<table>

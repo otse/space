@@ -125,6 +125,7 @@ var outer_space;
         if (random.userId == space.sply.id) {
             console.log(`we're us`);
             outer_space.you = float;
+            outer_space.you.element.classList.add('you');
         }
     }
     function fetch() {
@@ -148,7 +149,14 @@ var outer_space;
                 }
                 bee.stamp = outer_space.stamp;
             }
-            obj.check();
+            let i = outer_space.objs.length;
+            while (i--) {
+                const obj = outer_space.objs[i];
+                if (obj.older_stamp()) {
+                    obj.remove();
+                    outer_space.objs.splice(i, 1);
+                }
+            }
             right_bar.on_fetch();
             console.log('fetched');
             fetcher = setTimeout(fetch, 2000);
@@ -177,35 +185,49 @@ var outer_space;
         right_bar.step();
     }
     outer_space.step = step;
-    class obj {
-        constructor(tuple) {
-            this.tuple = tuple;
-            this.stamp = 0;
-            this.tween_pos = [0, 0];
-            this.lost = false;
-            outer_space.objs.push(this);
+    class element {
+        constructor() {
         }
         append() {
             outer_space.renderer.append(this.element);
         }
         remove() {
             this.element.remove();
+        }
+        stylize() {
+        }
+        focus() {
+            this.element.classList.add('focus');
+        }
+        blur() {
+            this.element.classList.remove('focus');
+        }
+    }
+    outer_space.element = element;
+    class obj extends element {
+        constructor(tuple) {
+            super();
+            this.tuple = tuple;
+            this.stamp = 0;
+            this.tween_pos = [0, 0];
+            this.lost = false;
+            outer_space.objs.push(this);
+        }
+        remove() {
+            super.remove();
             this.lost = true;
         }
-        has_old_stamp() {
+        is_type(types) {
+            for (const type of types) {
+                if (type == this.tuple[3]) {
+                    return true;
+                }
+            }
+        }
+        older_stamp() {
             if (this.stamp != -1 && this.stamp != outer_space.stamp) {
                 console.log(` obj went out of lod ! `, this.stamp, outer_space.stamp);
                 return true;
-            }
-        }
-        static check() {
-            let i = outer_space.objs.length;
-            while (i--) {
-                const obj = outer_space.objs[i];
-                if (obj.has_old_stamp()) {
-                    obj.remove();
-                    outer_space.objs.splice(i, 1);
-                }
             }
         }
         static steps() {
@@ -222,15 +244,7 @@ var outer_space;
             this.tuple[2] = pts.add(this.tuple[2], tween);
             this.stylize();
         }
-        stylize() {
-        }
-        focus() {
-            this.element.classList.add('focus');
-        }
-        blur() {
-            this.element.classList.remove('focus');
-        }
-        handle_onclick() {
+        attach_onclick() {
             this.element.onclick = (event) => {
                 var _a;
                 event.stopPropagation();
@@ -257,7 +271,7 @@ var outer_space;
             this.element = document.createElement('div');
             this.element.classList.add('float');
             this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
-            this.handle_onclick();
+            this.attach_onclick();
             this.stylize();
             this.append();
         }
@@ -286,6 +300,9 @@ var outer_space;
             this.element.style.left = proj[0] - radius;
             this.element.style.width = radius * 2;
             this.element.style.height = radius * 2;
+        }
+        step() {
+            this.stylize();
         }
     }
     outer_space.region = region;

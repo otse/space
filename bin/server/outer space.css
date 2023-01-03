@@ -37,6 +37,11 @@ outer-space .float {
 	display: inline-flex;
 }
 
+outer-space .float.you {
+	text-decoration: underline;
+	color: orange;
+}
+
 outer-space .float span:nth-child(1) {
 	float: left;
 	width: 0;

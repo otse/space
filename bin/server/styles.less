@@ -54,12 +54,36 @@ x-right-bar {
 			border: 1px solid @borderColor;
 			display: none;
 			flex-direction: column;
+			align-items: flex-start;
+
+			x-pos {
+				display: inline-flex;
+			}
 
 			x-horizontal-rule {
 				display: block;
-				margin: 5px;
-				border-bottom: 1px solid darkgray;
-				border-bottom: 1px solid gray;
+				width: 100%;
+				margin: 4px 0;
+				border-top: 1px solid @borderColor;
+			}
+
+			x-buttons {
+				display: flex;
+			}
+
+			x-button {
+				display: inline-flex;
+				padding: 4px;
+				/* border-bottom: 1px solid #97d6da; */
+				/* border-radius: 3px; */
+				/* background: rgba(128, 128, 128, 0.5); */
+				margin: 0 2px;
+				text-decoration: underline;
+				/* color: #97d6da; */
+
+				&:hover {
+					background: rgb(81 88 121 / 30%);
+				}
 			}
 
 			x-tabs {

@@ -158,6 +158,10 @@ namespace space {
 		}
 	}
 
+	export function action_begin_mine_target(obj: outer_space.obj) {
+		
+	}
+
 	function receive_sply(stuple) {
 		const [type, data] = stuple;
 		if (type != 'sply')

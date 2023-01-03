@@ -47,12 +47,32 @@ x-right-bar x-begin x-content {
   border: 1px solid rgba(255, 255, 255, 0.33);
   display: none;
   flex-direction: column;
+  align-items: flex-start;
+}
+x-right-bar x-begin x-content x-pos {
+  display: inline-flex;
 }
 x-right-bar x-begin x-content x-horizontal-rule {
   display: block;
-  margin: 5px;
-  border-bottom: 1px solid darkgray;
-  border-bottom: 1px solid gray;
+  width: 100%;
+  margin: 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.33);
+}
+x-right-bar x-begin x-content x-buttons {
+  display: flex;
+}
+x-right-bar x-begin x-content x-button {
+  display: inline-flex;
+  padding: 4px;
+  /* border-bottom: 1px solid #97d6da; */
+  /* border-radius: 3px; */
+  /* background: rgba(128, 128, 128, 0.5); */
+  margin: 0 2px;
+  text-decoration: underline;
+  /* color: #97d6da; */
+}
+x-right-bar x-begin x-content x-button:hover {
+  background: rgba(81, 88, 121, 0.3);
 }
 x-right-bar x-begin x-content x-tabs {
   display: flex;

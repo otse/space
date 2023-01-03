@@ -145,6 +145,7 @@ namespace outer_space {
 		if (random.userId == space.sply.id) {
 			console.log(`we're us`);
 			you = float;
+			you!.element.classList.add('you');
 		}
 	}
 
@@ -168,7 +169,14 @@ namespace outer_space {
 			}
 			bee.stamp = outer_space.stamp;
 		}
-		obj.check();
+		let i = objs.length;
+		while (i--) {
+			const obj = objs[i];
+			if (obj.older_stamp()) {
+				obj.remove();
+				objs.splice(i, 1);
+			}
+		}
 		right_bar.on_fetch();
 		console.log('fetched');
 		fetcher = setTimeout(fetch, 2000);
@@ -205,38 +213,53 @@ namespace outer_space {
 
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
-	export class obj {
-		static focus?: obj
-		stamp = 0
+	export class element {
 		element
-		tween_pos: vec2 = [0, 0]
-		lost = false
-		constructor(
-			public tuple: tuple,
-		) {
-			objs.push(this);
+		constructor() {
+
 		}
 		append() {
 			renderer.append(this.element);
 		}
 		remove() {
 			this.element.remove();
+		}
+		stylize() {
+		}
+		focus() {
+			this.element.classList.add('focus');
+		}
+		blur() {
+			this.element.classList.remove('focus');
+		}
+	}
+
+	export abstract class obj extends element {
+		static focus?: obj
+		stamp = 0
+		tween_pos: vec2 = [0, 0]
+		lost = false
+		constructor(
+			public tuple: tuple,
+		) {
+			super();
+			objs.push(this);
+		}
+		override remove() {
+			super.remove();
 			this.lost = true;
 		}
-		has_old_stamp() {
+		is_type(types: string[]) {
+			for (const type of types) {
+				if (type == this.tuple[3]) {
+					return true;
+				}
+			}
+		}
+		older_stamp() {
 			if (this.stamp != -1 && this.stamp != outer_space.stamp) {
 				console.log(` obj went out of lod ! `, this.stamp, outer_space.stamp);
 				return true;
-			}
-		}
-		static check() {
-			let i = objs.length;
-			while (i--) {
-				const obj = objs[i];
-				if (obj.has_old_stamp()) {
-					obj.remove();
-					objs.splice(i, 1);
-				}
 			}
 		}
 		static steps() {
@@ -256,15 +279,7 @@ namespace outer_space {
 
 			this.stylize();
 		}
-		stylize() {
-		}
-		focus() {
-			this.element.classList.add('focus');
-		}
-		blur() {
-			this.element.classList.remove('focus');
-		}
-		handle_onclick() {
+		attach_onclick() {
 			this.element.onclick = (event) => {
 				event.stopPropagation();
 				obj.focus?.blur();
@@ -277,7 +292,6 @@ namespace outer_space {
 				//overview.instance.toggler.close();
 				//marker!.enabled = false;
 				console.log('clicked obj');
-
 				//this.element.innerHTML = 'clicked';
 				return true;
 			}
@@ -293,7 +307,7 @@ namespace outer_space {
 			this.element = document.createElement('div');
 			this.element.classList.add('float');
 			this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
-			this.handle_onclick();
+			this.attach_onclick();
 			this.stylize();
 			this.append();
 		}
@@ -323,6 +337,9 @@ namespace outer_space {
 			this.element.style.left = proj[0] - radius;
 			this.element.style.width = radius * 2;
 			this.element.style.height = radius * 2;
+		}
+		override step() {
+			this.stylize();
 		}
 	}
 

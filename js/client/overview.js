@@ -70,7 +70,7 @@ class overview extends right_bar.toggler_behavior {
     }
     on_fetch() {
         var _a, _b;
-        // <x-horizontal-rule></x-horizontal-rule>
+        // 
         let text = '';
         text += `
 			<table>
