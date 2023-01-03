@@ -55,7 +55,7 @@ namespace outer_space {
 		renderer.onclick = (event) => {
 			if (!started)
 				return;
-			console.log('clicked map');
+			console.log(' clicked map ');
 
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
@@ -85,7 +85,7 @@ namespace outer_space {
 	var started;
 	var fetcher;
 
-	export var things: thing[] = []
+	export var objs: obj[] = []
 
 	export function start() {
 		if (!started) {
@@ -100,9 +100,10 @@ namespace outer_space {
 
 	export function stop() {
 		if (started) {
-			let i = things.length;
+			let i = objs.length;
 			while (i--)
-				things[i].remove();
+				objs[i].remove();
+			objs = [];
 			you = undefined;
 			marker = undefined;
 			started = false;
@@ -133,10 +134,10 @@ namespace outer_space {
 		}
 	}
 
-	function get_thing_by_id(id) {
-		for (const joint of things)
-			if (id == joint.tuple[1])
-				return joint;
+	function get_obj_by_id(id) {
+		for (const obj of objs)
+			if (id == obj.tuple[1])
+				return obj;
 	}
 
 	function handle_you(object, float) {
@@ -155,7 +156,7 @@ namespace outer_space {
 		const objects = tuple[1];
 		for (const object of objects) {
 			const [random, id, pos, type, name] = object;
-			let bee = get_thing_by_id(id);
+			let bee = get_obj_by_id(id);
 			if (bee) {
 				//bee.tuple[2] = pos;
 				bee.tween_pos = pos;
@@ -167,7 +168,7 @@ namespace outer_space {
 			}
 			bee.stamp = outer_space.stamp;
 		}
-		thing.check();
+		obj.check();
 		right_bar.on_fetch();
 		console.log('fetched');
 		fetcher = setTimeout(fetch, 2000);
@@ -186,60 +187,64 @@ namespace outer_space {
 		const multiplier = pixelMultiple / zoom_max;
 		const increment = 10 * multiplier;
 
-		if (app.wheel == 1)
-			pixelMultiple += increment;
-		if (app.wheel == -1)
-			pixelMultiple -= increment;
+		if (!right_bar.toggler.hovering) {
+			if (app.wheel == 1)
+				pixelMultiple += increment;
+			if (app.wheel == -1)
+				pixelMultiple -= increment;
+		}
 
 		pixelMultiple = space.clamp(pixelMultiple, zoom_min, zoom_max);
 
 		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(1)}`;
 
-		thing.steps();
+		obj.steps();
 
 		right_bar.step();
 	}
 
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
-	export class thing {
-		static focus?: thing
+	export class obj {
+		static focus?: obj
 		stamp = 0
 		element
 		tween_pos: vec2 = [0, 0]
+		lost = false
 		constructor(
 			public tuple: tuple,
 		) {
-			things.push(this);
+			objs.push(this);
 		}
 		append() {
 			renderer.append(this.element);
 		}
 		remove() {
-			things.splice(things.indexOf(this), 1);
 			this.element.remove();
+			this.lost = true;
 		}
 		has_old_stamp() {
 			if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-				console.log(` thing went out of lod ! `, this.stamp, outer_space.stamp);
+				console.log(` obj went out of lod ! `, this.stamp, outer_space.stamp);
 				return true;
 			}
 		}
 		static check() {
-			let i = things.length;
+			let i = objs.length;
 			while (i--) {
-				const thing = things[i];
-				if (thing.has_old_stamp()) {
-					thing.remove();
+				const obj = objs[i];
+				if (obj.has_old_stamp()) {
+					obj.remove();
+					objs.splice(i, 1);
 				}
 			}
 		}
 		static steps() {
-			for (const thing of things)
-				thing.step();
+			for (const obj of objs)
+				obj.step();
 		}
 		step() {
-			if (thing.focus == this && marker!.sticky == this)
+			if (obj.focus == this && marker!.sticky == this)
 				marker!.tuple[2] = this.tuple[2];
 
 			if (!pts.together(this.tween_pos))
@@ -262,8 +267,8 @@ namespace outer_space {
 		handle_onclick() {
 			this.element.onclick = (event) => {
 				event.stopPropagation();
-				thing.focus?.blur();
-				thing.focus = this;
+				obj.focus?.blur();
+				obj.focus = this;
 				this.focus();
 				marker!.enabled = true;
 				marker!.sticky = this;
@@ -271,7 +276,7 @@ namespace outer_space {
 				selected_item.instance.toggler.open();
 				//overview.instance.toggler.close();
 				//marker!.enabled = false;
-				console.log('clicked thing');
+				console.log('clicked obj');
 
 				//this.element.innerHTML = 'clicked';
 				return true;
@@ -279,12 +284,12 @@ namespace outer_space {
 		}
 	}
 
-	export class float extends thing {
+	export class float extends obj {
 		constructor(
 			tuple
 		) {
 			super(tuple);
-			console.log('new float');
+			//console.log('new float');
 			this.element = document.createElement('div');
 			this.element.classList.add('float');
 			this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
@@ -300,7 +305,7 @@ namespace outer_space {
 		}
 	}
 
-	export class region extends thing {
+	export class region extends obj {
 		constructor(
 			tuple,
 			public radius) {
@@ -321,7 +326,7 @@ namespace outer_space {
 		}
 	}
 
-	class ping extends thing {
+	class ping extends obj {
 		sticky?: float
 		enabled = false
 		constructor() {

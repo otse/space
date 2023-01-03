@@ -16,19 +16,21 @@ x-right-bar {
 
 	x-begin {
 		cursor: pointer;
-		font-family: 'Inconsolata';
-		font-size: 14px;
+		font-family: 'Space Mono';
+		font-size: 13px;
 		bbackground: hsl(0deg 0% 50% / 20%);
 		margin: 2px;
+		-webkit-backdrop-filter: blur(2px);
+		backdrop-filter: blur(2px);
 		display: flex;
 		flex-direction: column;
 
 		x-title {
 			padding: 8px;
-			-webkit-backdrop-filter: blur(2px);
-			backdrop-filter: blur(2px);
+			
 			color: darkseagreen;
 			color: #85c685;
+			letter-spacing: 0px;
 			display: flex;
 			align-items: center;
 
@@ -42,11 +44,14 @@ x-right-bar {
 			}
 		}
 
+		@borderColor: rgb(255 255 255 / 33%);
+
 		x-content {
+			overflow: hidden;
+			ccolor: #cecece;
 			padding: 5px;
-			background: rgb(77 77 77 / 20%);
-			-webkit-backdrop-filter: blur(2px);
-			backdrop-filter: blur(2px);
+			bbackground: rgb(77 77 77 / 20%);
+			border: 1px solid @borderColor;
 			display: none;
 			flex-direction: column;
 
@@ -63,51 +68,60 @@ x-right-bar {
 
 			x-tab {
 				display: flex;
-				padding: 4px;
-				border: 1px solid #ffffff54;
-				border-top-left-radius: 3px;
-				border-top-right-radius: 3px;
+				padding: 2px 6px;
+				border: 1px solid @borderColor;
+				bborder-top: none;
+				border-top-left-radius: 2px;
+				border-top-right-radius: 2px;
 
 				&:hover {
 					bbackground: rgb(81 88 121 / 30%);
 				}
 
 				&.selected {
-					border-top: 1px solid #ffffff54;
 					border-bottom: 1px solid transparent;
+					text-decoration: underline;
 				}
 
 				&:not(.selected) {
 					border: 1px solid transparent;
-					border-bottom: 1px solid #ffffff54;
+					border-bottom: 1px solid @borderColor;
 				}
 			}
 
-			x-inner-content {
+			x-outer-content {
 				display: flex;
-				width: 200px;
-				padding: 5px;
-				border: 1px solid #ffffff54;
+				wwidth: 200px;
+				padding: 3px;
+				border: 1px solid @borderColor;
 				border-top: none;
-				max-height: 200px;
-				overflow-y: scroll;
-				overflow-x: hidden;
+
+				x-inner-content {
+					width: 100%;
+					padding: 5px;
+					bbackground: rgb(110 110 110 / 50%);
+					display: flex;
+					max-height: 200px;
+					overflow-y: scroll;
+					overflow-x: hidden;
+				}
 			}
 
 			table {
 				border-spacing: 0px;
+				color: inherit;
+				font-size: inherit;
 			}
 
 			td {
-				padding: 2px;
+				padding: 0 6px;
 			}
-			
+
 			thead td {
-				padding: 2px;
-				bborder-left: 1px solid rgb(171, 171, 171);
+				border-left: 1px solid rgb(171, 171, 171);
 				border-bottom: 1px solid rgb(171, 171, 171);
 			}
-			
+
 			tbody td {
 				bborder-right: 1px solid rgb(171, 171, 171);
 			}
@@ -126,7 +140,7 @@ x-right-bar {
 		&.overview {
 			x-content {
 				wwidth: 150px;
-				
+
 				bbackground: rgba(82, 82, 169, 0.5);
 			}
 		}

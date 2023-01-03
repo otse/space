@@ -50,7 +50,6 @@ function init() {
         let rock = new stellar_objects_1.default.tp_rock;
         rock.name = 'Debris';
         rock.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-        rock.lifetime = 2;
         const chunk = lod_1.default.add(rock);
         chunk.renew(rock);
         return false;

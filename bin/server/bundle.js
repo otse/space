@@ -265,6 +265,12 @@ var space = (function () {
                 this.begin = document.querySelector(`x-right-bar x-begin:nth-of-type(${index})`);
                 this.title = this.begin.querySelector('x-title');
                 this.content = this.begin.querySelector('x-content');
+                this.begin.onmouseover = () => {
+                    toggler.hovering = true;
+                };
+                this.begin.onmouseleave = () => {
+                    toggler.hovering = false;
+                };
                 this.begin.classList.add(name);
                 this.title.onclick = () => {
                     this.opened = !this.opened;
@@ -297,6 +303,7 @@ var space = (function () {
                 (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_step();
             }
         }
+        toggler.hovering = false;
         right_bar.toggler = toggler;
         function init() {
             right_bar.element = document.querySelector('x-right-bar');
@@ -365,14 +372,30 @@ var space = (function () {
             return string;
         return string.slice(0, limit) + '...';
     }
+    class tab {
+        constructor(parent, name, index) {
+            this.parent = parent;
+            this.name = name;
+            tab.tabs.push(this);
+            this.element = this.parent.toggler.content.querySelector(`x-tab:nth-of-type(${index})`);
+            this.element.onclick = () => {
+                tab.select(this);
+                overview.instance.on_fetch();
+            };
+        }
+        static select(which) {
+            var _a;
+            (_a = tab.active) === null || _a === void 0 ? void 0 : _a.element.classList.remove('selected');
+            tab.active = which;
+            tab.active.element.classList.add('selected');
+        }
+    }
+    tab.tabs = [];
     class overview extends right_bar$1.toggler_behavior {
         constructor(toggler) {
             super(toggler);
             this.items = [];
             overview.instance = this;
-        }
-        on_open() {
-            //this.on_fetch();
             let text = '';
             text += `
 			<x-tabs>
@@ -382,56 +405,61 @@ var space = (function () {
 				<x-tab>
 					Mining
 				</x-tab>
+				<x-tab>
+					Junk
+				</x-tab>
 			</x-tabs>
-			<x-inner-content>
-				Nothing here yet
-			</x-inner-content>
+			<x-outer-content>
+				<x-inner-content>
+					Nothing here yet
+				</x-inner-content>
+			</x-outer-content>
 		`;
             this.toggler.content.innerHTML = text;
-            this.tabs = this.toggler.content.querySelector('x-tabs');
-            this.inner_content = this.toggler.content.querySelector('x-inner-content');
-            this.general = this.toggler.content.querySelector('x-tab:nth-of-type(1)');
-            this.mining = this.toggler.content.querySelector('x-tab:nth-of-type(2)');
-            this.setup_tab(this.general);
-            this.setup_tab(this.mining);
-            this.select_tab(this.general);
-            console.log('x-tabs', this.tabs);
-            console.log('x-inner-content', this.inner_content);
+            this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
+            new tab(this, 'General', 1);
+            new tab(this, 'Mining', 2);
+            tab.select(tab.tabs[0]);
+            console.log('x-inner-content', this.x_inner_content);
         }
-        setup_tab(element) {
-            element.onclick = () => {
-                this.select_tab(element);
-            };
-        }
-        select_tab(element) {
-            if (this.active_tab)
-                this.active_tab.classList.remove('selected');
-            this.active_tab = element;
-            this.active_tab.classList.add('selected');
+        on_open() {
+            this.on_fetch();
         }
         on_close() {
             this.items = [];
         }
         on_fetch() {
+            var _a, _b;
             // <x-horizontal-rule></x-horizontal-rule>
             let text = '';
             text += `
 			<table>
 			<thead>
 			<tr>
-			<td>dist</td>
-			<td>name</td>
-			<td>type</td>
+			<td>Dist</td>
+			<td>Name</td>
+			<td>Type</td>
 			</tr>
 			</thead>
 			<tbody>
 		`;
-            for (const thing of outer_space$1.things) {
+            outer_space$1.objs.slice();
+            for (const obj of outer_space$1.objs) {
+                const type = obj.tuple[3];
+                if (((_a = tab.active) === null || _a === void 0 ? void 0 : _a.name) == 'General') {
+                    if (!(type.includes('ply')))
+                        continue;
+                }
+                else if (((_b = tab.active) === null || _b === void 0 ? void 0 : _b.name) == 'Mining') {
+                    if (!(type.includes('rock') || type.includes('debris')))
+                        continue;
+                }
+                const dist = pts.dist(outer_space$1.center, obj.tuple[2]);
                 text += `
 				<tr>
-				<td>1km</td>
-				<td>${truncate(thing.tuple[4], 10)}</td>
-				<td>${thing.tuple[3]}</td>
+				<td>${dist.toFixed(2)} km</td>
+				<td>${truncate(obj.tuple[4], 10)}</td>
+				<td>${obj.tuple[3]}</td>
 				</tr>
 			`;
                 //console.log('woo', thing.tuple[4]);
@@ -441,11 +469,11 @@ var space = (function () {
 			</tbody>
 			</table>
 		`;
-            this.inner_content.innerHTML = text;
+            this.x_inner_content.innerHTML = text;
         }
         produce_items() {
-            for (const thing of outer_space$1.things) {
-                let ite = new item(thing);
+            for (const obj of outer_space$1.objs) {
+                let ite = new item(obj);
                 this.items.push(ite);
             }
         }
@@ -463,15 +491,25 @@ var space = (function () {
         }
         on_step() {
             let text = '';
-            if (outer_space$1.thing.focus) {
-                text += `
-                pos: [ ${pts.to_string(outer_space$1.thing.focus.tuple[2], 2)} ]<br />
-                type: ${outer_space$1.thing.focus.tuple[3]}<br />
-                name: ${outer_space$1.thing.focus.tuple[4]}
+            const obj = outer_space$1.obj.focus;
+            if (obj) {
+                if (obj.lost) {
+                    text += ' ~~ Lost ~~';
+                }
+                else {
+                    text += `
+                pos: [ ${pts.to_string(obj.tuple[2], 2)} ]<br />
+                type: ${obj.tuple[3]}<br />
+                name: ${obj.tuple[4]}
 			`;
+                    text += `
+                <br />
+                <x-button>mine</x-button>
+                `;
+                }
             }
             else {
-                text += 'n/a';
+                text += 'N/A';
             }
             this.toggler.content.innerHTML = text;
         }
@@ -537,7 +575,7 @@ var space = (function () {
             outer_space.renderer.onclick = (event) => {
                 if (!started)
                     return;
-                console.log('clicked map');
+                console.log(' clicked map ');
                 let pixel = [event.clientX, event.clientY];
                 let unit = unproject(pixel);
                 outer_space.marker.tuple[2] = unit;
@@ -563,7 +601,7 @@ var space = (function () {
         outer_space.init = init;
         var started;
         var fetcher;
-        outer_space.things = [];
+        outer_space.objs = [];
         function start() {
             if (!started) {
                 console.log(' outer space start ');
@@ -577,9 +615,10 @@ var space = (function () {
         outer_space.start = start;
         function stop() {
             if (started) {
-                let i = outer_space.things.length;
+                let i = outer_space.objs.length;
                 while (i--)
-                    outer_space.things[i].remove();
+                    outer_space.objs[i].remove();
+                outer_space.objs = [];
                 outer_space.you = undefined;
                 outer_space.marker = undefined;
                 started = false;
@@ -601,10 +640,10 @@ var space = (function () {
                 reg.stamp = -1;
             }
         }
-        function get_thing_by_id(id) {
-            for (const joint of outer_space.things)
-                if (id == joint.tuple[1])
-                    return joint;
+        function get_obj_by_id(id) {
+            for (const obj of outer_space.objs)
+                if (id == obj.tuple[1])
+                    return obj;
         }
         function handle_you(object, float) {
             const [random] = object;
@@ -622,7 +661,7 @@ var space = (function () {
                 const objects = tuple[1];
                 for (const object of objects) {
                     const [random, id, pos, type, name] = object;
-                    let bee = get_thing_by_id(id);
+                    let bee = get_obj_by_id(id);
                     if (bee) {
                         //bee.tuple[2] = pos;
                         bee.tween_pos = pos;
@@ -634,7 +673,7 @@ var space = (function () {
                     }
                     bee.stamp = outer_space.stamp;
                 }
-                thing.check();
+                obj.check();
                 right_bar$1.on_fetch();
                 console.log('fetched');
                 fetcher = setTimeout(fetch, 2000);
@@ -651,51 +690,55 @@ var space = (function () {
             }
             const multiplier = outer_space.pixelMultiple / zoom_max;
             const increment = 10 * multiplier;
-            if (app$1.wheel == 1)
-                outer_space.pixelMultiple += increment;
-            if (app$1.wheel == -1)
-                outer_space.pixelMultiple -= increment;
+            if (!right_bar$1.toggler.hovering) {
+                if (app$1.wheel == 1)
+                    outer_space.pixelMultiple += increment;
+                if (app$1.wheel == -1)
+                    outer_space.pixelMultiple -= increment;
+            }
             outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
             outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
-            thing.steps();
+            obj.steps();
             right_bar$1.step();
         }
         outer_space.step = step;
-        class thing {
+        class obj {
             constructor(tuple) {
                 this.tuple = tuple;
                 this.stamp = 0;
                 this.tween_pos = [0, 0];
-                outer_space.things.push(this);
+                this.lost = false;
+                outer_space.objs.push(this);
             }
             append() {
                 outer_space.renderer.append(this.element);
             }
             remove() {
-                outer_space.things.splice(outer_space.things.indexOf(this), 1);
                 this.element.remove();
+                this.lost = true;
             }
             has_old_stamp() {
                 if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-                    console.log(` thing went out of lod ! `, this.stamp, outer_space.stamp);
+                    console.log(` obj went out of lod ! `, this.stamp, outer_space.stamp);
                     return true;
                 }
             }
             static check() {
-                let i = outer_space.things.length;
+                let i = outer_space.objs.length;
                 while (i--) {
-                    const thing = outer_space.things[i];
-                    if (thing.has_old_stamp()) {
-                        thing.remove();
+                    const obj = outer_space.objs[i];
+                    if (obj.has_old_stamp()) {
+                        obj.remove();
+                        outer_space.objs.splice(i, 1);
                     }
                 }
             }
             static steps() {
-                for (const thing of outer_space.things)
-                    thing.step();
+                for (const obj of outer_space.objs)
+                    obj.step();
             }
             step() {
-                if (thing.focus == this && outer_space.marker.sticky == this)
+                if (obj.focus == this && outer_space.marker.sticky == this)
                     outer_space.marker.tuple[2] = this.tuple[2];
                 if (!pts.together(this.tween_pos))
                     this.tween_pos = this.tuple[2];
@@ -716,8 +759,8 @@ var space = (function () {
                 this.element.onclick = (event) => {
                     var _a;
                     event.stopPropagation();
-                    (_a = thing.focus) === null || _a === void 0 ? void 0 : _a.blur();
-                    thing.focus = this;
+                    (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
+                    obj.focus = this;
                     this.focus();
                     outer_space.marker.enabled = true;
                     outer_space.marker.sticky = this;
@@ -725,17 +768,17 @@ var space = (function () {
                     selected_item.instance.toggler.open();
                     //overview.instance.toggler.close();
                     //marker!.enabled = false;
-                    console.log('clicked thing');
+                    console.log('clicked obj');
                     //this.element.innerHTML = 'clicked';
                     return true;
                 };
             }
         }
-        outer_space.thing = thing;
-        class float extends thing {
+        outer_space.obj = obj;
+        class float extends obj {
             constructor(tuple) {
                 super(tuple);
-                console.log('new float');
+                //console.log('new float');
                 this.element = document.createElement('div');
                 this.element.classList.add('float');
                 this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
@@ -751,7 +794,7 @@ var space = (function () {
             }
         }
         outer_space.float = float;
-        class region extends thing {
+        class region extends obj {
             constructor(tuple, radius) {
                 super(tuple);
                 this.radius = radius;
@@ -771,7 +814,7 @@ var space = (function () {
             }
         }
         outer_space.region = region;
-        class ping extends thing {
+        class ping extends obj {
             constructor() {
                 super([{}, -1, [0, 0], 'ping', 'ping']);
                 this.enabled = false;

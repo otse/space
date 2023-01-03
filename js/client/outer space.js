@@ -48,7 +48,7 @@ var outer_space;
         outer_space.renderer.onclick = (event) => {
             if (!started)
                 return;
-            console.log('clicked map');
+            console.log(' clicked map ');
             let pixel = [event.clientX, event.clientY];
             let unit = unproject(pixel);
             outer_space.marker.tuple[2] = unit;
@@ -74,7 +74,7 @@ var outer_space;
     outer_space.init = init;
     var started;
     var fetcher;
-    outer_space.things = [];
+    outer_space.objs = [];
     function start() {
         if (!started) {
             console.log(' outer space start ');
@@ -88,9 +88,10 @@ var outer_space;
     outer_space.start = start;
     function stop() {
         if (started) {
-            let i = outer_space.things.length;
+            let i = outer_space.objs.length;
             while (i--)
-                outer_space.things[i].remove();
+                outer_space.objs[i].remove();
+            outer_space.objs = [];
             outer_space.you = undefined;
             outer_space.marker = undefined;
             started = false;
@@ -114,10 +115,10 @@ var outer_space;
             reg.stamp = -1;
         }
     }
-    function get_thing_by_id(id) {
-        for (const joint of outer_space.things)
-            if (id == joint.tuple[1])
-                return joint;
+    function get_obj_by_id(id) {
+        for (const obj of outer_space.objs)
+            if (id == obj.tuple[1])
+                return obj;
     }
     function handle_you(object, float) {
         const [random] = object;
@@ -135,7 +136,7 @@ var outer_space;
             const objects = tuple[1];
             for (const object of objects) {
                 const [random, id, pos, type, name] = object;
-                let bee = get_thing_by_id(id);
+                let bee = get_obj_by_id(id);
                 if (bee) {
                     //bee.tuple[2] = pos;
                     bee.tween_pos = pos;
@@ -147,7 +148,7 @@ var outer_space;
                 }
                 bee.stamp = outer_space.stamp;
             }
-            thing.check();
+            obj.check();
             right_bar.on_fetch();
             console.log('fetched');
             fetcher = setTimeout(fetch, 2000);
@@ -164,51 +165,55 @@ var outer_space;
         }
         const multiplier = outer_space.pixelMultiple / zoom_max;
         const increment = 10 * multiplier;
-        if (app.wheel == 1)
-            outer_space.pixelMultiple += increment;
-        if (app.wheel == -1)
-            outer_space.pixelMultiple -= increment;
+        if (!right_bar.toggler.hovering) {
+            if (app.wheel == 1)
+                outer_space.pixelMultiple += increment;
+            if (app.wheel == -1)
+                outer_space.pixelMultiple -= increment;
+        }
         outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
         outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
-        thing.steps();
+        obj.steps();
         right_bar.step();
     }
     outer_space.step = step;
-    class thing {
+    class obj {
         constructor(tuple) {
             this.tuple = tuple;
             this.stamp = 0;
             this.tween_pos = [0, 0];
-            outer_space.things.push(this);
+            this.lost = false;
+            outer_space.objs.push(this);
         }
         append() {
             outer_space.renderer.append(this.element);
         }
         remove() {
-            outer_space.things.splice(outer_space.things.indexOf(this), 1);
             this.element.remove();
+            this.lost = true;
         }
         has_old_stamp() {
             if (this.stamp != -1 && this.stamp != outer_space.stamp) {
-                console.log(` thing went out of lod ! `, this.stamp, outer_space.stamp);
+                console.log(` obj went out of lod ! `, this.stamp, outer_space.stamp);
                 return true;
             }
         }
         static check() {
-            let i = outer_space.things.length;
+            let i = outer_space.objs.length;
             while (i--) {
-                const thing = outer_space.things[i];
-                if (thing.has_old_stamp()) {
-                    thing.remove();
+                const obj = outer_space.objs[i];
+                if (obj.has_old_stamp()) {
+                    obj.remove();
+                    outer_space.objs.splice(i, 1);
                 }
             }
         }
         static steps() {
-            for (const thing of outer_space.things)
-                thing.step();
+            for (const obj of outer_space.objs)
+                obj.step();
         }
         step() {
-            if (thing.focus == this && outer_space.marker.sticky == this)
+            if (obj.focus == this && outer_space.marker.sticky == this)
                 outer_space.marker.tuple[2] = this.tuple[2];
             if (!pts.together(this.tween_pos))
                 this.tween_pos = this.tuple[2];
@@ -229,8 +234,8 @@ var outer_space;
             this.element.onclick = (event) => {
                 var _a;
                 event.stopPropagation();
-                (_a = thing.focus) === null || _a === void 0 ? void 0 : _a.blur();
-                thing.focus = this;
+                (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
+                obj.focus = this;
                 this.focus();
                 outer_space.marker.enabled = true;
                 outer_space.marker.sticky = this;
@@ -238,17 +243,17 @@ var outer_space;
                 selected_item.instance.toggler.open();
                 //overview.instance.toggler.close();
                 //marker!.enabled = false;
-                console.log('clicked thing');
+                console.log('clicked obj');
                 //this.element.innerHTML = 'clicked';
                 return true;
             };
         }
     }
-    outer_space.thing = thing;
-    class float extends thing {
+    outer_space.obj = obj;
+    class float extends obj {
         constructor(tuple) {
             super(tuple);
-            console.log('new float');
+            //console.log('new float');
             this.element = document.createElement('div');
             this.element.classList.add('float');
             this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
@@ -264,7 +269,7 @@ var outer_space;
         }
     }
     outer_space.float = float;
-    class region extends thing {
+    class region extends obj {
         constructor(tuple, radius) {
             super(tuple);
             this.radius = radius;
@@ -284,7 +289,7 @@ var outer_space;
         }
     }
     outer_space.region = region;
-    class ping extends thing {
+    class ping extends obj {
         constructor() {
             super([{}, -1, [0, 0], 'ping', 'ping']);
             this.enabled = false;

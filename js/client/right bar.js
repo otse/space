@@ -20,6 +20,12 @@ var right_bar;
             this.begin = document.querySelector(`x-right-bar x-begin:nth-of-type(${index})`);
             this.title = this.begin.querySelector('x-title');
             this.content = this.begin.querySelector('x-content');
+            this.begin.onmouseover = () => {
+                toggler.hovering = true;
+            };
+            this.begin.onmouseleave = () => {
+                toggler.hovering = false;
+            };
             this.begin.classList.add(name);
             this.title.onclick = () => {
                 this.opened = !this.opened;
@@ -52,6 +58,7 @@ var right_bar;
             (_a = this.behavior) === null || _a === void 0 ? void 0 : _a.on_step();
         }
     }
+    toggler.hovering = false;
     right_bar.toggler = toggler;
     function init() {
         right_bar.element = document.querySelector('x-right-bar');

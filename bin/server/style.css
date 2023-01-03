@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Major+Mono+Display&family=Poppins:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Open+Sans&family=Poppins:wght@400;600&family=Source+Code+Pro&family=Space+Mono&display=swap');
 
 body {
 	background-color: #353f48;
@@ -33,11 +33,14 @@ nav-bar {
 	z-index: 3;
 	position: relative;
 	color: #e2e2e2;
-	height: 50px;
+	height: 60px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: rgb(0 81 127 / 85%);
+    background: rgb(23 27 28 / 50%);
+	-webkit-backdrop-filter: blur(2px);
+	backdrop-filter: blur(2px);
+	bborder-bottom: 1px solid #2c4b6b;
 	bbackground: linear-gradient(90deg, rgb(61 65 68 / 50%) 50%, rgb(66 103 125 / 50%) 100%);
 }
 
@@ -45,8 +48,8 @@ nav-bar-left {
 	align-content: center;
 	display: flex;
 	align-items: center;
-	height: 50px;
-	background: linear-gradient(90deg, rgb(24 89 141) 0%, rgb(11 73 109 / 0%) 100%);
+	height: inherit;
+    background: linear-gradient(90deg, rgb(19 31 37) 0%, rgb(11 73 109 / 0%) 100%);
 }
 
 nav-bar-left menu-button {

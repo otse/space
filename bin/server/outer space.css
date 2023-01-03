@@ -6,8 +6,8 @@ outer-space {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	font-family: courier;
-	font-size: 12px;
+	font-family: 'Space Mono';
+	font-size: 11px;
 	color: lightgray;
 }
 
@@ -59,7 +59,7 @@ outer-space .float span:nth-child(2):hover {
 }
 
 outer-space .region {
-	font-family: 'Inconsolata';
+	font-family: 'Space Mono';
 	font-size: 18px;
 	z-index: 1;
 	user-select: none;
@@ -67,7 +67,7 @@ outer-space .region {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	color: gray;
+	ccolor: gray;
 	position: absolute;
 	/*background: rgba(127, 127, 127, 0.05);*/
 	border-radius: 100%;

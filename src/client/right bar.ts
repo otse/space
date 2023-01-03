@@ -19,6 +19,7 @@ namespace right_bar {
 	}
 
 	export class toggler {
+		static hovering = false
 		opened = false
 		begin: HTMLElement
 		title: HTMLElement
@@ -29,6 +30,14 @@ namespace right_bar {
 			this.begin = document.querySelector(`x-right-bar x-begin:nth-of-type(${index})`)!;
 			this.title = this.begin.querySelector('x-title')!;
 			this.content = this.begin.querySelector('x-content')!;
+
+			this.begin.onmouseover = () => {
+				toggler.hovering = true;
+			}
+
+			this.begin.onmouseleave = () => {
+				toggler.hovering = false;
+			}
 
 			this.begin.classList.add(name);
 

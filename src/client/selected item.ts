@@ -17,16 +17,25 @@ class selected_item extends right_bar.toggler_behavior {
     }
     override on_step() {
         let text = '';
-        if (outer_space.thing.focus) {
-            text += `
-                pos: [ ${pts.to_string(outer_space.thing.focus!.tuple[2], 2)} ]<br />
-                type: ${outer_space.thing.focus!.tuple[3]}<br />
-                name: ${outer_space.thing.focus!.tuple[4]}
+        const obj = outer_space.obj.focus;
+        if (obj) {
+            if (obj.lost) {
+                text += ' ~~ Lost ~~';
+            }
+            else {
+                text += `
+                pos: [ ${pts.to_string(obj.tuple[2], 2)} ]<br />
+                type: ${obj.tuple[3]}<br />
+                name: ${obj.tuple[4]}
 			`;
+                text += `
+                <br />
+                <x-button>mine</x-button>
+                `;
+            }
         }
-        else
-        {
-            text += 'n/a';
+        else {
+            text += 'N/A';
         }
         this.toggler.content.innerHTML = text;
     }

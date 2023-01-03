@@ -1,3 +1,4 @@
+import pts from "../shared/pts";
 import outer_space from "./outer space";
 import right_bar from "./right bar";
 class item {
@@ -11,14 +12,30 @@ function truncate(string, limit) {
         return string;
     return string.slice(0, limit) + '...';
 }
+class tab {
+    constructor(parent, name, index) {
+        this.parent = parent;
+        this.name = name;
+        tab.tabs.push(this);
+        this.element = this.parent.toggler.content.querySelector(`x-tab:nth-of-type(${index})`);
+        this.element.onclick = () => {
+            tab.select(this);
+            overview.instance.on_fetch();
+        };
+    }
+    static select(which) {
+        var _a;
+        (_a = tab.active) === null || _a === void 0 ? void 0 : _a.element.classList.remove('selected');
+        tab.active = which;
+        tab.active.element.classList.add('selected');
+    }
+}
+tab.tabs = [];
 class overview extends right_bar.toggler_behavior {
     constructor(toggler) {
         super(toggler);
         this.items = [];
         overview.instance = this;
-    }
-    on_open() {
-        //this.on_fetch();
         let text = '';
         text += `
 			<x-tabs>
@@ -28,56 +45,61 @@ class overview extends right_bar.toggler_behavior {
 				<x-tab>
 					Mining
 				</x-tab>
+				<x-tab>
+					Junk
+				</x-tab>
 			</x-tabs>
-			<x-inner-content>
-				Nothing here yet
-			</x-inner-content>
+			<x-outer-content>
+				<x-inner-content>
+					Nothing here yet
+				</x-inner-content>
+			</x-outer-content>
 		`;
         this.toggler.content.innerHTML = text;
-        this.tabs = this.toggler.content.querySelector('x-tabs');
-        this.inner_content = this.toggler.content.querySelector('x-inner-content');
-        this.general = this.toggler.content.querySelector('x-tab:nth-of-type(1)');
-        this.mining = this.toggler.content.querySelector('x-tab:nth-of-type(2)');
-        this.setup_tab(this.general);
-        this.setup_tab(this.mining);
-        this.select_tab(this.general);
-        console.log('x-tabs', this.tabs);
-        console.log('x-inner-content', this.inner_content);
+        this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
+        new tab(this, 'General', 1);
+        new tab(this, 'Mining', 2);
+        tab.select(tab.tabs[0]);
+        console.log('x-inner-content', this.x_inner_content);
     }
-    setup_tab(element) {
-        element.onclick = () => {
-            this.select_tab(element);
-        };
-    }
-    select_tab(element) {
-        if (this.active_tab)
-            this.active_tab.classList.remove('selected');
-        this.active_tab = element;
-        this.active_tab.classList.add('selected');
+    on_open() {
+        this.on_fetch();
     }
     on_close() {
         this.items = [];
     }
     on_fetch() {
+        var _a, _b;
         // <x-horizontal-rule></x-horizontal-rule>
         let text = '';
         text += `
 			<table>
 			<thead>
 			<tr>
-			<td>dist</td>
-			<td>name</td>
-			<td>type</td>
+			<td>Dist</td>
+			<td>Name</td>
+			<td>Type</td>
 			</tr>
 			</thead>
 			<tbody>
 		`;
-        for (const thing of outer_space.things) {
+        const copy = outer_space.objs.slice();
+        for (const obj of outer_space.objs) {
+            const type = obj.tuple[3];
+            if (((_a = tab.active) === null || _a === void 0 ? void 0 : _a.name) == 'General') {
+                if (!(type.includes('ply')))
+                    continue;
+            }
+            else if (((_b = tab.active) === null || _b === void 0 ? void 0 : _b.name) == 'Mining') {
+                if (!(type.includes('rock') || type.includes('debris')))
+                    continue;
+            }
+            const dist = pts.dist(outer_space.center, obj.tuple[2]);
             text += `
 				<tr>
-				<td>1km</td>
-				<td>${truncate(thing.tuple[4], 10)}</td>
-				<td>${thing.tuple[3]}</td>
+				<td>${dist.toFixed(2)} km</td>
+				<td>${truncate(obj.tuple[4], 10)}</td>
+				<td>${obj.tuple[3]}</td>
 				</tr>
 			`;
             //console.log('woo', thing.tuple[4]);
@@ -87,11 +109,11 @@ class overview extends right_bar.toggler_behavior {
 			</tbody>
 			</table>
 		`;
-        this.inner_content.innerHTML = text;
+        this.x_inner_content.innerHTML = text;
     }
     produce_items() {
-        for (const thing of outer_space.things) {
-            let ite = new item(thing);
+        for (const obj of outer_space.objs) {
+            let ite = new item(obj);
             this.items.push(ite);
         }
     }
