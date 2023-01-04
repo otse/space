@@ -9,7 +9,7 @@ import selected_item from "./selected item";
 namespace outer_space {
 
 	const deduct_nav_bar = 50 / 2;
-	const zoom_min = 5;
+	const zoom_min = 0.1;
 	const zoom_max = 120;
 
 	export var renderer, zoomLevel;

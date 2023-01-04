@@ -12,7 +12,7 @@ outer-space {
 }
 
 outer-space zoom-level {
-	font-family: 'Inconsolata';
+	font-family: 'Space Mono';
 	display: block;
 	z-index: 3;
 	position: absolute;

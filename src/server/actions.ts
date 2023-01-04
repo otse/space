@@ -10,7 +10,7 @@ namespace actions {
 
 		if (q.pathname == '/follow') {
 			const id = q.query.id;
-			console.log('we want to follow obj ', id);
+			console.log('we want to follow obj', id);
 			res.end('1');
 			return true;
 		}

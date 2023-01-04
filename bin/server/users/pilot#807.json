@@ -1,0 +1,16 @@
+{
+    "id": 807,
+    "ip": "::1",
+    "guest": true,
+    "dormant": false,
+    "username": "pilot#807",
+    "password": "N/A",
+    "pos": [
+        0,
+        0
+    ],
+    "goto": [
+        0,
+        0
+    ]
+}

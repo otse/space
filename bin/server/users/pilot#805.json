@@ -1,9 +1,9 @@
 {
-    "id": 804,
-    "ip": "::1",
+    "id": 805,
+    "ip": "::ffff:192.168.2.1",
     "guest": true,
     "dormant": false,
-    "username": "pilot#804",
+    "username": "pilot#805",
     "password": "N/A",
     "pos": [
         0,

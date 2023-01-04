@@ -120,6 +120,15 @@ x-right-bar x-begin x-content table {
 x-right-bar x-begin x-content td {
   padding: 0 6px;
 }
+x-right-bar x-begin x-content td x-center {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+x-right-bar x-begin x-content td x-center span {
+  font-family: 'Material Symbols Outlined';
+  font-size: 16px;
+}
 x-right-bar x-begin x-content thead td {
   border-left: 1px solid #ababab;
   border-bottom: 1px solid #ababab;

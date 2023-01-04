@@ -32,12 +32,13 @@ canvas {
 nav-bar {
 	z-index: 3;
 	position: relative;
-	color: #e2e2e2;
-	height: 60px;
+    color: #565656;
+	height: 50px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-    background: rgb(23 27 28 / 50%);
+	background: rgb(0 42 53 / 50%);
+	background: url(tex/bg.png);
 	-webkit-backdrop-filter: blur(2px);
 	backdrop-filter: blur(2px);
 	bborder-bottom: 1px solid #2c4b6b;
@@ -45,11 +46,12 @@ nav-bar {
 }
 
 nav-bar-left {
-	align-content: center;
-	display: flex;
+	background: linear-gradient(90deg, rgb(208 208 208) 0%, rgb(11 73 109 / 0%) 100%);
+	wwidth: 50%;
 	align-items: center;
 	height: inherit;
-    background: linear-gradient(90deg, rgb(19 31 37) 0%, rgb(11 73 109 / 0%) 100%);
+	display: flex;
+	align-content: center;
 }
 
 nav-bar-left menu-button {
@@ -67,11 +69,12 @@ nav-bar-left my-logo span:nth-child(1) {
 	cursor: pointer;
 	display: inline-block;
 	font-family: 'Major Mono Display';
-	ccolor: #e8e8e8;
 	font-weight: 600;
-	font-size: 16px;
+	font-size: 13px;
 	letter-spacing: 2px;
 	margin-left: 0ex;
+	bborder-left: 1px solid #445d7a;
+	bborder-right: 1px solid #445d7a;
 }
 
 .shaded {
@@ -82,6 +85,8 @@ nav-bar-right {
 	display: inline-block;
 	font-size: 16px;
 	padding: 10px;
+	font-family: 'Space Mono';
+    font-size: 14px;
 }
 
 nav-bar-right .start-playing {
@@ -133,7 +138,7 @@ side-bar {
 	height: 100%;
 	padding: 20px;
 	box-sizing: border-box;
-    background: #dadada;
+	background: #dadada;
 	color: #313131;
 	display: flex;
 	align-items: flex-start;
@@ -151,12 +156,12 @@ side-bar-content .button {
 }
 
 side-bar close-button {
-    display: inline-block;
+	display: inline-block;
 	cursor: pointer;
-    font-family: 'Material Symbols Outlined';
-    font-size: 24px;
-    padding: 5px;
-    bborder: 2px solid white;
+	font-family: 'Material Symbols Outlined';
+	font-size: 24px;
+	padding: 5px;
+	bborder: 2px solid white;
 }
 
 /* end nav bar */
@@ -184,7 +189,7 @@ my-intro {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	height: calc(100% - 50px);
+	height: calc(100% - 60px);
 	box-sizing: border-box;
 	perspective: 350px;
 }
@@ -333,7 +338,7 @@ span.facilities {}
 	cursor: pointer;
 	/* padding: 0 10px; */
 	border-radius: 4px;
-    border: 2px solid #348ad87d !important;
+	border: 2px solid #348ad87d !important;
 }
 
 span.span-button {

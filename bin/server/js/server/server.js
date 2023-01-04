@@ -85,6 +85,12 @@ function init() {
             res.end(style);
             return;
         }
+        else if (req.url == '/tex/bg.png') {
+            let style = fs.readFileSync('tex/bg.png');
+            res.writeHead(200, { CONTENT_TYPE: "image/png" });
+            res.end(style);
+            return;
+        }
         else if (req.url == '/outer%20space.css') {
             let style = fs.readFileSync('outer space.css');
             res.writeHead(200, { CONTENT_TYPE: "text/css" });

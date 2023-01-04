@@ -24,15 +24,19 @@ class selected_item extends right_bar.toggler_behavior {
             this.build_lost();
         else if (this.built_obj != obj)
             this.build_once();
-        this.update_pos();
+        this.update_teller();
     }
-    update_pos() {
+    update_teller() {
         const obj = outer_space.obj.focus;
         if (!obj)
             return;
         const x_pos = this.toggler.content.querySelector('x-pos');
         if (x_pos) {
-            x_pos.innerHTML = `pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
+            x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
+        }
+        const x_dist = this.toggler.content.querySelector('x-dist');
+        if (x_dist) {
+            x_dist.innerHTML = `Dist: <span>${pts.dist(outer_space.center, obj.tuple[2]).toFixed(2)} Km</span>`;
         }
     }
     build_lost() {
@@ -50,9 +54,10 @@ class selected_item extends right_bar.toggler_behavior {
             }
             else {
                 text += `
-					name: ${obj.tuple[4]}<br />
-					type: ${obj.tuple[3]}<br />
+					Name: ${obj.tuple[4]}<br />
+					Type: ${obj.tuple[3]}<br />
 					<x-pos></x-pos>
+					<x-dist></x-dist>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
 			`;

@@ -10,7 +10,7 @@ var actions;
         const q = url.parse(req.url, true);
         if (q.pathname == '/follow') {
             const id = q.query.id;
-            console.log('we want to follow obj ', id);
+            console.log('we want to follow obj', id);
             res.end('1');
             return true;
         }

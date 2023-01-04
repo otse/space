@@ -16,7 +16,7 @@ import selected_item from "./selected item";
 var outer_space;
 (function (outer_space) {
     const deduct_nav_bar = 50 / 2;
-    const zoom_min = 5;
+    const zoom_min = 0.1;
     const zoom_max = 120;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
