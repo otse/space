@@ -7,6 +7,10 @@ class item {
         this.faded = false;
     }
 }
+// from SO
+function is_overflown(element) {
+    return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+}
 function truncate(string, limit) {
     if (string.length <= limit)
         return string;
@@ -46,14 +50,14 @@ class overview extends right_bar.toggler_behavior {
 			<x-tab>
 				Mining
 			</x-tab>
-
+			<x-scrollable>arrow_downward</x-scrollable>
 			</x-tabs>
 			<x-outer-content>
 			<x-inner-content>
 			<table>
 			<thead>
 			<tr>
-			<td><x-center>Dist <span>arrow_drop_down</span></x-center></td>
+			<td><x-sorter data-a="dist">Dist <span>arrow_drop_up</span></x-sorter></td>
 			<td>Name</td>
 			<td>Type</td>
 			</tr>
@@ -67,6 +71,7 @@ class overview extends right_bar.toggler_behavior {
         this.toggler.content.innerHTML = text;
         this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
         this.tbody = this.toggler.content.querySelector('tbody');
+        this.scrollable = this.toggler.content.querySelector('x-scrollable');
         new tab(this, 'General', 1);
         new tab(this, 'Mining', 2);
         tab.select(tab.tabs[0]);
@@ -78,6 +83,8 @@ class overview extends right_bar.toggler_behavior {
     }
     on_close() {
         this.items = [];
+    }
+    on_step() {
     }
     on_fetch() {
         this.build_table();
@@ -100,7 +107,7 @@ class overview extends right_bar.toggler_behavior {
             }
             const dist = pts.dist(outer_space.center, obj.tuple[2]);
             table += `
-				<tr>
+				<tr data-a="row">
 				<td>${dist.toFixed(2)} km</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
@@ -110,6 +117,17 @@ class overview extends right_bar.toggler_behavior {
             //this.do_once = false;
         }
         this.tbody.innerHTML = table;
+        if (is_overflown(this.x_inner_content)) {
+            this.scrollable.style.display = 'block';
+        }
+        else {
+            this.scrollable.style.display = 'none';
+        }
+        for (const obj of copy) {
+            const tr = this.tbody.querySelector('tr');
+            tr.onclick = () => {
+            };
+        }
     }
     produce_items() {
         for (const obj of outer_space.objs) {

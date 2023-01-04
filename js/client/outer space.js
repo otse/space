@@ -185,6 +185,18 @@ var outer_space;
         right_bar.step();
     }
     outer_space.step = step;
+    function focus_obj(target) {
+        var _a;
+        (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
+        obj.focus = target;
+        target.focus();
+        outer_space.marker.enabled = true;
+        outer_space.marker.sticky = target;
+        selected_item.instance.toggler.open();
+        console.log('focus on obj');
+        return true;
+    }
+    outer_space.focus_obj = focus_obj;
     class element {
         constructor() {
         }
@@ -246,19 +258,8 @@ var outer_space;
         }
         attach_onclick() {
             this.element.onclick = (event) => {
-                var _a;
                 event.stopPropagation();
-                (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
-                obj.focus = this;
-                this.focus();
-                outer_space.marker.enabled = true;
-                outer_space.marker.sticky = this;
-                outer_space.marker.tuple[2] = this.tuple[2];
-                selected_item.instance.toggler.open();
-                //overview.instance.toggler.close();
-                //marker!.enabled = false;
-                console.log('clicked obj');
-                //this.element.innerHTML = 'clicked';
+                focus_obj(this);
                 return true;
             };
         }

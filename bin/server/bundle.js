@@ -367,6 +367,10 @@ var space = (function () {
             this.faded = false;
         }
     }
+    // from SO
+    function is_overflown(element) {
+        return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+    }
     function truncate(string, limit) {
         if (string.length <= limit)
             return string;
@@ -406,14 +410,14 @@ var space = (function () {
 			<x-tab>
 				Mining
 			</x-tab>
-
+			<x-scrollable>arrow_downward</x-scrollable>
 			</x-tabs>
 			<x-outer-content>
 			<x-inner-content>
 			<table>
 			<thead>
 			<tr>
-			<td><x-center>Dist <span>arrow_drop_down</span></x-center></td>
+			<td><x-sorter data-a="dist">Dist <span>arrow_drop_up</span></x-sorter></td>
 			<td>Name</td>
 			<td>Type</td>
 			</tr>
@@ -427,6 +431,7 @@ var space = (function () {
             this.toggler.content.innerHTML = text;
             this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
             this.tbody = this.toggler.content.querySelector('tbody');
+            this.scrollable = this.toggler.content.querySelector('x-scrollable');
             new tab(this, 'General', 1);
             new tab(this, 'Mining', 2);
             tab.select(tab.tabs[0]);
@@ -438,6 +443,8 @@ var space = (function () {
         }
         on_close() {
             this.items = [];
+        }
+        on_step() {
         }
         on_fetch() {
             this.build_table();
@@ -460,7 +467,7 @@ var space = (function () {
                 }
                 const dist = pts.dist(outer_space$1.center, obj.tuple[2]);
                 table += `
-				<tr>
+				<tr data-a="row">
 				<td>${dist.toFixed(2)} km</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
@@ -470,6 +477,17 @@ var space = (function () {
                 //this.do_once = false;
             }
             this.tbody.innerHTML = table;
+            if (is_overflown(this.x_inner_content)) {
+                this.scrollable.style.display = 'block';
+            }
+            else {
+                this.scrollable.style.display = 'none';
+            }
+            for (const obj of copy) {
+                const tr = this.tbody.querySelector('tr');
+                tr.onclick = () => {
+                };
+            }
         }
         produce_items() {
             for (const obj of outer_space$1.objs) {
@@ -758,6 +776,18 @@ var space = (function () {
             right_bar$1.step();
         }
         outer_space.step = step;
+        function focus_obj(target) {
+            var _a;
+            (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
+            obj.focus = target;
+            target.focus();
+            outer_space.marker.enabled = true;
+            outer_space.marker.sticky = target;
+            selected_item.instance.toggler.open();
+            console.log('focus on obj');
+            return true;
+        }
+        outer_space.focus_obj = focus_obj;
         class element {
             constructor() {
             }
@@ -819,19 +849,8 @@ var space = (function () {
             }
             attach_onclick() {
                 this.element.onclick = (event) => {
-                    var _a;
                     event.stopPropagation();
-                    (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
-                    obj.focus = this;
-                    this.focus();
-                    outer_space.marker.enabled = true;
-                    outer_space.marker.sticky = this;
-                    outer_space.marker.tuple[2] = this.tuple[2];
-                    selected_item.instance.toggler.open();
-                    //overview.instance.toggler.close();
-                    //marker!.enabled = false;
-                    console.log('clicked obj');
-                    //this.element.innerHTML = 'clicked';
+                    focus_obj(this);
                     return true;
                 };
             }

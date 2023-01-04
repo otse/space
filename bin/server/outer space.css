@@ -39,7 +39,7 @@ outer-space .float {
 
 outer-space .float.you {
 	text-decoration: underline;
-	color: orange;
+	color: #68bfcd;
 }
 
 outer-space .float span:nth-child(1) {

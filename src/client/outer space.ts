@@ -211,6 +211,17 @@ namespace outer_space {
 		right_bar.step();
 	}
 
+	export function focus_obj(target: obj) {
+		obj.focus?.blur();
+		obj.focus = target;
+		target.focus();
+		marker!.enabled = true;
+		marker!.sticky = target;
+		selected_item.instance.toggler.open();
+		console.log('focus on obj');
+		return true;
+	}
+
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
 	export class element {
@@ -282,17 +293,7 @@ namespace outer_space {
 		attach_onclick() {
 			this.element.onclick = (event) => {
 				event.stopPropagation();
-				obj.focus?.blur();
-				obj.focus = this;
-				this.focus();
-				marker!.enabled = true;
-				marker!.sticky = this;
-				marker!.tuple[2] = this.tuple[2];
-				selected_item.instance.toggler.open();
-				//overview.instance.toggler.close();
-				//marker!.enabled = false;
-				console.log('clicked obj');
-				//this.element.innerHTML = 'clicked';
+				focus_obj(this);
 				return true;
 			}
 		}

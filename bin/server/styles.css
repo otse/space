@@ -14,7 +14,6 @@ x-right-bar {
   user-select: none;
 }
 x-right-bar x-begin {
-  cursor: pointer;
   font-family: 'Space Mono';
   font-size: 13px;
   bbackground: hsla(0, 0%, 50%, 0.2);
@@ -25,6 +24,7 @@ x-right-bar x-begin {
   flex-direction: column;
 }
 x-right-bar x-begin x-title {
+  cursor: pointer;
   padding: 8px;
   color: darkseagreen;
   color: #85c685;
@@ -76,8 +76,10 @@ x-right-bar x-begin x-content x-button:hover {
 }
 x-right-bar x-begin x-content x-tabs {
   display: flex;
+  align-items: center;
 }
 x-right-bar x-begin x-content x-tab {
+  cursor: pointer;
   display: flex;
   padding: 2px 6px;
   border: 1px solid rgba(255, 255, 255, 0.33);
@@ -95,6 +97,23 @@ x-right-bar x-begin x-content x-tab.selected {
 x-right-bar x-begin x-content x-tab:not(.selected) {
   border: 1px solid transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.33);
+}
+x-right-bar x-begin x-content x-scrollable {
+  position: absolute;
+  right: 0;
+  font-family: 'Material Symbols Outlined';
+  font-size: 12px;
+  display: flex;
+  margin: 0 10px;
+  animation: 0.5s linear 0s infinite alternate overflow-pulse;
+}
+@keyframes overflow-pulse {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 x-right-bar x-begin x-content x-outer-content {
   display: flex;
@@ -120,23 +139,23 @@ x-right-bar x-begin x-content table {
 x-right-bar x-begin x-content td {
   padding: 0 6px;
 }
-x-right-bar x-begin x-content td x-center {
+x-right-bar x-begin x-content td x-sorter {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-x-right-bar x-begin x-content td x-center span {
+x-right-bar x-begin x-content td x-sorter span {
   font-family: 'Material Symbols Outlined';
   font-size: 16px;
 }
 x-right-bar x-begin x-content thead td {
-  border-left: 1px solid #ababab;
-  border-bottom: 1px solid #ababab;
+  bborder-left: 1px solid #ababab;
+  bborder-bottom: 1px solid #ababab;
 }
 x-right-bar x-begin x-content tbody td {
   bborder-right: 1px solid #ababab;
 }
-x-right-bar x-begin x-content tr:hover {
+x-right-bar x-begin x-content tbody tr:hover {
   background: rgba(139, 139, 139, 0.2);
 }
 x-right-bar x-begin.selected-item x-content {

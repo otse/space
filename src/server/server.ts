@@ -109,7 +109,7 @@ function init() {
 		}
 		else if (req.url == '/tex/bg.png') {
 			let style = fs.readFileSync('tex/bg.png');
-			res.writeHead(200, { CONTENT_TYPE: "image/png" });
+			res.writeHead(200, { CONTENT_TYPE: "image/png" }); 
 			res.end(style);
 			return;
 		}
