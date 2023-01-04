@@ -77,10 +77,11 @@ namespace right_bar {
 
 	export function start() {
 		element.innerHTML = `
+
 		<x-begin>
 			<x-title>
 				<span>rocket_launch</span>
-				<span>Selected Item</span>
+				<span>Selected</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -90,7 +91,7 @@ namespace right_bar {
 		<x-begin>
 			<x-title>
 				<span>sort</span>
-				<span>Overview</span>
+				<span>Objects</span>
 			</x-title>
 			<x-content>
 				boo-ya

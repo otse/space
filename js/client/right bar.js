@@ -67,10 +67,11 @@ var right_bar;
     right_bar.init = init;
     function start() {
         right_bar.element.innerHTML = `
+
 		<x-begin>
 			<x-title>
 				<span>rocket_launch</span>
-				<span>Selected Item</span>
+				<span>Selected</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -80,7 +81,7 @@ var right_bar;
 		<x-begin>
 			<x-title>
 				<span>sort</span>
-				<span>Overview</span>
+				<span>Objects</span>
 			</x-title>
 			<x-content>
 				boo-ya

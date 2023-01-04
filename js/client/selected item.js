@@ -53,24 +53,37 @@ class selected_item extends right_bar.toggler_behavior {
                 text += `~~ Lost ~~`;
             }
             else {
-                text += `
+                if (obj.is_type(['region'])) {
+                    text += `
+					Name: ${obj.tuple[4]}<br />
+					Type: ${obj.tuple[3]}<br />
+					Subtype: ${obj.tuple[0].subtype || 'generic'}<br />
+					Center: ${pts.to_string(obj.tuple[2], 2)}
+					
+					`;
+                }
+                else {
+                    text += `
 					Name: ${obj.tuple[4]}<br />
 					Type: ${obj.tuple[3]}<br />
 					<x-pos></x-pos>
 					<x-dist></x-dist>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
-			`;
-                text += `<x-button data-a="follow">Follow</x-button>`;
-                if (is_minable)
-                    text += `<x-button data-a="mine">Mine</x-button>`;
-                text += `</x-buttons>`;
+					`;
+                    text += `<x-button data-a="follow">Follow</x-button>`;
+                    if (is_minable)
+                        text += `<x-button data-a="mine">Mine</x-button>`;
+                    text += `</x-buttons>`;
+                }
                 this.toggler.content.innerHTML = text;
                 //this.update_pos();
                 const follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
-                follow_button.onclick = () => {
-                    space.action_follow_target(obj);
-                };
+                if (follow_button) {
+                    follow_button.onclick = () => {
+                        space.action_follow_target(obj);
+                    };
+                }
                 if (is_minable) {
                     const mine_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
                     mine_button.onclick = () => {

@@ -1,29 +1,23 @@
 [
 	{
 		"id": 1,
-		"name": "Small Belt",
+		"name": "Spoils",
 		"center": [0, 0],
 		"radius": 6,
-		"locations": [
-			"Dartwing",
-			"Generic Collision",
-			"Ungoverned Space"
-		]
+		"subtype": "Debris Field"
 	},
 	{
 		"id": 2,
 		"name": "Braze",
 		"center": [-10, -5],
 		"radius": 4,
-		"locations": [
-		]
+		"subtype": "Ore Field"
 	},
 	{
 		"id": 3,
 		"name": "Flint",
 		"center": [-4, -20],
 		"radius": 7,
-		"locations": [
-		]
+		"subtype": "Ore Field"
 }
 ]

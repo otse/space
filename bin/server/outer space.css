@@ -35,10 +35,21 @@ outer-space .float {
 	position: absolute;
 	margin-top: -0.5ex;
 	display: inline-flex;
+	animation: 2s ease-in 0s 1 alternate float-discover;
+}
+
+@keyframes float-discover {
+	from {
+		opacity: 0
+	}
+
+	to {
+		opacity: 1
+	}
 }
 
 outer-space .float.you {
-	text-decoration: underline;
+	ttext-decoration: underline;
 	color: #68bfcd;
 }
 
@@ -80,6 +91,10 @@ outer-space .region {
 	/* box-shadow: 0px 0px 50px hsl(0deg 0% 0% / 5%); */
 }
 
+outer-space .region.focus {
+	text-decoration: underline;
+}
+
 
 outer-space .ping {
 	display: flex;
@@ -104,7 +119,7 @@ outer-space .ping {
 		transform: rotateZ(135deg);
 		border-radius: 20%;
 	}
-	
+
 	to {
 		box-shadow: 0px 0px 5px white;
 		transform: rotateZ(-135deg);

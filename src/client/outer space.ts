@@ -8,7 +8,7 @@ import selected_item from "./selected item";
 
 namespace outer_space {
 
-	const deduct_nav_bar = 50 / 2;
+	const deduct_nav_bar = 60 / 2;
 	const zoom_min = 0.1;
 	const zoom_max = 120;
 
@@ -126,15 +126,16 @@ namespace outer_space {
 		//you.stamp = -1;
 
 		marker = new ping();
+		marker.obj.networked = false;
 
 		let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
 		collision.obj.stamp = -1;
 
 		for (let blob of space.regions) {
-			let dummy = new obj([{}, -1, blob.center, 'region', blob.name]);
+			let dummy = new obj([{ subtype: blob.subtype }, -1, blob.center, 'region', blob.name]);
 			let reg = new region(dummy, blob.radius);
 			dummy.element = reg;
-			reg.obj.stamp = -1
+			reg.obj.stamp = -1;
 		}
 	}
 
@@ -165,7 +166,7 @@ namespace outer_space {
 			if (bee) {
 				//bee.tuple[2] = pos;
 				bee.tween_pos = pos;
-				bee.element?.stylize();
+				//bee.element?.stylize();
 			}
 			else {
 				bee = new obj(object);
@@ -233,13 +234,13 @@ namespace outer_space {
 		static focus?: obj
 		element?: element
 		stamp = 0
+		networked = true
 		tween_pos: vec2 = [0, 0]
 		lost = false
 		constructor(
 			public tuple: tuple,
 		) {
 			objs.push(this);
-			//this.choose_element();
 		}
 		choose_element() {
 			if (this.is_type(['ply', 'rock', 'collision'])) {
@@ -272,27 +273,26 @@ namespace outer_space {
 			}
 		}
 		step() {
-			if (obj.focus == this && marker!.sticky?.obj == this)
-				marker!.obj.tuple[2] = this.tuple[2];
+			if (this.networked) {
+				if (obj.focus == this && marker!.sticky?.obj == this)
+					marker!.obj.tuple[2] = this.tuple[2];
 
-			if (!pts.together(this.tween_pos))
-				this.tween_pos = this.tuple[2];
+				if (!pts.together(this.tween_pos))
+					this.tween_pos = this.tuple[2];
 
-			const factor = app.delta / 2;
-			let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
-			this.tuple[2] = pts.add(this.tuple[2], tween);
-
+				const factor = app.delta / 2;
+				let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+				this.tuple[2] = pts.add(this.tuple[2], tween);
+			}
 			this.element?.stylize();
 		}
 
 	}
 
 	export class element {
-		obj: obj
-		element
-		constructor(obj: obj) {
-			this.obj = obj;
+		constructor(readonly obj: obj) {
 		}
+		element
 		append() {
 			renderer.append(this.element);
 		}
@@ -308,10 +308,9 @@ namespace outer_space {
 		stylize() {
 		}
 		step() {
-
 		}
-		attach_onclick() {
-			this.element.onclick = (event) => {
+		attach_onclick(element) {
+			element.onclick = (event) => {
 				event.stopPropagation();
 				focus_obj(this.obj);
 				return true;
@@ -322,11 +321,10 @@ namespace outer_space {
 	export class float extends element {
 		constructor(obj: obj) {
 			super(obj);
-			//console.log('new float');
 			this.element = document.createElement('div');
 			this.element.classList.add('float');
 			this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
-			this.attach_onclick();
+			this.attach_onclick(this.element);
 			this.stylize();
 			this.append();
 		}
@@ -345,6 +343,8 @@ namespace outer_space {
 			this.element = document.createElement('div');
 			this.element.classList.add('region');
 			this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
+			const span = this.element.querySelector('span');
+			this.attach_onclick(span);
 			this.stylize();
 			this.append();
 		}
@@ -362,11 +362,11 @@ namespace outer_space {
 	}
 
 	class ping extends element {
-		static obj: obj = new obj([{}, -1, [0, 0], 'ping', 'ping']);
 		sticky?: element
 		enabled = false
 		constructor() {
-			super(ping.obj);
+			super(new obj([{}, -1, [0, 0], 'ping', 'ping']));
+			this.obj.element = this;
 			this.obj.stamp = -1;
 			this.element = document.createElement('div');
 			this.element.classList.add('ping');

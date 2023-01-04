@@ -16,7 +16,7 @@ import right_bar_consumer from "./right bar consumer";
 import selected_item from "./selected item";
 var outer_space;
 (function (outer_space) {
-    const deduct_nav_bar = 50 / 2;
+    const deduct_nav_bar = 60 / 2;
     const zoom_min = 0.1;
     const zoom_max = 120;
     outer_space.mapSize = [100, 100];
@@ -111,10 +111,11 @@ var outer_space;
         //you = new float(-1, center, 'you', 'you');
         //you.stamp = -1;
         outer_space.marker = new ping();
+        outer_space.marker.obj.networked = false;
         let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
         collision.obj.stamp = -1;
         for (let blob of space.regions) {
-            let dummy = new obj([{}, -1, blob.center, 'region', blob.name]);
+            let dummy = new obj([{ subtype: blob.subtype }, -1, blob.center, 'region', blob.name]);
             let reg = new region(dummy, blob.radius);
             dummy.element = reg;
             reg.obj.stamp = -1;
@@ -136,7 +137,6 @@ var outer_space;
         }
     }
     function fetch() {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let tuple = yield space.make_request_json('GET', 'astronomical objects');
             if (!tuple)
@@ -149,7 +149,7 @@ var outer_space;
                 if (bee) {
                     //bee.tuple[2] = pos;
                     bee.tween_pos = pos;
-                    (_a = bee.element) === null || _a === void 0 ? void 0 : _a.stylize();
+                    //bee.element?.stylize();
                 }
                 else {
                     bee = new obj(object);
@@ -210,10 +210,10 @@ var outer_space;
         constructor(tuple) {
             this.tuple = tuple;
             this.stamp = 0;
+            this.networked = true;
             this.tween_pos = [0, 0];
             this.lost = false;
             outer_space.objs.push(this);
-            //this.choose_element();
         }
         choose_element() {
             if (this.is_type(['ply', 'rock', 'collision'])) {
@@ -248,13 +248,15 @@ var outer_space;
         }
         step() {
             var _a, _b;
-            if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
-                outer_space.marker.obj.tuple[2] = this.tuple[2];
-            if (!pts.together(this.tween_pos))
-                this.tween_pos = this.tuple[2];
-            const factor = app.delta / 2;
-            let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
-            this.tuple[2] = pts.add(this.tuple[2], tween);
+            if (this.networked) {
+                if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
+                    outer_space.marker.obj.tuple[2] = this.tuple[2];
+                if (!pts.together(this.tween_pos))
+                    this.tween_pos = this.tuple[2];
+                const factor = app.delta / 2;
+                let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+                this.tuple[2] = pts.add(this.tuple[2], tween);
+            }
             (_b = this.element) === null || _b === void 0 ? void 0 : _b.stylize();
         }
     }
@@ -279,8 +281,8 @@ var outer_space;
         }
         step() {
         }
-        attach_onclick() {
-            this.element.onclick = (event) => {
+        attach_onclick(element) {
+            element.onclick = (event) => {
                 event.stopPropagation();
                 focus_obj(this.obj);
                 return true;
@@ -291,11 +293,10 @@ var outer_space;
     class float extends element {
         constructor(obj) {
             super(obj);
-            //console.log('new float');
             this.element = document.createElement('div');
             this.element.classList.add('float');
             this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
-            this.attach_onclick();
+            this.attach_onclick(this.element);
             this.stylize();
             this.append();
         }
@@ -314,6 +315,8 @@ var outer_space;
             this.element = document.createElement('div');
             this.element.classList.add('region');
             this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
+            const span = this.element.querySelector('span');
+            this.attach_onclick(span);
             this.stylize();
             this.append();
         }
@@ -332,8 +335,9 @@ var outer_space;
     outer_space.region = region;
     class ping extends element {
         constructor() {
-            super(ping.obj);
+            super(new obj([{}, -1, [0, 0], 'ping', 'ping']));
             this.enabled = false;
+            this.obj.element = this;
             this.obj.stamp = -1;
             this.element = document.createElement('div');
             this.element.classList.add('ping');
@@ -352,6 +356,5 @@ var outer_space;
             this.stylize();
         }
     }
-    ping.obj = new obj([{}, -1, [0, 0], 'ping', 'ping']);
 })(outer_space || (outer_space = {}));
 export default outer_space;

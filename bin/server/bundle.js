@@ -312,10 +312,11 @@ var space = (function () {
         right_bar.init = init;
         function start() {
             right_bar.element.innerHTML = `
+
 		<x-begin>
 			<x-title>
 				<span>rocket_launch</span>
-				<span>Selected Item</span>
+				<span>Selected</span>
 			</x-title>
 			<x-content>
 				nothing to see here
@@ -325,7 +326,7 @@ var space = (function () {
 		<x-begin>
 			<x-title>
 				<span>sort</span>
-				<span>Overview</span>
+				<span>Objects</span>
 			</x-title>
 			<x-content>
 				boo-ya
@@ -561,24 +562,37 @@ var space = (function () {
                     text += `~~ Lost ~~`;
                 }
                 else {
-                    text += `
+                    if (obj.is_type(['region'])) {
+                        text += `
+					Name: ${obj.tuple[4]}<br />
+					Type: ${obj.tuple[3]}<br />
+					Subtype: ${obj.tuple[0].subtype || 'generic'}<br />
+					Center: ${pts.to_string(obj.tuple[2], 2)}
+					
+					`;
+                    }
+                    else {
+                        text += `
 					Name: ${obj.tuple[4]}<br />
 					Type: ${obj.tuple[3]}<br />
 					<x-pos></x-pos>
 					<x-dist></x-dist>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
-			`;
-                    text += `<x-button data-a="follow">Follow</x-button>`;
-                    if (is_minable)
-                        text += `<x-button data-a="mine">Mine</x-button>`;
-                    text += `</x-buttons>`;
+					`;
+                        text += `<x-button data-a="follow">Follow</x-button>`;
+                        if (is_minable)
+                            text += `<x-button data-a="mine">Mine</x-button>`;
+                        text += `</x-buttons>`;
+                    }
                     this.toggler.content.innerHTML = text;
                     //this.update_pos();
                     const follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
-                    follow_button.onclick = () => {
-                        space$1.action_follow_target(obj);
-                    };
+                    if (follow_button) {
+                        follow_button.onclick = () => {
+                            space$1.action_follow_target(obj);
+                        };
+                    }
                     if (is_minable) {
                         const mine_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
                         mine_button.onclick = () => {
@@ -621,7 +635,7 @@ var space = (function () {
     };
     var outer_space;
     (function (outer_space) {
-        const deduct_nav_bar = 50 / 2;
+        const deduct_nav_bar = 60 / 2;
         const zoom_min = 0.1;
         const zoom_max = 120;
         outer_space.mapSize = [100, 100];
@@ -714,10 +728,11 @@ var space = (function () {
             //you = new float(-1, center, 'you', 'you');
             //you.stamp = -1;
             outer_space.marker = new ping();
+            outer_space.marker.obj.networked = false;
             let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
             collision.obj.stamp = -1;
             for (let blob of space$1.regions) {
-                let dummy = new obj([{}, -1, blob.center, 'region', blob.name]);
+                let dummy = new obj([{ subtype: blob.subtype }, -1, blob.center, 'region', blob.name]);
                 let reg = new region(dummy, blob.radius);
                 dummy.element = reg;
                 reg.obj.stamp = -1;
@@ -739,7 +754,6 @@ var space = (function () {
             }
         }
         function fetch() {
-            var _a;
             return __awaiter$1(this, void 0, void 0, function* () {
                 let tuple = yield space$1.make_request_json('GET', 'astronomical objects');
                 if (!tuple)
@@ -752,7 +766,7 @@ var space = (function () {
                     if (bee) {
                         //bee.tuple[2] = pos;
                         bee.tween_pos = pos;
-                        (_a = bee.element) === null || _a === void 0 ? void 0 : _a.stylize();
+                        //bee.element?.stylize();
                     }
                     else {
                         bee = new obj(object);
@@ -813,10 +827,10 @@ var space = (function () {
             constructor(tuple) {
                 this.tuple = tuple;
                 this.stamp = 0;
+                this.networked = true;
                 this.tween_pos = [0, 0];
                 this.lost = false;
                 outer_space.objs.push(this);
-                //this.choose_element();
             }
             choose_element() {
                 if (this.is_type(['ply', 'rock', 'collision'])) {
@@ -851,13 +865,15 @@ var space = (function () {
             }
             step() {
                 var _a, _b;
-                if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
-                    outer_space.marker.obj.tuple[2] = this.tuple[2];
-                if (!pts.together(this.tween_pos))
-                    this.tween_pos = this.tuple[2];
-                const factor = app$1.delta / 2;
-                let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
-                this.tuple[2] = pts.add(this.tuple[2], tween);
+                if (this.networked) {
+                    if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
+                        outer_space.marker.obj.tuple[2] = this.tuple[2];
+                    if (!pts.together(this.tween_pos))
+                        this.tween_pos = this.tuple[2];
+                    const factor = app$1.delta / 2;
+                    let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+                    this.tuple[2] = pts.add(this.tuple[2], tween);
+                }
                 (_b = this.element) === null || _b === void 0 ? void 0 : _b.stylize();
             }
         }
@@ -882,8 +898,8 @@ var space = (function () {
             }
             step() {
             }
-            attach_onclick() {
-                this.element.onclick = (event) => {
+            attach_onclick(element) {
+                element.onclick = (event) => {
                     event.stopPropagation();
                     focus_obj(this.obj);
                     return true;
@@ -894,11 +910,10 @@ var space = (function () {
         class float extends element {
             constructor(obj) {
                 super(obj);
-                //console.log('new float');
                 this.element = document.createElement('div');
                 this.element.classList.add('float');
                 this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
-                this.attach_onclick();
+                this.attach_onclick(this.element);
                 this.stylize();
                 this.append();
             }
@@ -917,6 +932,8 @@ var space = (function () {
                 this.element = document.createElement('div');
                 this.element.classList.add('region');
                 this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
+                const span = this.element.querySelector('span');
+                this.attach_onclick(span);
                 this.stylize();
                 this.append();
             }
@@ -935,8 +952,9 @@ var space = (function () {
         outer_space.region = region;
         class ping extends element {
             constructor() {
-                super(ping.obj);
+                super(new obj([{}, -1, [0, 0], 'ping', 'ping']));
                 this.enabled = false;
+                this.obj.element = this;
                 this.obj.stamp = -1;
                 this.element = document.createElement('div');
                 this.element.classList.add('ping');
@@ -955,7 +973,6 @@ var space = (function () {
                 this.stylize();
             }
         }
-        ping.obj = new obj([{}, -1, [0, 0], 'ping', 'ping']);
     })(outer_space || (outer_space = {}));
     var outer_space$1 = outer_space;
 
