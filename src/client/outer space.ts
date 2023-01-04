@@ -134,7 +134,7 @@ namespace outer_space {
 		}
 	}
 
-	function get_obj_by_id(id) {
+	export function get_obj_by_id(id) {
 		for (const obj of objs)
 			if (id == obj.tuple[1])
 				return obj;

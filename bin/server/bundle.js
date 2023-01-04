@@ -450,7 +450,7 @@ var space = (function () {
             this.build_table();
         }
         build_table() {
-            var _a, _b;
+            var _a, _b, _c;
             let table = '';
             const copy = outer_space$1.objs.slice();
             const dist = (obj) => pts.dist(outer_space$1.center, obj.tuple[2]);
@@ -467,7 +467,7 @@ var space = (function () {
                 }
                 const dist = pts.dist(outer_space$1.center, obj.tuple[2]);
                 table += `
-				<tr data-a="row">
+				<tr data-a="${obj.tuple[1]}">
 				<td>${dist.toFixed(2)} km</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
@@ -484,8 +484,15 @@ var space = (function () {
                 this.scrollable.style.display = 'none';
             }
             for (const obj of copy) {
-                const tr = this.tbody.querySelector('tr');
+                const tr = this.tbody.querySelector(`tr[data-a="${obj.tuple[1]}"]`);
+                if (!tr)
+                    continue;
+                if (tr.dataset.a == ((_c = outer_space$1.obj.focus) === null || _c === void 0 ? void 0 : _c.tuple[1])) {
+                    tr.classList.add('selected');
+                }
                 tr.onclick = () => {
+                    tr.classList.add('selected');
+                    outer_space$1.focus_obj(obj);
                 };
             }
         }
@@ -711,6 +718,7 @@ var space = (function () {
                 if (id == obj.tuple[1])
                     return obj;
         }
+        outer_space.get_obj_by_id = get_obj_by_id;
         function handle_you(object, float) {
             const [random] = object;
             if (random.userId == space$1.sply.id) {

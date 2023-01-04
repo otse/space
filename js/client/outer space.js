@@ -120,6 +120,7 @@ var outer_space;
             if (id == obj.tuple[1])
                 return obj;
     }
+    outer_space.get_obj_by_id = get_obj_by_id;
     function handle_you(object, float) {
         const [random] = object;
         if (random.userId == space.sply.id) {

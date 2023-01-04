@@ -125,7 +125,7 @@ class overview extends right_bar.toggler_behavior {
 			}
 			const dist = pts.dist(outer_space.center, obj.tuple[2]);
 			table += `
-				<tr data-a="row">
+				<tr data-a="${obj.tuple[1]}">
 				<td>${dist.toFixed(2)} km</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
@@ -139,15 +139,20 @@ class overview extends right_bar.toggler_behavior {
 		if (is_overflown(this.x_inner_content)) {
 			this.scrollable.style.display = 'block';
 		}
-		else
-		{
+		else {
 			this.scrollable.style.display = 'none';
 		}
 
 		for (const obj of copy) {
-			const tr = this.tbody.querySelector('tr')!;
+			const tr = this.tbody.querySelector(`tr[data-a="${obj.tuple[1]}"]`)!;
+			if (!tr)
+				continue;
+			if (tr.dataset.a == outer_space.obj.focus?.tuple[1]) {
+				tr.classList.add('selected');
+			}
 			tr.onclick = () => {
-
+				tr.classList.add('selected');
+				outer_space.focus_obj(obj);
 			};
 		}
 	}

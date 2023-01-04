@@ -99,6 +99,7 @@ x-right-bar x-begin x-content x-tab:not(.selected) {
   border-bottom: 1px solid rgba(255, 255, 255, 0.33);
 }
 x-right-bar x-begin x-content x-scrollable {
+  display: block;
   position: absolute;
   right: 0;
   font-family: 'Material Symbols Outlined';
@@ -147,6 +148,9 @@ x-right-bar x-begin x-content td x-sorter {
 x-right-bar x-begin x-content td x-sorter span {
   font-family: 'Material Symbols Outlined';
   font-size: 16px;
+}
+x-right-bar x-begin x-content tr.selected {
+  text-decoration: underline;
 }
 x-right-bar x-begin x-content thead td {
   bborder-left: 1px solid #ababab;
