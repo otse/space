@@ -59,7 +59,7 @@ namespace outer_space {
 
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
-			marker!.tuple[2] = unit;
+			marker!.obj.tuple[2] = unit;
 			marker!.enabled = true;
 			marker!.sticky = undefined;
 			//selected_item.instance.toggler.close();
@@ -76,6 +76,8 @@ namespace outer_space {
 				pixelMultiple -= zoomAmount;
 			else if (ev.scale > 1.0)
 				pixelMultiple += zoomAmount;
+			overview.instance.toggler.close();
+			selected_item.instance.toggler.close();
 		}, false);
 
 		right_bar.init();
@@ -125,12 +127,14 @@ namespace outer_space {
 
 		marker = new ping();
 
-		let collision = new float([{}, -1, [2, 1], 'collision', 'collision']);
-		collision.stamp = -1;
+		let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
+		collision.obj.stamp = -1;
 
 		for (let blob of space.regions) {
-			let reg = new region([{}, -1, blob.center, 'region', blob.name], blob.radius);
-			reg.stamp = -1
+			let dummy = new obj([{}, -1, blob.center, 'region', blob.name]);
+			let reg = new region(dummy, blob.radius);
+			dummy.element = reg;
+			reg.obj.stamp = -1
 		}
 	}
 
@@ -140,12 +144,12 @@ namespace outer_space {
 				return obj;
 	}
 
-	function handle_you(object, float) {
+	function handle_you(object, obj: obj) {
 		const [random] = object;
 		if (random.userId == space.sply.id) {
 			console.log(`we're us`);
-			you = float;
-			you!.element.classList.add('you');
+			you = obj.element;
+			you!.element?.classList.add('you');
 		}
 	}
 
@@ -161,10 +165,11 @@ namespace outer_space {
 			if (bee) {
 				//bee.tuple[2] = pos;
 				bee.tween_pos = pos;
-				bee.stylize();
+				bee.element?.stylize();
 			}
 			else {
-				bee = new float(object);
+				bee = new obj(object);
+				bee.choose_element();
 				handle_you(object, bee);
 			}
 			bee.stamp = outer_space.stamp;
@@ -189,7 +194,7 @@ namespace outer_space {
 
 		if (you) {
 			//you.pos = pts.add(you.pos, [0.001, 0]);
-			center = you.tuple[2];
+			center = you.obj.tuple[2];
 		}
 
 		const multiplier = pixelMultiple / zoom_max;
@@ -212,11 +217,11 @@ namespace outer_space {
 	}
 
 	export function focus_obj(target: obj) {
-		obj.focus?.blur();
+		obj.focus?.element?.blur();
 		obj.focus = target;
-		target.focus();
+		target.element?.focus();
 		marker!.enabled = true;
-		marker!.sticky = target;
+		marker!.sticky = target.element;
 		selected_item.instance.toggler.open();
 		console.log('focus on obj');
 		return true;
@@ -224,40 +229,28 @@ namespace outer_space {
 
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
-	export class element {
-		element
-		constructor() {
-
-		}
-		append() {
-			renderer.append(this.element);
-		}
-		remove() {
-			this.element.remove();
-		}
-		stylize() {
-		}
-		focus() {
-			this.element.classList.add('focus');
-		}
-		blur() {
-			this.element.classList.remove('focus');
-		}
-	}
-
-	export abstract class obj extends element {
+	export class obj {
 		static focus?: obj
+		element?: element
 		stamp = 0
 		tween_pos: vec2 = [0, 0]
 		lost = false
 		constructor(
 			public tuple: tuple,
 		) {
-			super();
 			objs.push(this);
+			//this.choose_element();
 		}
-		override remove() {
-			super.remove();
+		choose_element() {
+			if (this.is_type(['ply', 'rock', 'collision'])) {
+				this.element = new float(this);
+			}
+			// else if (this.is_type(['region'])) {
+			// this.element = new region(this, 10);
+			// }
+		}
+		remove() {
+			this.element?.remove();
 			this.lost = true;
 		}
 		is_type(types: string[]) {
@@ -274,12 +267,13 @@ namespace outer_space {
 			}
 		}
 		static steps() {
-			for (const obj of objs)
+			for (const obj of objs) {
 				obj.step();
+			}
 		}
 		step() {
-			if (obj.focus == this && marker!.sticky == this)
-				marker!.tuple[2] = this.tuple[2];
+			if (obj.focus == this && marker!.sticky?.obj == this)
+				marker!.obj.tuple[2] = this.tuple[2];
 
 			if (!pts.together(this.tween_pos))
 				this.tween_pos = this.tuple[2];
@@ -288,51 +282,74 @@ namespace outer_space {
 			let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
 			this.tuple[2] = pts.add(this.tuple[2], tween);
 
-			this.stylize();
+			this.element?.stylize();
+		}
+
+	}
+
+	export class element {
+		obj: obj
+		element
+		constructor(obj: obj) {
+			this.obj = obj;
+		}
+		append() {
+			renderer.append(this.element);
+		}
+		remove() {
+			this.element.remove();
+		}
+		focus() {
+			this.element.classList.add('focus');
+		}
+		blur() {
+			this.element.classList.remove('focus');
+		}
+		stylize() {
+		}
+		step() {
+
 		}
 		attach_onclick() {
 			this.element.onclick = (event) => {
 				event.stopPropagation();
-				focus_obj(this);
+				focus_obj(this.obj);
 				return true;
 			}
 		}
 	}
 
-	export class float extends obj {
-		constructor(
-			tuple
-		) {
-			super(tuple);
+	export class float extends element {
+		constructor(obj: obj) {
+			super(obj);
 			//console.log('new float');
 			this.element = document.createElement('div');
 			this.element.classList.add('float');
-			this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
+			this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
 			this.attach_onclick();
 			this.stylize();
 			this.append();
 		}
 		override stylize() {
-			let proj = project(this.tuple[2]);
+			let proj = project(this.obj.tuple[2]);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 			//console.log('half', half);
 		}
 	}
 
-	export class region extends obj {
-		constructor(
-			tuple,
+	export class region extends element {
+		constructor(obj,
 			public radius) {
-			super(tuple);
+			super(obj);
 			this.element = document.createElement('div');
 			this.element.classList.add('region');
-			this.element.innerHTML = `<span>${this.tuple[4]}</span>`;
+			this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
 			this.stylize();
 			this.append();
 		}
 		override stylize() {
-			let proj = project(this.tuple[2]);
+			let proj = project(this.obj.tuple[2]);
 			const radius = this.radius * pixelMultiple;
 			this.element.style.top = proj[1] - radius;
 			this.element.style.left = proj[0] - radius;
@@ -344,12 +361,13 @@ namespace outer_space {
 		}
 	}
 
-	class ping extends obj {
-		sticky?: float
+	class ping extends element {
+		static obj: obj = new obj([{}, -1, [0, 0], 'ping', 'ping']);
+		sticky?: element
 		enabled = false
 		constructor() {
-			super([{}, -1, [0, 0], 'ping', 'ping']);
-			this.stamp = -1;
+			super(ping.obj);
+			this.obj.stamp = -1;
 			this.element = document.createElement('div');
 			this.element.classList.add('ping');
 			this.element.innerHTML = `<span></span>`;
@@ -358,7 +376,7 @@ namespace outer_space {
 		}
 		override stylize() {
 			// console.log('ping stylize');
-			let proj = project(this.tuple[2]);
+			let proj = project(this.obj.tuple[2]);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 			this.element.style.visibility = this.enabled ? 'visible' : 'hidden';

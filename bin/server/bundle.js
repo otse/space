@@ -657,7 +657,7 @@ var space = (function () {
                 console.log(' clicked map ');
                 let pixel = [event.clientX, event.clientY];
                 let unit = unproject(pixel);
-                outer_space.marker.tuple[2] = unit;
+                outer_space.marker.obj.tuple[2] = unit;
                 outer_space.marker.enabled = true;
                 outer_space.marker.sticky = undefined;
                 //selected_item.instance.toggler.close();
@@ -673,6 +673,8 @@ var space = (function () {
                     outer_space.pixelMultiple -= zoomAmount;
                 else if (ev.scale > 1.0)
                     outer_space.pixelMultiple += zoomAmount;
+                overview.instance.toggler.close();
+                selected_item.instance.toggler.close();
             }, false);
             right_bar$1.init();
             right_bar_consumer$1.init();
@@ -712,11 +714,13 @@ var space = (function () {
             //you = new float(-1, center, 'you', 'you');
             //you.stamp = -1;
             outer_space.marker = new ping();
-            let collision = new float([{}, -1, [2, 1], 'collision', 'collision']);
-            collision.stamp = -1;
+            let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
+            collision.obj.stamp = -1;
             for (let blob of space$1.regions) {
-                let reg = new region([{}, -1, blob.center, 'region', blob.name], blob.radius);
-                reg.stamp = -1;
+                let dummy = new obj([{}, -1, blob.center, 'region', blob.name]);
+                let reg = new region(dummy, blob.radius);
+                dummy.element = reg;
+                reg.obj.stamp = -1;
             }
         }
         function get_obj_by_id(id) {
@@ -725,15 +729,17 @@ var space = (function () {
                     return obj;
         }
         outer_space.get_obj_by_id = get_obj_by_id;
-        function handle_you(object, float) {
+        function handle_you(object, obj) {
+            var _a;
             const [random] = object;
             if (random.userId == space$1.sply.id) {
                 console.log(`we're us`);
-                outer_space.you = float;
-                outer_space.you.element.classList.add('you');
+                outer_space.you = obj.element;
+                (_a = outer_space.you.element) === null || _a === void 0 ? void 0 : _a.classList.add('you');
             }
         }
         function fetch() {
+            var _a;
             return __awaiter$1(this, void 0, void 0, function* () {
                 let tuple = yield space$1.make_request_json('GET', 'astronomical objects');
                 if (!tuple)
@@ -746,10 +752,11 @@ var space = (function () {
                     if (bee) {
                         //bee.tuple[2] = pos;
                         bee.tween_pos = pos;
-                        bee.stylize();
+                        (_a = bee.element) === null || _a === void 0 ? void 0 : _a.stylize();
                     }
                     else {
-                        bee = new float(object);
+                        bee = new obj(object);
+                        bee.choose_element();
                         handle_you(object, bee);
                     }
                     bee.stamp = outer_space.stamp;
@@ -774,7 +781,7 @@ var space = (function () {
             outer_space.mapSize = [window.innerWidth, window.innerHeight];
             if (outer_space.you) {
                 //you.pos = pts.add(you.pos, [0.001, 0]);
-                outer_space.center = outer_space.you.tuple[2];
+                outer_space.center = outer_space.you.obj.tuple[2];
             }
             const multiplier = outer_space.pixelMultiple / zoom_max;
             const increment = 10 * multiplier;
@@ -791,47 +798,37 @@ var space = (function () {
         }
         outer_space.step = step;
         function focus_obj(target) {
-            var _a;
-            (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.blur();
+            var _a, _b, _c;
+            (_b = (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.blur();
             obj.focus = target;
-            target.focus();
+            (_c = target.element) === null || _c === void 0 ? void 0 : _c.focus();
             outer_space.marker.enabled = true;
-            outer_space.marker.sticky = target;
+            outer_space.marker.sticky = target.element;
             selected_item.instance.toggler.open();
             console.log('focus on obj');
             return true;
         }
         outer_space.focus_obj = focus_obj;
-        class element {
-            constructor() {
-            }
-            append() {
-                outer_space.renderer.append(this.element);
-            }
-            remove() {
-                this.element.remove();
-            }
-            stylize() {
-            }
-            focus() {
-                this.element.classList.add('focus');
-            }
-            blur() {
-                this.element.classList.remove('focus');
-            }
-        }
-        outer_space.element = element;
-        class obj extends element {
+        class obj {
             constructor(tuple) {
-                super();
                 this.tuple = tuple;
                 this.stamp = 0;
                 this.tween_pos = [0, 0];
                 this.lost = false;
                 outer_space.objs.push(this);
+                //this.choose_element();
+            }
+            choose_element() {
+                if (this.is_type(['ply', 'rock', 'collision'])) {
+                    this.element = new float(this);
+                }
+                // else if (this.is_type(['region'])) {
+                // this.element = new region(this, 10);
+                // }
             }
             remove() {
-                super.remove();
+                var _a;
+                (_a = this.element) === null || _a === void 0 ? void 0 : _a.remove();
                 this.lost = true;
             }
             is_type(types) {
@@ -848,59 +845,83 @@ var space = (function () {
                 }
             }
             static steps() {
-                for (const obj of outer_space.objs)
+                for (const obj of outer_space.objs) {
                     obj.step();
+                }
             }
             step() {
-                if (obj.focus == this && outer_space.marker.sticky == this)
-                    outer_space.marker.tuple[2] = this.tuple[2];
+                var _a, _b;
+                if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
+                    outer_space.marker.obj.tuple[2] = this.tuple[2];
                 if (!pts.together(this.tween_pos))
                     this.tween_pos = this.tuple[2];
                 const factor = app$1.delta / 2;
                 let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
                 this.tuple[2] = pts.add(this.tuple[2], tween);
-                this.stylize();
+                (_b = this.element) === null || _b === void 0 ? void 0 : _b.stylize();
+            }
+        }
+        outer_space.obj = obj;
+        class element {
+            constructor(obj) {
+                this.obj = obj;
+            }
+            append() {
+                outer_space.renderer.append(this.element);
+            }
+            remove() {
+                this.element.remove();
+            }
+            focus() {
+                this.element.classList.add('focus');
+            }
+            blur() {
+                this.element.classList.remove('focus');
+            }
+            stylize() {
+            }
+            step() {
             }
             attach_onclick() {
                 this.element.onclick = (event) => {
                     event.stopPropagation();
-                    focus_obj(this);
+                    focus_obj(this.obj);
                     return true;
                 };
             }
         }
-        outer_space.obj = obj;
-        class float extends obj {
-            constructor(tuple) {
-                super(tuple);
+        outer_space.element = element;
+        class float extends element {
+            constructor(obj) {
+                super(obj);
                 //console.log('new float');
                 this.element = document.createElement('div');
                 this.element.classList.add('float');
-                this.element.innerHTML = `<span></span><span>${this.tuple[4]}</span>`;
+                this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
                 this.attach_onclick();
                 this.stylize();
                 this.append();
             }
             stylize() {
-                let proj = project(this.tuple[2]);
+                let proj = project(this.obj.tuple[2]);
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
                 //console.log('half', half);
             }
         }
         outer_space.float = float;
-        class region extends obj {
-            constructor(tuple, radius) {
-                super(tuple);
+        class region extends element {
+            constructor(obj, radius) {
+                super(obj);
                 this.radius = radius;
                 this.element = document.createElement('div');
                 this.element.classList.add('region');
-                this.element.innerHTML = `<span>${this.tuple[4]}</span>`;
+                this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
                 this.stylize();
                 this.append();
             }
             stylize() {
-                let proj = project(this.tuple[2]);
+                let proj = project(this.obj.tuple[2]);
                 const radius = this.radius * outer_space.pixelMultiple;
                 this.element.style.top = proj[1] - radius;
                 this.element.style.left = proj[0] - radius;
@@ -912,11 +933,11 @@ var space = (function () {
             }
         }
         outer_space.region = region;
-        class ping extends obj {
+        class ping extends element {
             constructor() {
-                super([{}, -1, [0, 0], 'ping', 'ping']);
+                super(ping.obj);
                 this.enabled = false;
-                this.stamp = -1;
+                this.obj.stamp = -1;
                 this.element = document.createElement('div');
                 this.element.classList.add('ping');
                 this.element.innerHTML = `<span></span>`;
@@ -925,7 +946,7 @@ var space = (function () {
             }
             stylize() {
                 // console.log('ping stylize');
-                let proj = project(this.tuple[2]);
+                let proj = project(this.obj.tuple[2]);
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
                 this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
@@ -934,6 +955,7 @@ var space = (function () {
                 this.stylize();
             }
         }
+        ping.obj = new obj([{}, -1, [0, 0], 'ping', 'ping']);
     })(outer_space || (outer_space = {}));
     var outer_space$1 = outer_space;
 
