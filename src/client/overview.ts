@@ -45,7 +45,9 @@ class overview extends right_bar.toggler_behavior {
 	x_tabs
 	x_inner_content
 	tbody
+	selected_tr?
 	scrollable
+	amount
 	//tabs: tab[] = []
 	general
 	mining
@@ -56,7 +58,6 @@ class overview extends right_bar.toggler_behavior {
 
 		let text = '';
 		text += `
-			
 			<x-tabs>
 			<x-tab>
 				General
@@ -68,6 +69,7 @@ class overview extends right_bar.toggler_behavior {
 			</x-tabs>
 			<x-outer-content>
 			<x-inner-content>
+			<x-amount>showing 10 rows</x-amount>
 			<table>
 			<thead>
 			<tr>
@@ -86,6 +88,7 @@ class overview extends right_bar.toggler_behavior {
 		this.x_inner_content = this.toggler.content.querySelector('x-inner-content')!;
 		this.tbody = this.toggler.content.querySelector('tbody')!;
 		this.scrollable = this.toggler.content.querySelector('x-scrollable')!;
+		this.amount = this.toggler.content.querySelector('x-amount')!;
 
 		new tab(this, 'General', 1);
 		new tab(this, 'Mining', 2);
@@ -109,20 +112,21 @@ class overview extends right_bar.toggler_behavior {
 	}
 	build_table() {
 		let table = '';
-		const copy = outer_space.objs.slice();
-		const dist = (obj: outer_space.obj) => pts.dist(outer_space.center, obj.tuple[2]);
+		let copy = outer_space.objs.slice();
 
-		copy.sort((a, b) => dist(a) > dist(b) ? 1 : -1)
+		const dist = (obj: outer_space.obj) => pts.dist(outer_space.center, obj.tuple[2]);
+		copy.sort((a, b) => dist(a) > dist(b) ? 1 : -1);
+
+		if (tab.active?.name == 'General') {
+			copy = copy.filter(a => a.is_type(['ply']));
+		}
+		else if (tab.active?.name == 'Mining') {
+			copy = copy.filter(a => a.is_type(['rock']));
+		}
+
 		for (const obj of copy) {
 			const type = obj.tuple[3];
-			if (tab.active?.name == 'General') {
-				if (!(type.includes('ply')))
-					continue;
-			}
-			else if (tab.active?.name == 'Mining') {
-				if (!(type.includes('rock') || type.includes('debris')))
-					continue;
-			}
+			
 			const dist = pts.dist(outer_space.center, obj.tuple[2]);
 			table += `
 				<tr data-a="${obj.tuple[1]}">
@@ -134,6 +138,8 @@ class overview extends right_bar.toggler_behavior {
 			//console.log('woo', thing.tuple[4]);
 			//this.do_once = false;
 		}
+		this.amount.innerHTML = `showing ${copy.length} items`
+
 		this.tbody.innerHTML = table;
 
 		if (is_overflown(this.x_inner_content)) {
@@ -147,12 +153,17 @@ class overview extends right_bar.toggler_behavior {
 			const tr = this.tbody.querySelector(`tr[data-a="${obj.tuple[1]}"]`)!;
 			if (!tr)
 				continue;
-			if (tr.dataset.a == outer_space.obj.focus?.tuple[1]) {
+			const select = () => {
+				this.selected_tr?.classList.remove('selected');
+				this.selected_tr = tr;
 				tr.classList.add('selected');
 			}
+			if (tr.dataset.a == outer_space.obj.focus?.tuple[1]) {
+				select();
+			}
 			tr.onclick = () => {
-				tr.classList.add('selected');
 				outer_space.focus_obj(obj);
+				select();
 			};
 		}
 	}

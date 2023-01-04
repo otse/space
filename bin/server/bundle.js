@@ -402,7 +402,6 @@ var space = (function () {
             overview.instance = this;
             let text = '';
             text += `
-			
 			<x-tabs>
 			<x-tab>
 				General
@@ -414,6 +413,7 @@ var space = (function () {
 			</x-tabs>
 			<x-outer-content>
 			<x-inner-content>
+			<x-amount>showing 10 rows</x-amount>
 			<table>
 			<thead>
 			<tr>
@@ -432,6 +432,7 @@ var space = (function () {
             this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
             this.tbody = this.toggler.content.querySelector('tbody');
             this.scrollable = this.toggler.content.querySelector('x-scrollable');
+            this.amount = this.toggler.content.querySelector('x-amount');
             new tab(this, 'General', 1);
             new tab(this, 'Mining', 2);
             tab.select(tab.tabs[0]);
@@ -452,19 +453,17 @@ var space = (function () {
         build_table() {
             var _a, _b, _c;
             let table = '';
-            const copy = outer_space$1.objs.slice();
+            let copy = outer_space$1.objs.slice();
             const dist = (obj) => pts.dist(outer_space$1.center, obj.tuple[2]);
             copy.sort((a, b) => dist(a) > dist(b) ? 1 : -1);
+            if (((_a = tab.active) === null || _a === void 0 ? void 0 : _a.name) == 'General') {
+                copy = copy.filter(a => a.is_type(['ply']));
+            }
+            else if (((_b = tab.active) === null || _b === void 0 ? void 0 : _b.name) == 'Mining') {
+                copy = copy.filter(a => a.is_type(['rock']));
+            }
             for (const obj of copy) {
-                const type = obj.tuple[3];
-                if (((_a = tab.active) === null || _a === void 0 ? void 0 : _a.name) == 'General') {
-                    if (!(type.includes('ply')))
-                        continue;
-                }
-                else if (((_b = tab.active) === null || _b === void 0 ? void 0 : _b.name) == 'Mining') {
-                    if (!(type.includes('rock') || type.includes('debris')))
-                        continue;
-                }
+                obj.tuple[3];
                 const dist = pts.dist(outer_space$1.center, obj.tuple[2]);
                 table += `
 				<tr data-a="${obj.tuple[1]}">
@@ -476,6 +475,7 @@ var space = (function () {
                 //console.log('woo', thing.tuple[4]);
                 //this.do_once = false;
             }
+            this.amount.innerHTML = `showing ${copy.length} items`;
             this.tbody.innerHTML = table;
             if (is_overflown(this.x_inner_content)) {
                 this.scrollable.style.display = 'block';
@@ -487,12 +487,18 @@ var space = (function () {
                 const tr = this.tbody.querySelector(`tr[data-a="${obj.tuple[1]}"]`);
                 if (!tr)
                     continue;
-                if (tr.dataset.a == ((_c = outer_space$1.obj.focus) === null || _c === void 0 ? void 0 : _c.tuple[1])) {
+                const select = () => {
+                    var _a;
+                    (_a = this.selected_tr) === null || _a === void 0 ? void 0 : _a.classList.remove('selected');
+                    this.selected_tr = tr;
                     tr.classList.add('selected');
+                };
+                if (tr.dataset.a == ((_c = outer_space$1.obj.focus) === null || _c === void 0 ? void 0 : _c.tuple[1])) {
+                    select();
                 }
                 tr.onclick = () => {
-                    tr.classList.add('selected');
                     outer_space$1.focus_obj(obj);
+                    select();
                 };
             }
         }

@@ -2,7 +2,7 @@
 x-right-bar {
   z-index: 3;
   position: absolute;
-  bottom: 50;
+  bottom: 30;
   right: 0;
   margin: 20px;
   margin-right: 0;
@@ -127,10 +127,11 @@ x-right-bar x-begin x-content x-outer-content x-inner-content {
   width: 100%;
   padding: 5px;
   bbackground: rgba(110, 110, 110, 0.5);
-  display: flex;
   max-height: 200px;
   overflow-y: scroll;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 x-right-bar x-begin x-content table {
   border-spacing: 0px;
