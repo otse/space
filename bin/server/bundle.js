@@ -636,7 +636,7 @@ var space = (function () {
     var outer_space;
     (function (outer_space) {
         const deduct_nav_bar = 60 / 2;
-        const zoom_min = 0.1;
+        const zoom_min = 0.001;
         const zoom_max = 120;
         outer_space.mapSize = [100, 100];
         outer_space.locations = [];
@@ -737,6 +737,9 @@ var space = (function () {
                 dummy.element = reg;
                 reg.obj.stamp = -1;
             }
+            let ob = new obj([{ subtype: 'star' }, -1, [-120000, 120000], 'star', 'star']);
+            ob.networked = false;
+            new star(ob, 167000);
         }
         function get_obj_by_id(id) {
             for (const obj of outer_space.objs)
@@ -806,7 +809,7 @@ var space = (function () {
                     outer_space.pixelMultiple -= increment;
             }
             outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
-            outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(1)}`;
+            outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(3)}`;
             obj.steps();
             right_bar$1.step();
         }
@@ -973,6 +976,34 @@ var space = (function () {
                 this.stylize();
             }
         }
+        class star extends element {
+            constructor(obj, radius) {
+                super(obj);
+                this.radius = radius;
+                this.obj.element = this;
+                this.obj.stamp = -1;
+                this.element = document.createElement('div');
+                this.element.classList.add('star');
+                this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
+                const span = this.element.querySelector('span');
+                this.attach_onclick(span);
+                this.stylize();
+                this.append();
+            }
+            stylize() {
+                let proj = project(this.obj.tuple[2]);
+                const radius = this.radius * outer_space.pixelMultiple;
+                this.element.style.top = proj[1] - radius;
+                this.element.style.left = proj[0] - radius;
+                this.element.style.width = radius * 2;
+                this.element.style.height = radius * 2;
+                console.log('stylize star');
+            }
+            step() {
+                this.stylize();
+            }
+        }
+        outer_space.star = star;
     })(outer_space || (outer_space = {}));
     var outer_space$1 = outer_space;
 

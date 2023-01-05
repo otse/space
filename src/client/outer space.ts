@@ -9,7 +9,7 @@ import selected_item from "./selected item";
 namespace outer_space {
 
 	const deduct_nav_bar = 60 / 2;
-	const zoom_min = 0.1;
+	const zoom_min = 0.001;
 	const zoom_max = 120;
 
 	export var renderer, zoomLevel;
@@ -137,6 +137,10 @@ namespace outer_space {
 			dummy.element = reg;
 			reg.obj.stamp = -1;
 		}
+
+		let ob = new obj([{ subtype: 'star' }, -1, [-120000, 120000], 'star', 'star']);
+		ob.networked = false;
+		new star(ob, 167000);
 	}
 
 	export function get_obj_by_id(id) {
@@ -210,7 +214,7 @@ namespace outer_space {
 
 		pixelMultiple = space.clamp(pixelMultiple, zoom_min, zoom_max);
 
-		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(1)}`;
+		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(3)}`;
 
 		obj.steps();
 
@@ -380,6 +384,35 @@ namespace outer_space {
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 			this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
+		}
+		override step() {
+			this.stylize();
+		}
+	}
+
+	export class star extends element {
+		constructor(obj,
+			public radius) {
+			super(obj);
+			this.obj.element = this;
+			this.obj.stamp = -1;
+			this.element = document.createElement('div');
+			this.element.classList.add('star');
+			this.element.innerHTML = `<span>${this.obj.tuple[4]}</span>`;
+			const span = this.element.querySelector('span');
+			this.attach_onclick(span);
+			this.stylize();
+			this.append();
+		}
+		override stylize() {
+			let proj = project(this.obj.tuple[2]);
+			const radius = this.radius * pixelMultiple;
+			this.element.style.top = proj[1] - radius;
+			this.element.style.left = proj[0] - radius;
+			this.element.style.width = radius * 2;
+			this.element.style.height = radius * 2;
+			console.log('stylize star');
+			
 		}
 		override step() {
 			this.stylize();
