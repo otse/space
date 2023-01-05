@@ -29,7 +29,7 @@ class zoom_controls extends right_bar.toggler_behavior {
         const stellar_button = this.get_element('x-button[data-a="stellar"]');
         const local_button = this.get_element('x-button[data-a="local"]');
         stellar_button.onclick = () => {
-            outer_space.pixelMultiple = 0.001;
+            outer_space.pixelMultiple = 0.0004;
         };
         local_button.onclick = () => {
             outer_space.pixelMultiple = 10.0;

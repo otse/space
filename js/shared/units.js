@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var units;
 (function (units) {
     const au = 150000000;
@@ -16,4 +14,4 @@ var units;
     }
     units.express_number_with_unit = express_number_with_unit;
 })(units || (units = {}));
-exports.default = units;
+export default units;

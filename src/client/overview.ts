@@ -1,4 +1,5 @@
 import pts from "../shared/pts";
+import units from "../shared/units";
 import outer_space from "./outer space";
 import right_bar from "./right bar";
 
@@ -137,7 +138,7 @@ class overview extends right_bar.toggler_behavior {
 			const dist = pts.dist(outer_space.center, obj.tuple[2]);
 			table += `
 				<tr data-a="${obj.tuple[1]}">
-				<td>${dist.toFixed(2)} km</td>
+				<td>${units.express_number_with_unit(dist)}</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
 				</tr>

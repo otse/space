@@ -120,10 +120,14 @@ var outer_space;
             dummy.element = reg;
             reg.obj.stamp = -1;
         }
-        let ob = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
-        ob.networked = false;
+        let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
+        star_1.networked = false;
         // star based on ogle tr 122 b
-        new star(ob, 81100);
+        new star(star_1, 81100);
+        let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -1, [-400000, 120000], 'star', 'Tars']);
+        star_2.networked = false;
+        // star based on ogle tr 122 b
+        new star(star_2, 9048);
     }
     function get_obj_by_id(id) {
         for (const obj of outer_space.objs)

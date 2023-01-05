@@ -243,6 +243,23 @@ var space = (function () {
         ;
     }
 
+    var units;
+    (function (units) {
+        units.astronomical_unit = 150000000; // 149597871
+        function is_astronomical_unit(km) {
+        }
+        units.is_astronomical_unit = is_astronomical_unit;
+        function express_number_with_unit(km) {
+            const func = (n) => n.toLocaleString("en-US");
+            let text = `${func(Math.round(km))} km`;
+            if (km < 10)
+                text = `${func(Math.round(km * 1000))} m`;
+            return text;
+        }
+        units.express_number_with_unit = express_number_with_unit;
+    })(units || (units = {}));
+    var units$1 = units;
+
     var right_bar;
     (function (right_bar) {
         right_bar.togglers = [];
@@ -489,7 +506,7 @@ var space = (function () {
                 const dist = pts.dist(outer_space$1.center, obj.tuple[2]);
                 table += `
 				<tr data-a="${obj.tuple[1]}">
-				<td>${dist.toFixed(2)} km</td>
+				<td>${units$1.express_number_with_unit(dist)}</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
 				</tr>
@@ -566,7 +583,8 @@ var space = (function () {
             }
             const x_dist = this.get_element('x-dist');
             if (x_dist) {
-                x_dist.innerHTML = `Dist: <span>${pts.dist(outer_space$1.center, obj.tuple[2]).toFixed(2)} Km</span>`;
+                const unit = units$1.express_number_with_unit(pts.dist(outer_space$1.center, obj.tuple[2]));
+                x_dist.innerHTML = `Dist: <span>${unit}</span>`;
             }
         }
         build_lost() {
@@ -665,7 +683,7 @@ var space = (function () {
             const stellar_button = this.get_element('x-button[data-a="stellar"]');
             const local_button = this.get_element('x-button[data-a="local"]');
             stellar_button.onclick = () => {
-                outer_space$1.pixelMultiple = 0.001;
+                outer_space$1.pixelMultiple = 0.0004;
             };
             local_button.onclick = () => {
                 outer_space$1.pixelMultiple = 10.0;
@@ -803,10 +821,14 @@ var space = (function () {
                 dummy.element = reg;
                 reg.obj.stamp = -1;
             }
-            let ob = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
-            ob.networked = false;
+            let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
+            star_1.networked = false;
             // star based on ogle tr 122 b
-            new star(ob, 81100);
+            new star(star_1, 81100);
+            let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -1, [-400000, 120000], 'star', 'Tars']);
+            star_2.networked = false;
+            // star based on ogle tr 122 b
+            new star(star_2, 9048);
         }
         function get_obj_by_id(id) {
             for (const obj of outer_space.objs)

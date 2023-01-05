@@ -1,4 +1,5 @@
 import pts from "../shared/pts";
+import units from "../shared/units";
 import outer_space from "./outer space";
 import right_bar from "./right bar";
 import space from "./space";
@@ -36,7 +37,8 @@ class selected_item extends right_bar.toggler_behavior {
         }
         const x_dist = this.get_element('x-dist');
         if (x_dist) {
-            x_dist.innerHTML = `Dist: <span>${pts.dist(outer_space.center, obj.tuple[2]).toFixed(2)} Km</span>`;
+            const unit = units.express_number_with_unit(pts.dist(outer_space.center, obj.tuple[2]));
+            x_dist.innerHTML = `Dist: <span>${unit}</span>`;
         }
     }
     build_lost() {
