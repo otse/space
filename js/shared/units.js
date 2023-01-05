@@ -8,8 +8,10 @@ var units;
     function express_number_with_unit(km) {
         const func = (n) => n.toLocaleString("en-US");
         let text = `${func(Math.round(km))} km`;
-        if (km < 10)
+        if (km <= 10)
             text = `${func(Math.round(km * 1000))} m`;
+        else if (km >= units.astronomical_unit / 10)
+            text = `${func((km / units.astronomical_unit).toFixed(1))} au`;
         return text;
     }
     units.express_number_with_unit = express_number_with_unit;
