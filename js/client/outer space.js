@@ -17,7 +17,7 @@ import selected_item from "./selected item";
 var outer_space;
 (function (outer_space) {
     const deduct_nav_bar = 60 / 2;
-    const zoom_min = 0.001;
+    const zoom_min = 0.0001;
     const zoom_max = 120;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
@@ -120,9 +120,10 @@ var outer_space;
             dummy.element = reg;
             reg.obj.stamp = -1;
         }
-        let ob = new obj([{ subtype: 'star' }, -1, [-120000, 120000], 'star', 'star']);
+        let ob = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
         ob.networked = false;
-        new star(ob, 167000);
+        // star based on ogle tr 122 b
+        new star(ob, 81100);
     }
     function get_obj_by_id(id) {
         for (const obj of outer_space.objs)
@@ -192,7 +193,7 @@ var outer_space;
                 outer_space.pixelMultiple -= increment;
         }
         outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
-        outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(3)}`;
+        outer_space.zoomLevel.innerHTML = `pixels per kilometre: ${outer_space.pixelMultiple.toFixed(4)}`;
         obj.steps();
         right_bar.step();
     }
@@ -267,6 +268,7 @@ var outer_space;
     class element {
         constructor(obj) {
             this.obj = obj;
+            this.obj.element = this;
         }
         append() {
             outer_space.renderer.append(this.element);
@@ -340,7 +342,6 @@ var outer_space;
         constructor() {
             super(new obj([{}, -1, [0, 0], 'ping', 'ping']));
             this.enabled = false;
-            this.obj.element = this;
             this.obj.stamp = -1;
             this.element = document.createElement('div');
             this.element.classList.add('ping');
@@ -363,7 +364,6 @@ var outer_space;
         constructor(obj, radius) {
             super(obj);
             this.radius = radius;
-            this.obj.element = this;
             this.obj.stamp = -1;
             this.element = document.createElement('div');
             this.element.classList.add('star');

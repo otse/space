@@ -39,11 +39,11 @@ class selected_item extends right_bar.toggler_behavior {
 		const obj = outer_space.obj.focus;
 		if (!obj)
 			return;
-		const x_pos = this.toggler.content.querySelector('x-pos') as HTMLElement;
+		const x_pos = this.get_element('x-pos');
 		if (x_pos) {
 			x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
 		}
-		const x_dist = this.toggler.content.querySelector('x-dist') as HTMLElement;
+		const x_dist = this.get_element('x-dist');
 		if (x_dist) {
 			x_dist.innerHTML = `Dist: <span>${pts.dist(outer_space.center, obj.tuple[2]).toFixed(2)} Km</span>`;
 		}
@@ -71,6 +71,13 @@ class selected_item extends right_bar.toggler_behavior {
 					
 					`;
 				}
+				else if (obj.is_type(['star'])) {
+					text += `
+					Name: ${obj.tuple[4]}<br />
+					Type: ${obj.tuple[0].subtype || 'Unknown'}<br />
+					Center: ${pts.to_string(obj.tuple[2], 2)}
+					`;
+				}
 				else {
 					text += `
 					Name: ${obj.tuple[4]}<br />
@@ -88,8 +95,8 @@ class selected_item extends right_bar.toggler_behavior {
 				this.toggler.content.innerHTML = text;
 
 				//this.update_pos();
-
-				const follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]') as HTMLElement;
+				
+				const follow_button = this.get_element('x-button[data-a="follow"]');
 				if (follow_button) {
 					follow_button.onclick = () => {
 						space.action_follow_target(obj);
@@ -97,7 +104,7 @@ class selected_item extends right_bar.toggler_behavior {
 				}
 
 				if (is_minable) {
-					const mine_button = this.toggler.content.querySelector('x-button[data-a="mine"]') as HTMLElement;
+					const mine_button = this.get_element('x-button[data-a="mine"]');
 					mine_button.onclick = () => {
 						console.log('yeah');
 					}

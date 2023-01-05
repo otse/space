@@ -251,6 +251,9 @@ var space = (function () {
                 this.toggler = toggler;
                 toggler.behavior = this;
             }
+            get_element(selector) {
+                return this.toggler.content.querySelector(selector);
+            }
             on_open() { }
             on_close() { }
             on_fetch() { }
@@ -332,9 +335,20 @@ var space = (function () {
 				boo-ya
 			</x-content>
 		</x-begin>
+
+		<x-begin>
+			<x-title>
+				<span>zoom_in</span>
+				<span>Scale</span>
+			</x-title>
+			<x-content>
+				boo-ya
+			</x-content>
+		</x-begin>
 		`;
             right_bar.selected_item_toggler = new toggler('selected-item', 1);
             right_bar.nearby_ping_toggler = new toggler('overview', 2);
+            right_bar.zoom_controls_toggler = new toggler('scale', 3);
             right_bar.element.style.visibility = 'visible';
         }
         right_bar.start = start;
@@ -382,7 +396,7 @@ var space = (function () {
             this.parent = parent;
             this.name = name;
             tab.tabs.push(this);
-            this.element = this.parent.toggler.content.querySelector(`x-tab:nth-of-type(${index})`);
+            this.element = this.parent.get_element(`x-tab:nth-of-type(${index})`);
             this.element.onclick = () => {
                 tab.select(this);
                 overview.instance.build_table();
@@ -410,6 +424,9 @@ var space = (function () {
 			<x-tab>
 				Mining
 			</x-tab>
+			<x-tab>
+				Big
+			</x-tab>
 			<x-scrollable>arrow_downward</x-scrollable>
 			</x-tabs>
 			<x-outer-content>
@@ -430,12 +447,13 @@ var space = (function () {
 			</x-outer-content>
 		`;
             this.toggler.content.innerHTML = text;
-            this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
-            this.tbody = this.toggler.content.querySelector('tbody');
-            this.scrollable = this.toggler.content.querySelector('x-scrollable');
-            this.amount = this.toggler.content.querySelector('x-amount');
+            this.x_inner_content = this.get_element('x-inner-content');
+            this.tbody = this.get_element('tbody');
+            this.scrollable = this.get_element('x-scrollable');
+            this.amount = this.get_element('x-amount');
             new tab(this, 'General', 1);
             new tab(this, 'Mining', 2);
+            new tab(this, 'Big', 3);
             tab.select(tab.tabs[0]);
             console.log('x-inner-content', this.x_inner_content);
         }
@@ -452,7 +470,7 @@ var space = (function () {
             this.build_table();
         }
         build_table() {
-            var _a, _b, _c;
+            var _a, _b, _c, _d;
             let table = '';
             let copy = outer_space$1.objs.slice();
             const dist = (obj) => pts.dist(outer_space$1.center, obj.tuple[2]);
@@ -462,6 +480,9 @@ var space = (function () {
             }
             else if (((_b = tab.active) === null || _b === void 0 ? void 0 : _b.name) == 'Mining') {
                 copy = copy.filter(a => a.is_type(['rock']));
+            }
+            else if (((_c = tab.active) === null || _c === void 0 ? void 0 : _c.name) == 'Big') {
+                copy = copy.filter(a => a.is_type(['star']));
             }
             for (const obj of copy) {
                 obj.tuple[3];
@@ -494,7 +515,7 @@ var space = (function () {
                     this.selected_tr = tr;
                     tr.classList.add('selected');
                 };
-                if (tr.dataset.a == ((_c = outer_space$1.obj.focus) === null || _c === void 0 ? void 0 : _c.tuple[1])) {
+                if (tr.dataset.a == ((_d = outer_space$1.obj.focus) === null || _d === void 0 ? void 0 : _d.tuple[1])) {
                     select();
                 }
                 tr.onclick = () => {
@@ -539,11 +560,11 @@ var space = (function () {
             const obj = outer_space$1.obj.focus;
             if (!obj)
                 return;
-            const x_pos = this.toggler.content.querySelector('x-pos');
+            const x_pos = this.get_element('x-pos');
             if (x_pos) {
                 x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
             }
-            const x_dist = this.toggler.content.querySelector('x-dist');
+            const x_dist = this.get_element('x-dist');
             if (x_dist) {
                 x_dist.innerHTML = `Dist: <span>${pts.dist(outer_space$1.center, obj.tuple[2]).toFixed(2)} Km</span>`;
             }
@@ -571,6 +592,13 @@ var space = (function () {
 					
 					`;
                     }
+                    else if (obj.is_type(['star'])) {
+                        text += `
+					Name: ${obj.tuple[4]}<br />
+					Type: ${obj.tuple[0].subtype || 'Unknown'}<br />
+					Center: ${pts.to_string(obj.tuple[2], 2)}
+					`;
+                    }
                     else {
                         text += `
 					Name: ${obj.tuple[4]}<br />
@@ -587,14 +615,14 @@ var space = (function () {
                     }
                     this.toggler.content.innerHTML = text;
                     //this.update_pos();
-                    const follow_button = this.toggler.content.querySelector('x-button[data-a="follow"]');
+                    const follow_button = this.get_element('x-button[data-a="follow"]');
                     if (follow_button) {
                         follow_button.onclick = () => {
                             space$1.action_follow_target(obj);
                         };
                     }
                     if (is_minable) {
-                        const mine_button = this.toggler.content.querySelector('x-button[data-a="mine"]');
+                        const mine_button = this.get_element('x-button[data-a="mine"]');
                         mine_button.onclick = () => {
                             console.log('yeah');
                         };
@@ -608,6 +636,43 @@ var space = (function () {
         }
     }
 
+    class zoom_controls extends right_bar$1.toggler_behavior {
+        constructor(toggler) {
+            super(toggler);
+            this.built = false;
+            zoom_controls.instance = this;
+        }
+        on_open() {
+            //this.toggler.content.innerHTML = 'n/a';
+            this.build_once();
+        }
+        on_close() {
+        }
+        on_fetch() {
+            //this.build();
+        }
+        on_step() {
+        }
+        build_once() {
+            let text = '';
+            text += `
+			<x-buttons>
+			<x-button data-a="stellar">Stellar</x-button>
+			<x-button data-a="local">Local</x-button>
+			</x-buttons>
+		`;
+            this.toggler.content.innerHTML = text;
+            const stellar_button = this.get_element('x-button[data-a="stellar"]');
+            const local_button = this.get_element('x-button[data-a="local"]');
+            stellar_button.onclick = () => {
+                outer_space$1.pixelMultiple = 0.001;
+            };
+            local_button.onclick = () => {
+                outer_space$1.pixelMultiple = 10.0;
+            };
+        }
+    }
+
     var right_bar_consumer;
     (function (right_bar_consumer) {
         function init() {
@@ -616,6 +681,7 @@ var space = (function () {
         function start() {
             new overview(right_bar$1.nearby_ping_toggler);
             new selected_item(right_bar$1.selected_item_toggler);
+            new zoom_controls(right_bar$1.zoom_controls_toggler);
         }
         right_bar_consumer.start = start;
         function stop() {
@@ -636,7 +702,7 @@ var space = (function () {
     var outer_space;
     (function (outer_space) {
         const deduct_nav_bar = 60 / 2;
-        const zoom_min = 0.001;
+        const zoom_min = 0.0001;
         const zoom_max = 120;
         outer_space.mapSize = [100, 100];
         outer_space.locations = [];
@@ -737,9 +803,10 @@ var space = (function () {
                 dummy.element = reg;
                 reg.obj.stamp = -1;
             }
-            let ob = new obj([{ subtype: 'star' }, -1, [-120000, 120000], 'star', 'star']);
+            let ob = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
             ob.networked = false;
-            new star(ob, 167000);
+            // star based on ogle tr 122 b
+            new star(ob, 81100);
         }
         function get_obj_by_id(id) {
             for (const obj of outer_space.objs)
@@ -809,7 +876,7 @@ var space = (function () {
                     outer_space.pixelMultiple -= increment;
             }
             outer_space.pixelMultiple = space$1.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
-            outer_space.zoomLevel.innerHTML = `zoom-level: ${outer_space.pixelMultiple.toFixed(3)}`;
+            outer_space.zoomLevel.innerHTML = `pixels per kilometre: ${outer_space.pixelMultiple.toFixed(4)}`;
             obj.steps();
             right_bar$1.step();
         }
@@ -884,6 +951,7 @@ var space = (function () {
         class element {
             constructor(obj) {
                 this.obj = obj;
+                this.obj.element = this;
             }
             append() {
                 outer_space.renderer.append(this.element);
@@ -957,7 +1025,6 @@ var space = (function () {
             constructor() {
                 super(new obj([{}, -1, [0, 0], 'ping', 'ping']));
                 this.enabled = false;
-                this.obj.element = this;
                 this.obj.stamp = -1;
                 this.element = document.createElement('div');
                 this.element.classList.add('ping');
@@ -980,7 +1047,6 @@ var space = (function () {
             constructor(obj, radius) {
                 super(obj);
                 this.radius = radius;
-                this.obj.element = this;
                 this.obj.stamp = -1;
                 this.element = document.createElement('div');
                 this.element.classList.add('star');

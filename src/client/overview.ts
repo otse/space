@@ -26,7 +26,7 @@ class tab {
 	static tabs: tab[] = []
 	constructor(readonly parent: overview, readonly name, index) {
 		tab.tabs.push(this);
-		this.element = this.parent.toggler.content.querySelector(`x-tab:nth-of-type(${index})`);
+		this.element = this.parent.get_element(`x-tab:nth-of-type(${index})`);
 		this.element.onclick = () => {
 			tab.select(this);
 			overview.instance.build_table();
@@ -65,6 +65,9 @@ class overview extends right_bar.toggler_behavior {
 			<x-tab>
 				Mining
 			</x-tab>
+			<x-tab>
+				Big
+			</x-tab>
 			<x-scrollable>arrow_downward</x-scrollable>
 			</x-tabs>
 			<x-outer-content>
@@ -85,13 +88,14 @@ class overview extends right_bar.toggler_behavior {
 			</x-outer-content>
 		`;
 		this.toggler.content.innerHTML = text;
-		this.x_inner_content = this.toggler.content.querySelector('x-inner-content')!;
-		this.tbody = this.toggler.content.querySelector('tbody')!;
-		this.scrollable = this.toggler.content.querySelector('x-scrollable')!;
-		this.amount = this.toggler.content.querySelector('x-amount')!;
+		this.x_inner_content = this.get_element('x-inner-content')!;
+		this.tbody = this.get_element('tbody')!;
+		this.scrollable = this.get_element('x-scrollable')!;
+		this.amount = this.get_element('x-amount')!;
 
 		new tab(this, 'General', 1);
 		new tab(this, 'Mining', 2);
+		new tab(this, 'Big', 3);
 
 		tab.select(tab.tabs[0]);
 
@@ -122,6 +126,9 @@ class overview extends right_bar.toggler_behavior {
 		}
 		else if (tab.active?.name == 'Mining') {
 			copy = copy.filter(a => a.is_type(['rock']));
+		}
+		else if (tab.active?.name == 'Big') {
+			copy = copy.filter(a => a.is_type(['star']));
 		}
 
 		for (const obj of copy) {

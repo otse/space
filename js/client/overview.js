@@ -21,7 +21,7 @@ class tab {
         this.parent = parent;
         this.name = name;
         tab.tabs.push(this);
-        this.element = this.parent.toggler.content.querySelector(`x-tab:nth-of-type(${index})`);
+        this.element = this.parent.get_element(`x-tab:nth-of-type(${index})`);
         this.element.onclick = () => {
             tab.select(this);
             overview.instance.build_table();
@@ -49,6 +49,9 @@ class overview extends right_bar.toggler_behavior {
 			<x-tab>
 				Mining
 			</x-tab>
+			<x-tab>
+				Big
+			</x-tab>
 			<x-scrollable>arrow_downward</x-scrollable>
 			</x-tabs>
 			<x-outer-content>
@@ -69,12 +72,13 @@ class overview extends right_bar.toggler_behavior {
 			</x-outer-content>
 		`;
         this.toggler.content.innerHTML = text;
-        this.x_inner_content = this.toggler.content.querySelector('x-inner-content');
-        this.tbody = this.toggler.content.querySelector('tbody');
-        this.scrollable = this.toggler.content.querySelector('x-scrollable');
-        this.amount = this.toggler.content.querySelector('x-amount');
+        this.x_inner_content = this.get_element('x-inner-content');
+        this.tbody = this.get_element('tbody');
+        this.scrollable = this.get_element('x-scrollable');
+        this.amount = this.get_element('x-amount');
         new tab(this, 'General', 1);
         new tab(this, 'Mining', 2);
+        new tab(this, 'Big', 3);
         tab.select(tab.tabs[0]);
         console.log('x-inner-content', this.x_inner_content);
     }
@@ -91,7 +95,7 @@ class overview extends right_bar.toggler_behavior {
         this.build_table();
     }
     build_table() {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         let table = '';
         let copy = outer_space.objs.slice();
         const dist = (obj) => pts.dist(outer_space.center, obj.tuple[2]);
@@ -101,6 +105,9 @@ class overview extends right_bar.toggler_behavior {
         }
         else if (((_b = tab.active) === null || _b === void 0 ? void 0 : _b.name) == 'Mining') {
             copy = copy.filter(a => a.is_type(['rock']));
+        }
+        else if (((_c = tab.active) === null || _c === void 0 ? void 0 : _c.name) == 'Big') {
+            copy = copy.filter(a => a.is_type(['star']));
         }
         for (const obj of copy) {
             const type = obj.tuple[3];
@@ -133,7 +140,7 @@ class overview extends right_bar.toggler_behavior {
                 this.selected_tr = tr;
                 tr.classList.add('selected');
             };
-            if (tr.dataset.a == ((_c = outer_space.obj.focus) === null || _c === void 0 ? void 0 : _c.tuple[1])) {
+            if (tr.dataset.a == ((_d = outer_space.obj.focus) === null || _d === void 0 ? void 0 : _d.tuple[1])) {
                 select();
             }
             tr.onclick = () => {

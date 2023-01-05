@@ -6,6 +6,9 @@ var right_bar;
             this.toggler = toggler;
             toggler.behavior = this;
         }
+        get_element(selector) {
+            return this.toggler.content.querySelector(selector);
+        }
         on_open() { }
         on_close() { }
         on_fetch() { }
@@ -87,9 +90,20 @@ var right_bar;
 				boo-ya
 			</x-content>
 		</x-begin>
+
+		<x-begin>
+			<x-title>
+				<span>zoom_in</span>
+				<span>Scale</span>
+			</x-title>
+			<x-content>
+				boo-ya
+			</x-content>
+		</x-begin>
 		`;
         right_bar.selected_item_toggler = new toggler('selected-item', 1);
         right_bar.nearby_ping_toggler = new toggler('overview', 2);
+        right_bar.zoom_controls_toggler = new toggler('scale', 3);
         right_bar.element.style.visibility = 'visible';
     }
     right_bar.start = start;

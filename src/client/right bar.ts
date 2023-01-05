@@ -5,12 +5,17 @@ namespace right_bar {
 
 	export var nearby_ping_toggler: toggler;
 	export var selected_item_toggler: toggler;
+	export var zoom_controls_toggler: toggler;
 
 	export var element;
 
 	export class toggler_behavior {
-		constructor(public readonly toggler: toggler) {
+		constructor(
+			readonly toggler: toggler) {
 			toggler.behavior = this;
+		}
+		get_element(selector: string): HTMLElement {
+			return this.toggler.content.querySelector(selector) as HTMLElement;
 		}
 		on_open() { }
 		on_close() { }
@@ -97,10 +102,21 @@ namespace right_bar {
 				boo-ya
 			</x-content>
 		</x-begin>
+
+		<x-begin>
+			<x-title>
+				<span>zoom_in</span>
+				<span>Scale</span>
+			</x-title>
+			<x-content>
+				boo-ya
+			</x-content>
+		</x-begin>
 		`;
 
 		selected_item_toggler = new toggler('selected-item', 1);
 		nearby_ping_toggler = new toggler('overview', 2);
+		zoom_controls_toggler = new toggler('scale', 3);
 
 		element.style.visibility = 'visible';
 	}

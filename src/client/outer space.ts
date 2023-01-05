@@ -9,10 +9,10 @@ import selected_item from "./selected item";
 namespace outer_space {
 
 	const deduct_nav_bar = 60 / 2;
-	const zoom_min = 0.001;
+	const zoom_min = 0.0001;
 	const zoom_max = 120;
 
-	export var renderer, zoomLevel;
+	export var renderer, zoomLevel
 
 	export var mapSize: vec2 = [100, 100]
 
@@ -28,7 +28,7 @@ namespace outer_space {
 
 	export var zoomLimits = [5, 120];
 
-	export var stamp = 0;
+	export var stamp = 0
 
 	export function project(unit: vec2) {
 		const half = pts.divide(mapSize, 2);
@@ -138,9 +138,10 @@ namespace outer_space {
 			reg.obj.stamp = -1;
 		}
 
-		let ob = new obj([{ subtype: 'star' }, -1, [-120000, 120000], 'star', 'star']);
+		let ob = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
 		ob.networked = false;
-		new star(ob, 167000);
+		// star based on ogle tr 122 b
+		new star(ob, 81100);
 	}
 
 	export function get_obj_by_id(id) {
@@ -214,7 +215,7 @@ namespace outer_space {
 
 		pixelMultiple = space.clamp(pixelMultiple, zoom_min, zoom_max);
 
-		zoomLevel.innerHTML = `zoom-level: ${pixelMultiple.toFixed(3)}`;
+		zoomLevel.innerHTML = `pixels per kilometre: ${pixelMultiple.toFixed(4)}`;
 
 		obj.steps();
 
@@ -294,7 +295,9 @@ namespace outer_space {
 	}
 
 	export class element {
-		constructor(readonly obj: obj) {
+		constructor(
+			readonly obj: obj) {
+			this.obj.element = this;
 		}
 		element
 		append() {
@@ -370,7 +373,6 @@ namespace outer_space {
 		enabled = false
 		constructor() {
 			super(new obj([{}, -1, [0, 0], 'ping', 'ping']));
-			this.obj.element = this;
 			this.obj.stamp = -1;
 			this.element = document.createElement('div');
 			this.element.classList.add('ping');
@@ -394,7 +396,6 @@ namespace outer_space {
 		constructor(obj,
 			public radius) {
 			super(obj);
-			this.obj.element = this;
 			this.obj.stamp = -1;
 			this.element = document.createElement('div');
 			this.element.classList.add('star');
@@ -412,7 +413,7 @@ namespace outer_space {
 			this.element.style.width = radius * 2;
 			this.element.style.height = radius * 2;
 			console.log('stylize star');
-			
+
 		}
 		override step() {
 			this.stylize();

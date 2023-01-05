@@ -140,6 +140,6 @@ outer-space .star {
 	background: rgba(255, 255, 255, 0.9);
 	border-radius: 100%;
 	bborder: 4px solid white;
-box-shadow: 0px 0px 30px white;
+	box-shadow: 0px 0px 30px white;
 	/* box-shadow: 0px 0px 50px hsl(0deg 0% 0% / 5%); */
 }
