@@ -282,7 +282,7 @@ function init() {
 		if (ply) {
 			session = new short_lived;
 			session.ply = ply;
-			session.observer = new lod.observer(lod.guniverse, 2);
+			session.observer = new lod.observer(lod.guniverse, 3);
 			session.observer.big = lod.universe.big(ply.pos);
 			lod.guniverse.update_observer(session.observer, ply.pos);
 		}

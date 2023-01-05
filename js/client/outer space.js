@@ -120,11 +120,11 @@ var outer_space;
             dummy.element = reg;
             reg.obj.stamp = -1;
         }
-        let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
+        let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -2, [-120000, 120000], 'star', 'Tirsius']);
         star_1.networked = false;
         // star based on ogle tr 122 b
         new star(star_1, 81100);
-        let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -1, [-400000, 120000], 'star', 'Tars']);
+        let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -3, [-400000, 120000], 'star', 'Tars']);
         star_2.networked = false;
         // star based on ogle tr 122 b
         new star(star_2, 9048);
@@ -209,6 +209,7 @@ var outer_space;
         (_c = target.element) === null || _c === void 0 ? void 0 : _c.focus();
         outer_space.marker.enabled = true;
         outer_space.marker.sticky = target.element;
+        outer_space.marker.obj.tuple[2] = target.tuple[2];
         selected_item.instance.toggler.open();
         console.log('focus on obj');
         return true;
@@ -384,7 +385,7 @@ var outer_space;
             this.element.style.left = proj[0] - radius;
             this.element.style.width = radius * 2;
             this.element.style.height = radius * 2;
-            console.log('stylize star');
+            //console.log('stylize star');
         }
         step() {
             this.stylize();

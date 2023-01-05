@@ -7,10 +7,8 @@ import space from "./space";
 class selected_item extends right_bar.toggler_behavior {
 	static instance: selected_item;
 
-	obj?: outer_space.obj
-	x_pos?
-	built = false
 	built_obj?: outer_space.obj
+	built = false
 
 	constructor(toggler: right_bar.toggler) {
 		super(toggler);
@@ -46,7 +44,7 @@ class selected_item extends right_bar.toggler_behavior {
 		}
 		const x_dist = this.get_element('x-dist');
 		if (x_dist) {
-			const unit = units.express_number_with_unit(pts.dist(outer_space.center, obj.tuple[2]));
+			const unit = units.very_pretty_dist_format(pts.dist(outer_space.center, obj.tuple[2]));
 			x_dist.innerHTML = `Dist: <span>${unit}</span>`;
 		}
 	}
@@ -77,14 +75,15 @@ class selected_item extends right_bar.toggler_behavior {
 					text += `
 					Name: ${obj.tuple[4]}<br />
 					Type: ${obj.tuple[0].subtype || 'Unknown'}<br />
-					Center: ${pts.to_string(obj.tuple[2], 2)}
+					<x-dist></x-dist>
 					`;
+					//<!--Center: ${pts.to_string(obj.tuple[2], 2)}-->
 				}
 				else {
 					text += `
 					Name: ${obj.tuple[4]}<br />
 					Type: ${obj.tuple[3]}<br />
-					<x-pos></x-pos>
+					<!--<x-pos></x-pos>-->
 					<x-dist></x-dist>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>

@@ -234,7 +234,7 @@ function init() {
         if (ply) {
             session = new session_1.default;
             session.ply = ply;
-            session.observer = new lod_1.default.observer(lod_1.default.guniverse, 2);
+            session.observer = new lod_1.default.observer(lod_1.default.guniverse, 3);
             session.observer.big = lod_1.default.universe.big(ply.pos);
             lod_1.default.guniverse.update_observer(session.observer, ply.pos);
         }

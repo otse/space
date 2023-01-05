@@ -115,7 +115,7 @@ class overview extends right_bar.toggler_behavior {
             const dist = pts.dist(outer_space.center, obj.tuple[2]);
             table += `
 				<tr data-a="${obj.tuple[1]}">
-				<td>${units.express_number_with_unit(dist)}</td>
+				<td>${units.very_pretty_dist_format(dist)}</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
 				</tr>

@@ -5,7 +5,7 @@ var units;
     function is_astronomical_unit(km) {
     }
     units.is_astronomical_unit = is_astronomical_unit;
-    function express_number_with_unit(km) {
+    function very_pretty_dist_format(km) {
         const func = (n) => n.toLocaleString("en-US");
         let text = `${func(Math.round(km))} km`;
         if (km <= 10)
@@ -14,6 +14,6 @@ var units;
             text = `${func((km / units.astronomical_unit).toFixed(1))} au`;
         return text;
     }
-    units.express_number_with_unit = express_number_with_unit;
+    units.very_pretty_dist_format = very_pretty_dist_format;
 })(units || (units = {}));
 export default units;

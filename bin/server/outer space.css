@@ -143,3 +143,7 @@ outer-space .star {
 	box-shadow: 0px 0px 30px white;
 	/* box-shadow: 0px 0px 50px hsl(0deg 0% 0% / 5%); */
 }
+
+outer-space .star.focus {
+	text-decoration: underline;
+}

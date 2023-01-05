@@ -249,7 +249,7 @@ var space = (function () {
         function is_astronomical_unit(km) {
         }
         units.is_astronomical_unit = is_astronomical_unit;
-        function express_number_with_unit(km) {
+        function very_pretty_dist_format(km) {
             const func = (n) => n.toLocaleString("en-US");
             let text = `${func(Math.round(km))} km`;
             if (km <= 10)
@@ -258,7 +258,7 @@ var space = (function () {
                 text = `${func((km / units.astronomical_unit).toFixed(1))} au`;
             return text;
         }
-        units.express_number_with_unit = express_number_with_unit;
+        units.very_pretty_dist_format = very_pretty_dist_format;
     })(units || (units = {}));
     var units$1 = units;
 
@@ -508,7 +508,7 @@ var space = (function () {
                 const dist = pts.dist(outer_space$1.center, obj.tuple[2]);
                 table += `
 				<tr data-a="${obj.tuple[1]}">
-				<td>${units$1.express_number_with_unit(dist)}</td>
+				<td>${units$1.very_pretty_dist_format(dist)}</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
 				</tr>
@@ -585,7 +585,7 @@ var space = (function () {
             }
             const x_dist = this.get_element('x-dist');
             if (x_dist) {
-                const unit = units$1.express_number_with_unit(pts.dist(outer_space$1.center, obj.tuple[2]));
+                const unit = units$1.very_pretty_dist_format(pts.dist(outer_space$1.center, obj.tuple[2]));
                 x_dist.innerHTML = `Dist: <span>${unit}</span>`;
             }
         }
@@ -616,14 +616,15 @@ var space = (function () {
                         text += `
 					Name: ${obj.tuple[4]}<br />
 					Type: ${obj.tuple[0].subtype || 'Unknown'}<br />
-					Center: ${pts.to_string(obj.tuple[2], 2)}
+					<x-dist></x-dist>
 					`;
+                        //<!--Center: ${pts.to_string(obj.tuple[2], 2)}-->
                     }
                     else {
                         text += `
 					Name: ${obj.tuple[4]}<br />
 					Type: ${obj.tuple[3]}<br />
-					<x-pos></x-pos>
+					<!--<x-pos></x-pos>-->
 					<x-dist></x-dist>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
@@ -823,11 +824,11 @@ var space = (function () {
                 dummy.element = reg;
                 reg.obj.stamp = -1;
             }
-            let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -1, [-120000, 120000], 'star', 'Tirsius']);
+            let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -2, [-120000, 120000], 'star', 'Tirsius']);
             star_1.networked = false;
             // star based on ogle tr 122 b
             new star(star_1, 81100);
-            let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -1, [-400000, 120000], 'star', 'Tars']);
+            let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -3, [-400000, 120000], 'star', 'Tars']);
             star_2.networked = false;
             // star based on ogle tr 122 b
             new star(star_2, 9048);
@@ -912,6 +913,7 @@ var space = (function () {
             (_c = target.element) === null || _c === void 0 ? void 0 : _c.focus();
             outer_space.marker.enabled = true;
             outer_space.marker.sticky = target.element;
+            outer_space.marker.obj.tuple[2] = target.tuple[2];
             selected_item.instance.toggler.open();
             console.log('focus on obj');
             return true;
@@ -1087,7 +1089,7 @@ var space = (function () {
                 this.element.style.left = proj[0] - radius;
                 this.element.style.width = radius * 2;
                 this.element.style.height = radius * 2;
-                console.log('stylize star');
+                //console.log('stylize star');
             }
             step() {
                 this.stylize();
