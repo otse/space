@@ -20,20 +20,16 @@ class toggle {
 
 namespace lod {
 
-	const chunk_span = 3;
-
 	const chunk_minimum_lifetime = 10;
 
 	const obj_default_lifetime = 16;
 
-	const grid_makes_sectors = true;
+	const observer_makes_sectors = true;
 
 	export const tick_rate = 1;
 
-	export var guniverse: universe
-
-	export function add(obj: obj): chunk {
-		let chunk = guniverse.chart(lod.universe.big(obj.pos));
+	export function add(grid: grid, obj: obj): chunk {
+		let chunk = grid.chart(grid.big(obj.pos));
 		chunk.add(obj);
 		return chunk;
 	}
@@ -45,13 +41,16 @@ namespace lod {
 		}
 	}
 
-	export class universe {
+	export class grid {
+		list: obj[] = []
+		chunks: chunk[] = []
+
 		readonly arrays: chunk[][] = []
-		constructor() {
-			guniverse = this;
+		constructor(readonly chunk_span) {
+			
 		}
 		update_observer(observer: observer, pos: vec2) {
-			observer.big = lod.universe.big(pos);
+			observer.big = this.big(pos);
 			observer.observe();
 		}
 		lookup(big: vec2): chunk | undefined {
@@ -69,42 +68,52 @@ namespace lod {
 			hunk = this.arrays[big[1]][big[0]] = new chunk(big, this);
 			return hunk;
 		}
-		static big(units: vec2): vec2 {
-			return pts.floor(pts.divide(units, chunk_span));
+		big(units: vec2): vec2 {
+			return pts.floor(pts.divide(units, this.chunk_span));
 		}
-		/*
 		tick() {
+			this.decays();
+			hooks.call('lodTick', this);
+			this.list = [];
+			for (const chunk of this.chunks) {
+				chunk.tick();
+				this.list = this.list.concat(chunk.objs);
+			}
+			// todo sort visibles
+			for (const obj of this.list) {
+				obj.tick();
+			}
+		}
+		decays() {
 			let i = this.chunks.length;
 			while (i--) {
 				const chunk = this.chunks[i];
-				chunk.tick();
 				if (chunk.decay <= 0) {
-					chunk.expire();
-					const { big } = chunk;
 					this.chunks.splice(i, 1);
+					chunk.expire();
 				}
+				chunk.decay -= tick_rate;
 			}
 		}
-		*/
 	}
 
 	export class chunk extends toggle {
-		static actives: chunk[] = []
-		static list: obj[] = []
 		readonly objs: obj[] = []
 		decay = chunk_minimum_lifetime
 		constructor(
 			readonly big: vec2,
-			readonly galaxy: universe
+			readonly grid: grid
 		) {
 			super();
 		}
-		dist(grid: observer) {
-			return pts.distsimple(this.big, grid.big);
+		dist(observer: observer) {
+			return pts.distsimple(this.big, observer.big);
 		}
 		static swap(obj: obj) {
+			// todo an obj could not be in the lod grid
+			// before we swap, leading to error
 			let oldChunk = obj.chunk!;
-			let newChunk = oldChunk.galaxy.chart(lod.universe.big(obj.pos));
+			let newChunk = oldChunk.grid.chart(oldChunk.grid.big(obj.pos));
 			if (oldChunk != newChunk) {
 				oldChunk.remove(obj);
 				newChunk.add(obj);
@@ -125,7 +134,7 @@ namespace lod {
 				this.objs.splice(i, 1);
 			}
 		}
-		gather(grid: observer) {
+		gather(observer: observer) {
 			let objects: object[] = [];
 			for (let obj of this.objs) {
 				objects.push(obj.gather());
@@ -145,7 +154,7 @@ namespace lod {
 				this.decay = chunk_minimum_lifetime;
 			if (this.on())
 				return;
-			chunk.actives.push(this);
+			this.grid.chunks.push(this);
 			// hooks.call('chunkRenew', this);
 		}
 		expire() {
@@ -158,38 +167,14 @@ namespace lod {
 			hooks.call('chunkTick', this);
 			//for (const obj of this.objs)
 			//	obj.tick();
-			this.decay -= tick_rate;
-		}
-		static decays() {
-			let i = this.actives.length;
-			while (i--) {
-				const chunk = this.actives[i];
-				if (chunk.decay <= 0) {
-					this.actives.splice(i, 1);
-					chunk.expire();
-				}
-				chunk.tick();
-			}
-		}
-		static tick() {
-			chunk.decays();
-			hooks.call('lodTick', this);
-			this.list = [];
-			for (const chunk of this.actives) {
-				this.list = this.list.concat(chunk.objs);
-			}
-			// todo sort visibles
-			for (const obj of this.list) {
-				obj.tick();
-			}
 		}
 	}
 
 	export class observer {
 		public big: vec2 = [0, 0]
-		public grid: chunk[] = []
+		public chunks: chunk[] = []
 		constructor(
-			public galaxy: universe,
+			public galaxy: grid,
 			public spread: number
 		) {
 		}
@@ -200,11 +185,11 @@ namespace lod {
 			for (let y = -this.spread; y < this.spread + 1; y++) {
 				for (let x = -this.spread; x < this.spread + 1; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let chunk = grid_makes_sectors ? this.galaxy.chart(pos) : this.galaxy.lookup(pos);
+					let chunk = observer_makes_sectors ? this.galaxy.chart(pos) : this.galaxy.lookup(pos);
 					if (!chunk)
 						continue;
-					if (this.grid.indexOf(chunk) == -1)
-						this.grid.push(chunk);
+					if (this.chunks.indexOf(chunk) == -1)
+						this.chunks.push(chunk);
 					chunk.renew(null);
 					chunk.observe();
 				}
@@ -212,7 +197,7 @@ namespace lod {
 		}
 		gather() {
 			let objects: object[] = [];
-			for (let chunk of this.grid) {
+			for (let chunk of this.chunks) {
 				objects = objects.concat(chunk.gather(this));
 			}
 			return objects;

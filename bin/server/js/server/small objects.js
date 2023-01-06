@@ -1,13 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stellar_objects = void 0;
+exports.small_objects = void 0;
 const hooks_1 = require("../shared/hooks");
 const pts_1 = require("../shared/pts");
 const lod_1 = require("./lod");
-var stellar_objects;
-(function (stellar_objects) {
-    stellar_objects.ply_ships = {};
+var small_objects;
+(function (small_objects) {
+    small_objects.ply_ships = {};
     function init() {
+        small_objects.grid = new lod_1.default.grid(3000);
         hooks_1.default.register('userMinted', (user) => {
             when_user_minted(user);
             return false;
@@ -17,24 +18,28 @@ var stellar_objects;
             return false;
         });
     }
-    stellar_objects.init = init;
+    small_objects.init = init;
+    function tick() {
+        small_objects.grid.tick();
+    }
+    small_objects.tick = tick;
     function when_user_minted(user) {
         console.log('userMinted', user.id);
         user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-        let ship = new stellar_objects.ply_ship;
+        let ship = new small_objects.ply_ship;
         ship.userId = user.id;
         ship.name = user.username;
         ship.pos = user.pos;
         ship.set();
-        lod_1.default.add(ship);
+        lod_1.default.add(small_objects.grid, ship);
     }
-    stellar_objects.when_user_minted = when_user_minted;
+    small_objects.when_user_minted = when_user_minted;
     function when_user_purged(user) {
-        let ship = stellar_objects.ply_ships[user.id];
+        let ship = small_objects.ply_ships[user.id];
         if (ship)
             lod_1.default.remove(ship);
     }
-    stellar_objects.when_user_purged = when_user_purged;
+    small_objects.when_user_purged = when_user_purged;
     class ply_ship extends lod_1.default.obj {
         constructor() {
             super();
@@ -43,7 +48,7 @@ var stellar_objects;
         }
         set() {
             this.random.userId = this.userId;
-            stellar_objects.ply_ships[this.userId] = this;
+            small_objects.ply_ships[this.userId] = this;
         }
         tick() {
             super.tick();
@@ -52,7 +57,7 @@ var stellar_objects;
             lod_1.default.chunk.swap(this);
         }
     }
-    stellar_objects.ply_ship = ply_ship;
+    small_objects.ply_ship = ply_ship;
     class tp_rock extends lod_1.default.obj {
         constructor() {
             super();
@@ -65,7 +70,7 @@ var stellar_objects;
             if (this.pretick())
                 return;
             super.tick();
-            const speed = 0.3;
+            const speed = 0.3 * lod_1.default.tick_rate; // 0.3km per second
             let x = speed * Math.sin(this.angle);
             let y = speed * Math.cos(this.angle);
             this.pos = pts_1.default.add(this.pos, [x, y]);
@@ -73,6 +78,6 @@ var stellar_objects;
             //console.log('tickk');
         }
     }
-    stellar_objects.tp_rock = tp_rock;
-})(stellar_objects = exports.stellar_objects || (exports.stellar_objects = {}));
-exports.default = stellar_objects;
+    small_objects.tp_rock = tp_rock;
+})(small_objects = exports.small_objects || (exports.small_objects = {}));
+exports.default = small_objects;

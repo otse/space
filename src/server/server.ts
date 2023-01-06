@@ -1,6 +1,6 @@
 import { write } from "fs";
 import { locations } from "./locations";
-import stellar_objects from "./stellar objects";
+import small_objects from "./small objects";
 import lod from "./lod";
 import lmp from "./lost minor planet";
 import short_lived from "./session";
@@ -41,38 +41,42 @@ process.on('SIGINT', exit);
 }*/
 
 export function tick() {
-	lod.chunk.tick();
+	small_objects.tick();
 }
+
 
 function init() {
 
 	setInterval(tick, lod.tick_rate * 1000);
 
-	new lod.universe;
+	locations.init();
+
+	small_objects.init();
+
+	lmp.init();
 
 	for (let i = 0; i < 10; i++) {
-		let rock = new stellar_objects.tp_rock;
+		let rock = new small_objects.tp_rock;
 		//rock.name = `rock ${i}`;
 		//rock.type = 'rock';
 		rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
-		const chunk = lod.add(rock);
+		const chunk = lod.add(small_objects.grid, rock);
 		chunk.renew(rock);
 	}
 
+	var rock_spawner = 0;
 	hooks.register('lodTick', (x) => {
-		let rock = new stellar_objects.tp_rock;
+		rock_spawner += lod.tick_rate;
+		if (rock_spawner < 5)
+			return false;
+		rock_spawner = 0;
+		let rock = new small_objects.tp_rock;
 		rock.name = 'Debris';
 		rock.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-		const chunk = lod.add(rock);
+		const chunk = lod.add(small_objects.grid, rock);
 		chunk.renew(rock);
 		return false;
 	});
-
-	locations.init();
-
-	stellar_objects.init();
-
-	lmp.init();
 
 	/*for (let username of lmp.users) {
 		let ply = lmp.get_user_from_table_or_fetch(username, false);
@@ -109,7 +113,7 @@ function init() {
 		}
 		else if (req.url == '/tex/bg.png') {
 			let style = fs.readFileSync('tex/bg.png');
-			res.writeHead(200, { CONTENT_TYPE: "image/png" }); 
+			res.writeHead(200, { CONTENT_TYPE: "image/png" });
 			res.end(style);
 			return;
 		}
@@ -282,9 +286,8 @@ function init() {
 		if (ply) {
 			session = new short_lived;
 			session.ply = ply;
-			session.observer = new lod.observer(lod.guniverse, 3);
-			session.observer.big = lod.universe.big(ply.pos);
-			lod.guniverse.update_observer(session.observer, ply.pos);
+			session.observer = new lod.observer(small_objects.grid, 3);
+			small_objects.grid.update_observer(session.observer, ply.pos);
 		}
 		const send_sply = function (ply) {
 			let reduced: any = {
@@ -304,7 +307,10 @@ function init() {
 		}
 
 		const send_object = function (anything) {
-			let str = JSON.stringify(anything);
+			let str = JSON.stringify(anything, function (key, val) {
+				return val.toFixed ? Number(val.toFixed(3)) : val;
+			});
+			//let str = JSON.stringify(anything);
 			res.end(str);
 		}
 
@@ -361,9 +367,8 @@ function init() {
 			}
 			return;
 		}
-		else if (actions.handle(req, res))
-		{
-			
+		else if (actions.handle(req, res)) {
+
 		}
 		else {
 			console.log('unhandled');

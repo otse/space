@@ -2,11 +2,16 @@ import hooks from "../shared/hooks";
 import pts from "../shared/pts";
 import lod from "./lod"
 
-export namespace stellar_objects {
+export namespace small_objects {
 
 	export var ply_ships = {};
 
+	export var grid: lod.grid
+
 	export function init() {
+
+		grid = new lod.grid(3000);
+
 		hooks.register('userMinted', (user) => {
 			when_user_minted(user);
 			return false;
@@ -18,15 +23,19 @@ export namespace stellar_objects {
 		});
 	}
 
+	export function tick() {
+		grid.tick();
+	}
+
 	export function when_user_minted(user) {
 		console.log('userMinted', user.id);
 		user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-		let ship = new stellar_objects.ply_ship;
+		let ship = new small_objects.ply_ship;
 		ship.userId = user.id;
 		ship.name = user.username;
 		ship.pos = user.pos;
 		ship.set();
-		lod.add(ship);
+		lod.add(grid, ship);
 	}
 
 	export function when_user_purged(user) {
@@ -66,7 +75,7 @@ export namespace stellar_objects {
 			if (this.pretick())
 				return;
 			super.tick();
-			const speed = 0.3;
+			const speed = 0.3 * lod.tick_rate; // 0.3km per second
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
 			this.pos = pts.add(this.pos, [x, y]);
@@ -77,4 +86,4 @@ export namespace stellar_objects {
 
 }
 
-export default stellar_objects;
+export default small_objects;

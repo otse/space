@@ -23,13 +23,12 @@ class toggle {
 }
 var lod;
 (function (lod) {
-    const chunk_span = 3;
     const chunk_minimum_lifetime = 10;
     const obj_default_lifetime = 16;
-    const grid_makes_sectors = true;
+    const observer_makes_sectors = true;
     lod.tick_rate = 1;
-    function add(obj) {
-        let chunk = lod.guniverse.chart(lod.universe.big(obj.pos));
+    function add(grid, obj) {
+        let chunk = grid.chart(grid.big(obj.pos));
         chunk.add(obj);
         return chunk;
     }
@@ -41,13 +40,15 @@ var lod;
         }
     }
     lod.remove = remove;
-    class universe {
-        constructor() {
+    class grid {
+        constructor(chunk_span) {
+            this.chunk_span = chunk_span;
+            this.list = [];
+            this.chunks = [];
             this.arrays = [];
-            lod.guniverse = this;
         }
         update_observer(observer, pos) {
-            observer.big = lod.universe.big(pos);
+            observer.big = this.big(pos);
             observer.observe();
         }
         lookup(big) {
@@ -65,25 +66,51 @@ var lod;
             hunk = this.arrays[big[1]][big[0]] = new chunk(big, this);
             return hunk;
         }
-        static big(units) {
-            return pts_1.default.floor(pts_1.default.divide(units, chunk_span));
+        big(units) {
+            return pts_1.default.floor(pts_1.default.divide(units, this.chunk_span));
+        }
+        tick() {
+            this.decays();
+            hooks_1.default.call('lodTick', this);
+            this.list = [];
+            for (const chunk of this.chunks) {
+                chunk.tick();
+                this.list = this.list.concat(chunk.objs);
+            }
+            // todo sort visibles
+            for (const obj of this.list) {
+                obj.tick();
+            }
+        }
+        decays() {
+            let i = this.chunks.length;
+            while (i--) {
+                const chunk = this.chunks[i];
+                if (chunk.decay <= 0) {
+                    this.chunks.splice(i, 1);
+                    chunk.expire();
+                }
+                chunk.decay -= lod.tick_rate;
+            }
         }
     }
-    lod.universe = universe;
+    lod.grid = grid;
     class chunk extends toggle {
-        constructor(big, galaxy) {
+        constructor(big, grid) {
             super();
             this.big = big;
-            this.galaxy = galaxy;
+            this.grid = grid;
             this.objs = [];
             this.decay = chunk_minimum_lifetime;
         }
-        dist(grid) {
-            return pts_1.default.distsimple(this.big, grid.big);
+        dist(observer) {
+            return pts_1.default.distsimple(this.big, observer.big);
         }
         static swap(obj) {
+            // todo an obj could not be in the lod grid
+            // before we swap, leading to error
             let oldChunk = obj.chunk;
-            let newChunk = oldChunk.galaxy.chart(lod.universe.big(obj.pos));
+            let newChunk = oldChunk.grid.chart(oldChunk.grid.big(obj.pos));
             if (oldChunk != newChunk) {
                 oldChunk.remove(obj);
                 newChunk.add(obj);
@@ -104,7 +131,7 @@ var lod;
                 this.objs.splice(i, 1);
             }
         }
-        gather(grid) {
+        gather(observer) {
             let objects = [];
             for (let obj of this.objs) {
                 objects.push(obj.gather());
@@ -124,7 +151,7 @@ var lod;
                 this.decay = chunk_minimum_lifetime;
             if (this.on())
                 return;
-            chunk.actives.push(this);
+            this.grid.chunks.push(this);
             // hooks.call('chunkRenew', this);
         }
         expire() {
@@ -137,41 +164,15 @@ var lod;
             hooks_1.default.call('chunkTick', this);
             //for (const obj of this.objs)
             //	obj.tick();
-            this.decay -= lod.tick_rate;
-        }
-        static decays() {
-            let i = this.actives.length;
-            while (i--) {
-                const chunk = this.actives[i];
-                if (chunk.decay <= 0) {
-                    this.actives.splice(i, 1);
-                    chunk.expire();
-                }
-                chunk.tick();
-            }
-        }
-        static tick() {
-            chunk.decays();
-            hooks_1.default.call('lodTick', this);
-            this.list = [];
-            for (const chunk of this.actives) {
-                this.list = this.list.concat(chunk.objs);
-            }
-            // todo sort visibles
-            for (const obj of this.list) {
-                obj.tick();
-            }
         }
     }
-    chunk.actives = [];
-    chunk.list = [];
     lod.chunk = chunk;
     class observer {
         constructor(galaxy, spread) {
             this.galaxy = galaxy;
             this.spread = spread;
             this.big = [0, 0];
-            this.grid = [];
+            this.chunks = [];
         }
         visible(chunk) {
             return chunk.dist(this) < this.spread;
@@ -180,11 +181,11 @@ var lod;
             for (let y = -this.spread; y < this.spread + 1; y++) {
                 for (let x = -this.spread; x < this.spread + 1; x++) {
                     let pos = pts_1.default.add(this.big, [x, y]);
-                    let chunk = grid_makes_sectors ? this.galaxy.chart(pos) : this.galaxy.lookup(pos);
+                    let chunk = observer_makes_sectors ? this.galaxy.chart(pos) : this.galaxy.lookup(pos);
                     if (!chunk)
                         continue;
-                    if (this.grid.indexOf(chunk) == -1)
-                        this.grid.push(chunk);
+                    if (this.chunks.indexOf(chunk) == -1)
+                        this.chunks.push(chunk);
                     chunk.renew(null);
                     chunk.observe();
                 }
@@ -192,7 +193,7 @@ var lod;
         }
         gather() {
             let objects = [];
-            for (let chunk of this.grid) {
+            for (let chunk of this.chunks) {
                 objects = objects.concat(chunk.gather(this));
             }
             return objects;

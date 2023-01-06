@@ -1,7 +1,7 @@
 var fs = require('fs');
 
 import hooks from "../shared/hooks";
-import stellar_objects from "./stellar objects";
+import small_objects from "./small objects";
 
 
 interface LostMinorPlanet {

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tick = void 0;
 const locations_1 = require("./locations");
-const stellar_objects_1 = require("./stellar objects");
+const small_objects_1 = require("./small objects");
 const lod_1 = require("./lod");
 const lost_minor_planet_1 = require("./lost minor planet");
 const session_1 = require("./session");
@@ -33,31 +33,35 @@ process.on('SIGINT', exit);
             return region;
 }*/
 function tick() {
-    lod_1.default.chunk.tick();
+    small_objects_1.default.tick();
 }
 exports.tick = tick;
 function init() {
     setInterval(tick, lod_1.default.tick_rate * 1000);
-    new lod_1.default.universe;
+    locations_1.locations.init();
+    small_objects_1.default.init();
+    lost_minor_planet_1.default.init();
     for (let i = 0; i < 10; i++) {
-        let rock = new stellar_objects_1.default.tp_rock;
+        let rock = new small_objects_1.default.tp_rock;
         //rock.name = `rock ${i}`;
         //rock.type = 'rock';
         rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
-        const chunk = lod_1.default.add(rock);
+        const chunk = lod_1.default.add(small_objects_1.default.grid, rock);
         chunk.renew(rock);
     }
+    var rock_spawner = 0;
     hooks_1.default.register('lodTick', (x) => {
-        let rock = new stellar_objects_1.default.tp_rock;
+        rock_spawner += lod_1.default.tick_rate;
+        if (rock_spawner < 5)
+            return false;
+        rock_spawner = 0;
+        let rock = new small_objects_1.default.tp_rock;
         rock.name = 'Debris';
         rock.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-        const chunk = lod_1.default.add(rock);
+        const chunk = lod_1.default.add(small_objects_1.default.grid, rock);
         chunk.renew(rock);
         return false;
     });
-    locations_1.locations.init();
-    stellar_objects_1.default.init();
-    lost_minor_planet_1.default.init();
     /*for (let username of lmp.users) {
         let ply = lmp.get_user_from_table_or_fetch(username, false);
         //make_ship(ply);
@@ -234,9 +238,8 @@ function init() {
         if (ply) {
             session = new session_1.default;
             session.ply = ply;
-            session.observer = new lod_1.default.observer(lod_1.default.guniverse, 3);
-            session.observer.big = lod_1.default.universe.big(ply.pos);
-            lod_1.default.guniverse.update_observer(session.observer, ply.pos);
+            session.observer = new lod_1.default.observer(small_objects_1.default.grid, 3);
+            small_objects_1.default.grid.update_observer(session.observer, ply.pos);
         }
         const send_sply = function (ply) {
             let reduced = {
@@ -253,7 +256,10 @@ function init() {
             send_object(['message', message]);
         };
         const send_object = function (anything) {
-            let str = JSON.stringify(anything);
+            let str = JSON.stringify(anything, function (key, val) {
+                return val.toFixed ? Number(val.toFixed(3)) : val;
+            });
+            //let str = JSON.stringify(anything);
             res.end(str);
         };
         if (req.url == '/ply') {

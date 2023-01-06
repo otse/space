@@ -50,6 +50,14 @@ x-right-bar x-begin x-content {
   flex-direction: column;
   align-items: flex-start;
 }
+x-right-bar x-begin x-content x-name-value-pair {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+x-right-bar x-begin x-content x-name-value-pair x-value {
+  ttext-transform: capitalize;
+}
 x-right-bar x-begin x-content x-pos {
   display: inline-flex;
 }
@@ -165,7 +173,7 @@ x-right-bar x-begin x-content tbody tr:hover {
   background: rgba(139, 139, 139, 0.2);
 }
 x-right-bar x-begin.selected-item x-content {
-  min-width: 200px;
+  mmin-width: 200px;
 }
 x-right-bar x-begin.overview x-content {
   wwidth: 150px;

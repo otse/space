@@ -45,7 +45,7 @@ class selected_item extends right_bar.toggler_behavior {
 		const x_dist = this.get_element('x-dist');
 		if (x_dist) {
 			const unit = units.very_pretty_dist_format(pts.dist(outer_space.center, obj.tuple[2]));
-			x_dist.innerHTML = `Dist: <span>${unit}</span>`;
+			x_dist.innerHTML = `${unit}`;
 		}
 	}
 	build_lost() {
@@ -64,27 +64,56 @@ class selected_item extends right_bar.toggler_behavior {
 			else {
 				if (obj.is_type(['region'])) {
 					text += `
-					Name: ${obj.tuple[4]}<br />
-					Type: ${obj.tuple[3]}<br />
-					Subtype: ${obj.tuple[0].subtype || 'generic'}<br />
-					Center: ${pts.to_string(obj.tuple[2], 2)}
+					<x-name-value-pair>
+						<x-name>Name:</x-name>
+						<x-value>${obj.tuple[4]}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Type:</x-name>
+						<x-value>${obj.tuple[3]}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Dist:</x-name>
+						<x-value><x-dist></x-dist></x-value>
+					</x-name-value-pair>
 					
 					`;
 				}
 				else if (obj.is_type(['star'])) {
 					text += `
-					Name: ${obj.tuple[4]}<br />
-					Type: ${obj.tuple[0].subtype || 'Unknown'}<br />
-					<x-dist></x-dist>
+					<x-name-value-pair>
+						<x-name>Name:</x-name>
+						<x-value>${obj.tuple[4]}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Type:</x-name>
+						<x-value>${obj.tuple[0].subtype || 'Unknown'}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Radius:</x-name>
+						<x-value>${ units.very_pretty_dist_format(obj.tuple[0].radius)}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Dist:</x-name>
+						<x-value><x-dist></x-dist></x-value>
+					</x-name-value-pair>
 					`;
 					//<!--Center: ${pts.to_string(obj.tuple[2], 2)}-->
 				}
 				else {
 					text += `
-					Name: ${obj.tuple[4]}<br />
-					Type: ${obj.tuple[3]}<br />
-					<!--<x-pos></x-pos>-->
-					<x-dist></x-dist>
+					<x-name-value-pair>
+						<x-name>Name:</x-name>
+						<x-value>${obj.tuple[4]}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Type:</x-name>
+						<x-value>${obj.tuple[3]}</x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Dist:</x-name>
+						<x-value><x-dist></x-dist></x-value>
+					</x-name-value-pair>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
 					`;
@@ -96,7 +125,7 @@ class selected_item extends right_bar.toggler_behavior {
 				this.toggler.content.innerHTML = text;
 
 				//this.update_pos();
-				
+
 				const follow_button = this.get_element('x-button[data-a="follow"]');
 				if (follow_button) {
 					follow_button.onclick = () => {

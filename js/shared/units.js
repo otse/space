@@ -1,3 +1,4 @@
+// https://stackoverflow.com/questions/307179/what-is-javascripts-highest-integer-value-that-a-number-can-go-to-without-losin
 var units;
 (function (units) {
     const au = 150000000;

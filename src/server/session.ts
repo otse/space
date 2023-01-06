@@ -1,4 +1,4 @@
-import stellar_objects from "./stellar objects";
+import small_objects from "./small objects";
 import lost_minor_planet from "./lost minor planet";
 import lod from "./lod";
 

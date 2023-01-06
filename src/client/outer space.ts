@@ -138,15 +138,25 @@ namespace outer_space {
 			reg.obj.stamp = -1;
 		}
 
-		let star_1 = new obj([{ subtype: 'Red Dwarf Star' }, -2, [-120000, 120000], 'star', 'Tirsius']);
+		let star_1 = new obj([{ radius: 81100, subtype: 'Red Dwarf Star' }, -2, [-120000, 120000], 'star', 'Aroba']);
 		star_1.networked = false;
 		// star based on ogle tr 122 b
-		new star(star_1, 81100);
+		new star(star_1);
 
-		let star_2 = new obj([{ subtype: 'White Dwarf Star' }, -3, [-400000, 120000], 'star', 'Tars']);
+		let star_2 = new obj([{ radius: 9048, subtype: 'White Dwarf Star' }, -3, [-400000, 120000], 'star', 'Tars']);
 		star_2.networked = false;
 		// star based on ogle tr 122 b
-		new star(star_2, 9048);
+		new star(star_2);
+
+		let star_3 = new obj([{ radius: 320000, subtype: 'Red Dwarf Star' }, -4, [-1000000, -300000], 'star', 'Loki']);
+		star_3.networked = false;
+		// star based on ogle tr 122 b
+		new star(star_3);
+
+		let star_4 = new obj([{ radius: 679000, subtype: 'Red Dwarf Star' }, -5, [2000000, -400000], 'star', 'Shor']);
+		star_4.networked = false;
+		// star based on ogle tr 122 b
+		new star(star_4);
 	}
 
 	export function get_obj_by_id(id) {
@@ -220,7 +230,7 @@ namespace outer_space {
 
 		pixelMultiple = space.clamp(pixelMultiple, zoom_min, zoom_max);
 
-		zoomLevel.innerHTML = `pixels per kilometre: ${pixelMultiple.toFixed(4)}`;
+		zoomLevel.innerHTML = `pixels / kilometer: ${pixelMultiple.toFixed(4)}`;
 
 		obj.steps();
 
@@ -399,8 +409,7 @@ namespace outer_space {
 	}
 
 	export class star extends element {
-		constructor(obj,
-			public radius) {
+		constructor(obj) {
 			super(obj);
 			this.obj.stamp = -1;
 			this.element = document.createElement('div');
@@ -413,7 +422,7 @@ namespace outer_space {
 		}
 		override stylize() {
 			let proj = project(this.obj.tuple[2]);
-			const radius = this.radius * pixelMultiple;
+			const radius = this.obj.tuple[0].radius * pixelMultiple;
 			this.element.style.top = proj[1] - radius;
 			this.element.style.left = proj[0] - radius;
 			this.element.style.width = radius * 2;

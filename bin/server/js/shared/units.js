@@ -1,4 +1,5 @@
 "use strict";
+// https://stackoverflow.com/questions/307179/what-is-javascripts-highest-integer-value-that-a-number-can-go-to-without-losin
 Object.defineProperty(exports, "__esModule", { value: true });
 var units;
 (function (units) {
