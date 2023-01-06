@@ -22,12 +22,13 @@ namespace lod {
 
 	const chunk_minimum_lifetime = 10;
 
-	const obj_default_lifetime = 16;
+	const obj_default_lifetime = 30;
 
 	const observer_makes_sectors = true;
 
 	export const tick_rate = 1;
 
+	// useful for new objects, use chunk.swap otherwise
 	export function add(grid: grid, obj: obj): chunk {
 		let chunk = grid.chart(grid.big(obj.pos));
 		chunk.add(obj);
@@ -62,11 +63,11 @@ namespace lod {
 			return this.lookup(big) || this.make(big);
 		}
 		protected make(big): chunk {
-			let hunk = this.lookup(big);
-			if (hunk)
-				return hunk;
-			hunk = this.arrays[big[1]][big[0]] = new chunk(big, this);
-			return hunk;
+			let chuck = this.lookup(big);
+			if (chuck)
+				return chuck;
+			chuck = this.arrays[big[1]][big[0]] = new chunk(big, this);
+			return chuck;
 		}
 		big(units: vec2): vec2 {
 			return pts.floor(pts.divide(units, this.chunk_span));
@@ -79,7 +80,7 @@ namespace lod {
 				chunk.tick();
 				this.list = this.list.concat(chunk.objs);
 			}
-			// todo sort visibles
+			// todo sort rocks to go before spaceships
 			for (const obj of this.list) {
 				obj.tick();
 			}
@@ -110,14 +111,14 @@ namespace lod {
 			return pts.distsimple(this.big, observer.big);
 		}
 		static swap(obj: obj) {
-			// todo an obj could not be in the lod grid
-			// before we swap, leading to error
-			let oldChunk = obj.chunk!;
-			let newChunk = oldChunk.grid.chart(oldChunk.grid.big(obj.pos));
-			if (oldChunk != newChunk) {
-				oldChunk.remove(obj);
-				newChunk.add(obj);
-				newChunk.renew(obj);
+			const { chunk } = obj;
+			if (!chunk)
+				return;
+			let chunkNew = chunk.grid.chart(chunk.grid.big(obj.pos));
+			if (chunk != chunkNew) {
+				chunk.remove(obj);
+				chunkNew.add(obj);
+				chunkNew.renew(obj);
 			}
 		}
 		add(obj: obj) {
@@ -204,6 +205,18 @@ namespace lod {
 		}
 	}
 
+	/*
+	todo obj decay is not a good system.
+	it extends obj lifetime by observation.
+	meaning if the lod is unobserved for 16 seconds,
+	then the obj decays and is removed.
+	this doesnt imitate reality very well.
+
+	the goal is to keep the lod cleaned up.
+	if nobody sees obj x for 16 seconds, then presumably nobody
+	would care beyond that time-span,
+	and it is safe to destroy to unclutter the lod.
+	*/
 	export class obj {
 		static ids = 1
 		id = 0
@@ -225,7 +238,7 @@ namespace lod {
 		observe() {
 			this.decay = this.lifetime;
 		}
-		pretick() {
+		decayed() {
 			if (this.decay <= 0) {
 				lod.remove(this);
 				console.log(` ${this.type} expired into intergalactic space `);

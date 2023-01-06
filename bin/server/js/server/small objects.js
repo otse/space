@@ -40,6 +40,21 @@ var small_objects;
             lod_1.default.remove(ship);
     }
     small_objects.when_user_purged = when_user_purged;
+    class timed extends lod_1.default.obj {
+        constructor() {
+            super();
+            this.timed = 100;
+        }
+        timed_out() {
+            if (this.timed <= 0) {
+                lod_1.default.remove(this);
+                return true;
+            }
+            this.timed -= lod_1.default.tick_rate;
+            return false;
+        }
+    }
+    small_objects.timed = timed;
     class ply_ship extends lod_1.default.obj {
         constructor() {
             super();
@@ -58,16 +73,19 @@ var small_objects;
         }
     }
     small_objects.ply_ship = ply_ship;
-    class tp_rock extends lod_1.default.obj {
+    class tp_rock extends timed {
         constructor() {
             super();
             this.angle = 0;
             this.name = 'rock';
             this.type = 'rock';
             this.angle = Math.random() * Math.PI * 2;
+            this.timed = 60 * 3;
         }
         tick() {
-            if (this.pretick())
+            if (this.timed_out())
+                return;
+            if (this.decayed())
                 return;
             super.tick();
             const speed = 0.3 * lod_1.default.tick_rate; // 0.3km per second

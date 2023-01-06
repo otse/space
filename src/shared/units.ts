@@ -10,7 +10,7 @@ namespace units {
 	export const astronomical_unit: unit = 150000000; // 149597871
 
 	export function is_astronomical_unit(km: kilometer) {
-		
+
 	}
 
 	export function very_pretty_dist_format(km: kilometer) {

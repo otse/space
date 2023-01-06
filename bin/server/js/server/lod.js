@@ -24,9 +24,10 @@ class toggle {
 var lod;
 (function (lod) {
     const chunk_minimum_lifetime = 10;
-    const obj_default_lifetime = 16;
+    const obj_default_lifetime = 30;
     const observer_makes_sectors = true;
     lod.tick_rate = 1;
+    // useful for new objects, use chunk.swap otherwise
     function add(grid, obj) {
         let chunk = grid.chart(grid.big(obj.pos));
         chunk.add(obj);
@@ -60,11 +61,11 @@ var lod;
             return this.lookup(big) || this.make(big);
         }
         make(big) {
-            let hunk = this.lookup(big);
-            if (hunk)
-                return hunk;
-            hunk = this.arrays[big[1]][big[0]] = new chunk(big, this);
-            return hunk;
+            let chuck = this.lookup(big);
+            if (chuck)
+                return chuck;
+            chuck = this.arrays[big[1]][big[0]] = new chunk(big, this);
+            return chuck;
         }
         big(units) {
             return pts_1.default.floor(pts_1.default.divide(units, this.chunk_span));
@@ -77,7 +78,7 @@ var lod;
                 chunk.tick();
                 this.list = this.list.concat(chunk.objs);
             }
-            // todo sort visibles
+            // todo sort rocks to go before spaceships
             for (const obj of this.list) {
                 obj.tick();
             }
@@ -107,14 +108,14 @@ var lod;
             return pts_1.default.distsimple(this.big, observer.big);
         }
         static swap(obj) {
-            // todo an obj could not be in the lod grid
-            // before we swap, leading to error
-            let oldChunk = obj.chunk;
-            let newChunk = oldChunk.grid.chart(oldChunk.grid.big(obj.pos));
-            if (oldChunk != newChunk) {
-                oldChunk.remove(obj);
-                newChunk.add(obj);
-                newChunk.renew(obj);
+            const { chunk } = obj;
+            if (!chunk)
+                return;
+            let chunkNew = chunk.grid.chart(chunk.grid.big(obj.pos));
+            if (chunk != chunkNew) {
+                chunk.remove(obj);
+                chunkNew.add(obj);
+                chunkNew.renew(obj);
             }
         }
         add(obj) {
@@ -200,6 +201,18 @@ var lod;
         }
     }
     lod.observer = observer;
+    /*
+    todo obj decay is not a good system.
+    it extends obj lifetime by observation.
+    meaning if the lod is unobserved for 16 seconds,
+    then the obj decays and is removed.
+    this doesnt imitate reality very well.
+
+    the goal is to keep the lod cleaned up.
+    if nobody sees obj x for 16 seconds, then presumably nobody
+    would care beyond that time-span,
+    and it is safe to destroy to unclutter the lod.
+    */
     class obj {
         constructor() {
             this.id = 0;
@@ -220,7 +233,7 @@ var lod;
         observe() {
             this.decay = this.lifetime;
         }
-        pretick() {
+        decayed() {
             if (this.decay <= 0) {
                 lod.remove(this);
                 console.log(` ${this.type} expired into intergalactic space `);

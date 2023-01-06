@@ -1,0 +1,16 @@
+{
+    "id": 810,
+    "ip": "::ffff:127.0.0.1",
+    "guest": true,
+    "dormant": false,
+    "username": "pilot#810",
+    "password": "N/A",
+    "pos": [
+        0,
+        0
+    ],
+    "goto": [
+        0,
+        0
+    ]
+}
