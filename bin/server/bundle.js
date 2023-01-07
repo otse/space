@@ -582,6 +582,10 @@ var space = (function () {
             const obj = outer_space$1.obj.focus;
             if (!obj)
                 return;
+            const x_onscreen = this.get_element('x-on-screen');
+            if (x_onscreen) {
+                x_onscreen.innerHTML = `On-screen: ${outer_space$1.is_onscreen(obj)}`;
+            }
             const x_pos = this.get_element('x-pos');
             if (x_pos) {
                 x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
@@ -606,6 +610,7 @@ var space = (function () {
                     text += `~~ Lost ~~`;
                 }
                 else {
+                    text += `<x-on-screen></x-on-screen>`;
                     if (obj.is_type(['region'])) {
                         text += `
 					<x-name-value-pair>
@@ -683,7 +688,7 @@ var space = (function () {
                 }
             }
             else {
-                text += 'N/A';
+                text += 'Nothing';
                 this.toggler.content.innerHTML = text;
             }
         }
@@ -743,6 +748,48 @@ var space = (function () {
     })(right_bar_consumer || (right_bar_consumer = {}));
     var right_bar_consumer$1 = right_bar_consumer;
 
+    var TEST;
+    (function (TEST) {
+        TEST[TEST["Outside"] = 0] = "Outside";
+        TEST[TEST["Inside"] = 1] = "Inside";
+        TEST[TEST["Overlap"] = 2] = "Overlap";
+    })(TEST || (TEST = {}));
+    class aabb2 {
+        static dupe(bb) {
+            return new aabb2(bb.min, bb.max);
+        }
+        constructor(a, b) {
+            this.min = this.max = [...a];
+            if (b) {
+                this.extend(b);
+            }
+        }
+        extend(v) {
+            this.min = pts.min(this.min, v);
+            this.max = pts.max(this.max, v);
+        }
+        diagonal() {
+            return pts.subtract(this.max, this.min);
+        }
+        center() {
+            return pts.add(this.min, pts.mult(this.diagonal(), 0.5));
+        }
+        translate(v) {
+            this.min = pts.add(this.min, v);
+            this.max = pts.add(this.max, v);
+        }
+        test(b) {
+            if (this.max[0] < b.min[0] || this.min[0] > b.max[0] ||
+                this.max[1] < b.min[1] || this.min[1] > b.max[1])
+                return 0;
+            if (this.min[0] <= b.min[0] && this.max[0] >= b.max[0] &&
+                this.min[1] <= b.min[1] && this.max[1] >= b.max[1])
+                return 1;
+            return 2;
+        }
+    }
+    aabb2.TEST = TEST;
+
     var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
@@ -754,9 +801,10 @@ var space = (function () {
     };
     var outer_space;
     (function (outer_space) {
-        const deduct_nav_bar = 60 / 2;
+        const deduct_nav_bar = 60;
         const zoom_min = 0.0001;
         const zoom_max = 120;
+        outer_space.tick_rate = 2;
         outer_space.mapSize = [100, 100];
         outer_space.locations = [];
         outer_space.center = [0, -1];
@@ -768,19 +816,25 @@ var space = (function () {
             let pos = pts.subtract(unit, outer_space.center);
             pos = pts.mult(pos, outer_space.pixelMultiple);
             pos = pts.add(pos, half);
-            pos = pts.add(pos, [0, deduct_nav_bar]);
+            pos = pts.add(pos, [0, deduct_nav_bar / 2]);
             return pos;
         }
         outer_space.project = project;
         function unproject(pixel) {
             const half = pts.divide(outer_space.mapSize, 2);
             let pos = pts.subtract(pixel, half);
-            pos = pts.subtract(pos, [0, deduct_nav_bar]);
+            pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
             pos = pts.divide(pos, outer_space.pixelMultiple);
             pos = pts.add(pos, outer_space.center);
             return pos;
         }
         outer_space.unproject = unproject;
+        function is_onscreen(obj) {
+            let proj = project(obj.tuple[2]);
+            let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1] - deduct_nav_bar]);
+            return aabb.test(new aabb2(proj, proj));
+        }
+        outer_space.is_onscreen = is_onscreen;
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
             outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
@@ -924,7 +978,7 @@ var space = (function () {
                 }
                 right_bar$1.on_fetch();
                 console.log('fetched');
-                fetcher = setTimeout(fetch, 2000);
+                fetcher = setTimeout(fetch, outer_space.tick_rate * 1000);
             });
         }
         outer_space.fetch = fetch;
@@ -1029,8 +1083,9 @@ var space = (function () {
                         this.new_pos = this.tuple[2];
                     if (!pts.together(this.old_pos))
                         this.old_pos = this.tuple[2];
-                    const factor = app$1.delta / 2;
-                    let tween = pts.mult(pts.subtract(this.new_pos, this.old_pos), factor);
+                    const factor = app$1.delta / outer_space.tick_rate;
+                    const dif = pts.subtract(this.new_pos, this.old_pos);
+                    const tween = pts.mult(dif, factor);
                     this.tuple[2] = pts.add(this.tuple[2], tween);
                 }
                 (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();

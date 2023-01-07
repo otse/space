@@ -5,12 +5,15 @@ import overview from "./overview";
 import right_bar from "./right bar";
 import right_bar_consumer from "./right bar consumer";
 import selected_item from "./selected item";
+import aabb2 from "../shared/aabb2";
 
 namespace outer_space {
 
-	const deduct_nav_bar = 60 / 2;
+	const deduct_nav_bar = 60;
 	const zoom_min = 0.0001;
 	const zoom_max = 120;
+
+	export const tick_rate = 2;
 
 	export var renderer, zoomLevel
 
@@ -35,17 +38,23 @@ namespace outer_space {
 		let pos = pts.subtract(unit, center);
 		pos = pts.mult(pos, pixelMultiple);
 		pos = pts.add(pos, half);
-		pos = pts.add(pos, [0, deduct_nav_bar]);
+		pos = pts.add(pos, [0, deduct_nav_bar / 2]);
 		return pos;
 	}
 
 	export function unproject(pixel: vec2) {
 		const half = pts.divide(mapSize, 2);
 		let pos = pts.subtract(pixel, half);
-		pos = pts.subtract(pos, [0, deduct_nav_bar]);
+		pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
 		pos = pts.divide(pos, pixelMultiple);
 		pos = pts.add(pos, center);
 		return pos;
+	}
+
+	export function is_onscreen(obj: obj) {
+		let proj = project(obj.tuple[2]);
+		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1] - deduct_nav_bar]);
+		return aabb.test(new aabb2(proj, proj));
 	}
 
 	export function init() {
@@ -65,7 +74,7 @@ namespace outer_space {
 
 			obj.focus?.element?.blur();
 			obj.focus = undefined;
-			
+
 			//selected_item.instance.toggler.close();
 			//overview.instance.toggler.open();
 			//thing.focus = undefined;
@@ -210,12 +219,13 @@ namespace outer_space {
 		}
 		right_bar.on_fetch();
 		console.log('fetched');
-		fetcher = setTimeout(fetch, 2000);
+		fetcher = setTimeout(fetch, tick_rate * 1000);
 	}
 
 	export function step() {
 		if (!started)
 			return;
+
 		mapSize = [window.innerWidth, window.innerHeight];
 
 		if (you) {
@@ -323,12 +333,13 @@ namespace outer_space {
 
 				if (!pts.together(this.new_pos))
 					this.new_pos = this.tuple[2];
-				
+
 				if (!pts.together(this.old_pos))
 					this.old_pos = this.tuple[2];
 
-				const factor = app.delta / 2;
-				let tween = pts.mult(pts.subtract(this.new_pos, this.old_pos), factor);
+				const factor = app.delta / tick_rate;
+				const dif = pts.subtract(this.new_pos, this.old_pos);
+				const tween = pts.mult(dif, factor);
 				this.tuple[2] = pts.add(this.tuple[2], tween);
 			}
 			this.element?.step();

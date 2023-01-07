@@ -14,11 +14,13 @@ import overview from "./overview";
 import right_bar from "./right bar";
 import right_bar_consumer from "./right bar consumer";
 import selected_item from "./selected item";
+import aabb2 from "../shared/aabb2";
 var outer_space;
 (function (outer_space) {
-    const deduct_nav_bar = 60 / 2;
+    const deduct_nav_bar = 60;
     const zoom_min = 0.0001;
     const zoom_max = 120;
+    outer_space.tick_rate = 2;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
     outer_space.center = [0, -1];
@@ -30,19 +32,25 @@ var outer_space;
         let pos = pts.subtract(unit, outer_space.center);
         pos = pts.mult(pos, outer_space.pixelMultiple);
         pos = pts.add(pos, half);
-        pos = pts.add(pos, [0, deduct_nav_bar]);
+        pos = pts.add(pos, [0, deduct_nav_bar / 2]);
         return pos;
     }
     outer_space.project = project;
     function unproject(pixel) {
         const half = pts.divide(outer_space.mapSize, 2);
         let pos = pts.subtract(pixel, half);
-        pos = pts.subtract(pos, [0, deduct_nav_bar]);
+        pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
         pos = pts.divide(pos, outer_space.pixelMultiple);
         pos = pts.add(pos, outer_space.center);
         return pos;
     }
     outer_space.unproject = unproject;
+    function is_onscreen(obj) {
+        let proj = project(obj.tuple[2]);
+        let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1] - deduct_nav_bar]);
+        return aabb.test(new aabb2(proj, proj));
+    }
+    outer_space.is_onscreen = is_onscreen;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
@@ -188,7 +196,7 @@ var outer_space;
             }
             right_bar.on_fetch();
             console.log('fetched');
-            fetcher = setTimeout(fetch, 2000);
+            fetcher = setTimeout(fetch, outer_space.tick_rate * 1000);
         });
     }
     outer_space.fetch = fetch;
@@ -293,8 +301,9 @@ var outer_space;
                     this.new_pos = this.tuple[2];
                 if (!pts.together(this.old_pos))
                     this.old_pos = this.tuple[2];
-                const factor = app.delta / 2;
-                let tween = pts.mult(pts.subtract(this.new_pos, this.old_pos), factor);
+                const factor = app.delta / outer_space.tick_rate;
+                const dif = pts.subtract(this.new_pos, this.old_pos);
+                const tween = pts.mult(dif, factor);
                 this.tuple[2] = pts.add(this.tuple[2], tween);
             }
             (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();

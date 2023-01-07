@@ -38,6 +38,10 @@ class selected_item extends right_bar.toggler_behavior {
 		const obj = outer_space.obj.focus;
 		if (!obj)
 			return;
+		const x_onscreen = this.get_element('x-on-screen');
+		if (x_onscreen) {
+			x_onscreen.innerHTML = `On-screen: ${outer_space.is_onscreen(obj)}`;
+		}
 		const x_pos = this.get_element('x-pos');
 		if (x_pos) {
 			x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
@@ -62,6 +66,7 @@ class selected_item extends right_bar.toggler_behavior {
 				text += `~~ Lost ~~`;
 			}
 			else {
+				text += `<x-on-screen></x-on-screen>`;
 				if (obj.is_type(['region'])) {
 					text += `
 					<x-name-value-pair>
@@ -143,7 +148,7 @@ class selected_item extends right_bar.toggler_behavior {
 
 		}
 		else {
-			text += 'N/A';
+			text += 'Nothing';
 			this.toggler.content.innerHTML = text;
 		}
 	}
