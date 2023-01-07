@@ -76,16 +76,18 @@ var small_objects;
         constructor() {
             super();
             this.angle = 0;
+            this.speed = 0.3; // 0.3 km per second
             this.name = 'rock';
             this.type = 'rock';
             this.angle = Math.random() * Math.PI * 2;
             this.lifetime = 60 * 3;
+            this.speed = 0.3 + Math.random() * 0.3;
         }
         tick() {
             if (this.timed_out())
                 return;
             super.tick();
-            const speed = 0.3 * lod_1.default.tick_rate; // 0.3km per second
+            const speed = this.speed * lod_1.default.tick_rate;
             let x = speed * Math.sin(this.angle);
             let y = speed * Math.cos(this.angle);
             this.pos = pts_1.default.add(this.pos, [x, y]);

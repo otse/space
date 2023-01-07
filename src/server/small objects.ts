@@ -78,18 +78,20 @@ export namespace small_objects {
 
 	export class tp_rock extends obj_lifetime {
 		angle = 0
+		speed = 0.3 // 0.3 km per second
 		constructor() {
 			super();
 			this.name = 'rock';
 			this.type = 'rock';
 			this.angle = Math.random() * Math.PI * 2;
 			this.lifetime = 60 * 3;
+			this.speed = 0.3 + Math.random() * 0.3;
 		}
 		override tick() {
 			if (this.timed_out())
 				return;
 			super.tick();
-			const speed = 0.3 * lod.tick_rate; // 0.3km per second
+			const speed = this.speed * lod.tick_rate; 
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
 			this.pos = pts.add(this.pos, [x, y]);

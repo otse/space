@@ -903,7 +903,8 @@ var space = (function () {
                     let bee = get_obj_by_id(id);
                     if (bee) {
                         //bee.tuple[2] = pos;
-                        bee.tween_pos = pos;
+                        bee.old_pos = bee.tuple[2];
+                        bee.new_pos = pos;
                         //bee.element?.stylize();
                     }
                     else {
@@ -967,7 +968,8 @@ var space = (function () {
                 this.tuple = tuple;
                 this.stamp = 0;
                 this.networked = true;
-                this.tween_pos = [0, 0];
+                this.old_pos = [0, 0];
+                this.new_pos = [0, 0];
                 this.lost = false;
                 this.icon = 'radio_button_unchecked';
                 outer_space.objs.push(this);
@@ -1023,10 +1025,12 @@ var space = (function () {
                 if (this.networked) {
                     if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
                         outer_space.marker.obj.tuple[2] = this.tuple[2];
-                    if (!pts.together(this.tween_pos))
-                        this.tween_pos = this.tuple[2];
+                    if (!pts.together(this.new_pos))
+                        this.new_pos = this.tuple[2];
+                    if (!pts.together(this.old_pos))
+                        this.old_pos = this.tuple[2];
                     const factor = app$1.delta / 2;
-                    let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+                    let tween = pts.mult(pts.subtract(this.new_pos, this.old_pos), factor);
                     this.tuple[2] = pts.add(this.tuple[2], tween);
                 }
                 (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();

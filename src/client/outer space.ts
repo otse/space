@@ -189,7 +189,8 @@ namespace outer_space {
 			let bee = get_obj_by_id(id);
 			if (bee) {
 				//bee.tuple[2] = pos;
-				bee.tween_pos = pos;
+				bee.old_pos = bee.tuple[2];
+				bee.new_pos = pos;
 				//bee.element?.stylize();
 			}
 			else {
@@ -260,7 +261,8 @@ namespace outer_space {
 		element?: element
 		stamp = 0
 		networked = true
-		tween_pos: vec2 = [0, 0]
+		old_pos: vec2 = [0, 0]
+		new_pos: vec2 = [0, 0]
 		lost = false
 		icon = 'radio_button_unchecked'
 		constructor(
@@ -319,11 +321,14 @@ namespace outer_space {
 				if (obj.focus == this && marker!.sticky?.obj == this)
 					marker!.obj.tuple[2] = this.tuple[2];
 
-				if (!pts.together(this.tween_pos))
-					this.tween_pos = this.tuple[2];
+				if (!pts.together(this.new_pos))
+					this.new_pos = this.tuple[2];
+				
+				if (!pts.together(this.old_pos))
+					this.old_pos = this.tuple[2];
 
 				const factor = app.delta / 2;
-				let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
+				let tween = pts.mult(pts.subtract(this.new_pos, this.old_pos), factor);
 				this.tuple[2] = pts.add(this.tuple[2], tween);
 			}
 			this.element?.step();
