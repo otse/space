@@ -62,6 +62,10 @@ namespace outer_space {
 			marker!.obj.tuple[2] = unit;
 			marker!.enabled = true;
 			marker!.sticky = undefined;
+
+			obj.focus?.element?.blur();
+			obj.focus = undefined;
+			
 			//selected_item.instance.toggler.close();
 			//overview.instance.toggler.open();
 			//thing.focus = undefined;
@@ -77,7 +81,7 @@ namespace outer_space {
 			else if (ev.scale > 1.0)
 				pixelMultiple += zoomAmount;
 			overview.instance.toggler.close();
-			selected_item.instance.toggler.close();
+			//selected_item.instance.toggler.close();
 		}, false);
 
 		right_bar.init();
@@ -258,10 +262,24 @@ namespace outer_space {
 		networked = true
 		tween_pos: vec2 = [0, 0]
 		lost = false
+		icon = 'radio_button_unchecked'
 		constructor(
 			public tuple: tuple,
 		) {
 			objs.push(this);
+			this.set_icon();
+		}
+		set_icon() {
+			if (this.is_type(['ply'])) {
+				this.icon = 'rocket';
+			}
+			else if (this.is_type(['rock'])) {
+				this.icon = 'landscape';
+			}
+			else if (this.is_type(['star'])) {
+				this.icon = 'radio_button_unchecked';
+			}
+
 		}
 		choose_element() {
 			if (this.is_type(['ply', 'collision'])) {
@@ -368,7 +386,7 @@ namespace outer_space {
 	export class rock extends float {
 		showing_actual_rock = false
 		x_rock
-		diameter_in_km = Math.random()
+		diameter_in_km = 0.5 + Math.random() * 0.5
 		rotation = Math.random() * 360
 		constructor(obj: obj) {
 			super(obj);
@@ -376,7 +394,7 @@ namespace outer_space {
 		override step() {
 			if (pixelMultiple >= 1 && !this.showing_actual_rock) {
 				this.showing_actual_rock = true;
-				this.element.innerHTML = `<x-rock></x-rock><x-label>${this.obj.tuple[4]}</x-label>`;
+				this.element.innerHTML = `<x-rock></x-rock>`;
 				this.x_rock = this.element.querySelector('x-rock');
 
 			} else if (pixelMultiple < 1 && this.showing_actual_rock) {
@@ -393,6 +411,7 @@ namespace outer_space {
 				const size = this.diameter_in_km * pixelMultiple;
 				this.x_rock.style.width = size;
 				this.x_rock.style.height = size;
+				this.x_rock.style.margin = `${-size / 2}px`;
 				this.x_rock.style.transform = `rotateZ(${this.rotation}deg)`;
 			}
 			super.stylize();

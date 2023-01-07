@@ -47,6 +47,7 @@ var outer_space;
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
         outer_space.renderer.onclick = (event) => {
+            var _a, _b;
             if (!started)
                 return;
             console.log(' clicked map ');
@@ -55,6 +56,8 @@ var outer_space;
             outer_space.marker.obj.tuple[2] = unit;
             outer_space.marker.enabled = true;
             outer_space.marker.sticky = undefined;
+            (_b = (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.blur();
+            obj.focus = undefined;
             //selected_item.instance.toggler.close();
             //overview.instance.toggler.open();
             //thing.focus = undefined;
@@ -69,7 +72,7 @@ var outer_space;
             else if (ev.scale > 1.0)
                 outer_space.pixelMultiple += zoomAmount;
             overview.instance.toggler.close();
-            selected_item.instance.toggler.close();
+            //selected_item.instance.toggler.close();
         }, false);
         right_bar.init();
         right_bar_consumer.init();
@@ -230,7 +233,20 @@ var outer_space;
             this.networked = true;
             this.tween_pos = [0, 0];
             this.lost = false;
+            this.icon = 'radio_button_unchecked';
             outer_space.objs.push(this);
+            this.set_icon();
+        }
+        set_icon() {
+            if (this.is_type(['ply'])) {
+                this.icon = 'rocket';
+            }
+            else if (this.is_type(['rock'])) {
+                this.icon = 'landscape';
+            }
+            else if (this.is_type(['star'])) {
+                this.icon = 'radio_button_unchecked';
+            }
         }
         choose_element() {
             if (this.is_type(['ply', 'collision'])) {
@@ -336,13 +352,13 @@ var outer_space;
         constructor(obj) {
             super(obj);
             this.showing_actual_rock = false;
-            this.diameter_in_km = Math.random();
+            this.diameter_in_km = 0.5 + Math.random() * 0.5;
             this.rotation = Math.random() * 360;
         }
         step() {
             if (outer_space.pixelMultiple >= 1 && !this.showing_actual_rock) {
                 this.showing_actual_rock = true;
-                this.element.innerHTML = `<x-rock></x-rock><x-label>${this.obj.tuple[4]}</x-label>`;
+                this.element.innerHTML = `<x-rock></x-rock>`;
                 this.x_rock = this.element.querySelector('x-rock');
             }
             else if (outer_space.pixelMultiple < 1 && this.showing_actual_rock) {
@@ -359,6 +375,7 @@ var outer_space;
                 const size = this.diameter_in_km * outer_space.pixelMultiple;
                 this.x_rock.style.width = size;
                 this.x_rock.style.height = size;
+                this.x_rock.style.margin = `${-size / 2}px`;
                 this.x_rock.style.transform = `rotateZ(${this.rotation}deg)`;
             }
             super.stylize();

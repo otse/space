@@ -60,8 +60,6 @@ outer-space x-float x-label:hover {
 outer-space x-rock {
   background: url(tex/pngwing.com.png);
   background-size: 100% 100%;
-  width: 100;
-  height: 100;
 }
 outer-space .region {
   font-family: 'Space Mono';
@@ -83,6 +81,7 @@ outer-space .region.focus {
   text-decoration: underline;
 }
 outer-space .ping {
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -199,6 +198,10 @@ x-right-bar x-begin x-content x-name-value-pair x-value {
 }
 x-right-bar x-begin x-content x-pos {
   display: inline-flex;
+}
+x-right-bar x-begin x-content x-icon {
+  font-family: 'Material Symbols Outlined';
+  font-size: 16px;
 }
 x-right-bar x-begin x-content x-horizontal-rule {
   display: block;

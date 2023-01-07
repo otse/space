@@ -12,7 +12,7 @@ class item {
 
 // from SO
 function is_overflown(element) {
-	return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+	return element.scrollHeight > element.clientHeight; // || element.scrollWidth > element.clientWidth;
 }
 
 function truncate(string, limit) {
@@ -77,6 +77,7 @@ class overview extends right_bar.toggler_behavior {
 			<table>
 			<thead>
 			<tr>
+			<td></td>
 			<td><x-sorter data-a="dist">Dist <span>arrow_drop_up</span></x-sorter></td>
 			<td>Name</td>
 			<td>Type</td>
@@ -138,6 +139,7 @@ class overview extends right_bar.toggler_behavior {
 			const dist = pts.dist(outer_space.center, obj.tuple[2]);
 			table += `
 				<tr data-a="${obj.tuple[1]}">
+				<td><x-icon>${obj.icon}</x-icon></td>
 				<td>${units.very_pretty_dist_format(dist)}</td>
 				<td>${truncate(obj.tuple[4], 10)}</td>
 				<td>${obj.tuple[3]}</td>
