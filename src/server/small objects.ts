@@ -44,17 +44,17 @@ export namespace small_objects {
 			lod.remove(ship);
 	}
 
-	export class timed extends lod.obj {
-		timed = 100
+	export class obj_lifetime extends lod.obj {
+		lifetime = 100
 		constructor() {
 			super();
 		}
 		timed_out() {
-			if (this.timed <= 0) {
+			if (this.lifetime <= 0) {
 				lod.remove(this);
 				return true;
 			}
-			this.timed -= lod.tick_rate;
+			this.lifetime -= lod.tick_rate;
 			return false;
 		}
 	}
@@ -72,24 +72,21 @@ export namespace small_objects {
 		override tick() {
 			super.tick();
 			//this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
-			this.decay = 10;
 			lod.chunk.swap(this);
 		}
 	}
 
-	export class tp_rock extends timed {
+	export class tp_rock extends obj_lifetime {
 		angle = 0
 		constructor() {
 			super();
 			this.name = 'rock';
 			this.type = 'rock';
 			this.angle = Math.random() * Math.PI * 2;
-			this.timed = 60 * 3;
+			this.lifetime = 60 * 3;
 		}
 		override tick() {
 			if (this.timed_out())
-				return;
-			if (this.decayed())
 				return;
 			super.tick();
 			const speed = 0.3 * lod.tick_rate; // 0.3km per second

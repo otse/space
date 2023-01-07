@@ -264,8 +264,11 @@ namespace outer_space {
 			objs.push(this);
 		}
 		choose_element() {
-			if (this.is_type(['ply', 'rock', 'collision'])) {
+			if (this.is_type(['ply', 'collision'])) {
 				this.element = new float(this);
+			}
+			else if (this.is_type(['rock'])) {
+				this.element = new rock(this);
 			}
 			// else if (this.is_type(['region'])) {
 			// this.element = new region(this, 10);
@@ -305,7 +308,7 @@ namespace outer_space {
 				let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
 				this.tuple[2] = pts.add(this.tuple[2], tween);
 			}
-			this.element?.stylize();
+			this.element?.step();
 		}
 
 	}
@@ -344,18 +347,55 @@ namespace outer_space {
 	export class float extends element {
 		constructor(obj: obj) {
 			super(obj);
-			this.element = document.createElement('div');
-			this.element.classList.add('float');
-			this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
+			this.element = document.createElement('x-float');
+			//this.element.classList.add('float');
+			this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
 			this.attach_onclick(this.element);
 			this.stylize();
 			this.append();
+		}
+		override step() {
+			this.stylize();
 		}
 		override stylize() {
 			let proj = project(this.obj.tuple[2]);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 			//console.log('half', half);
+		}
+	}
+
+	export class rock extends float {
+		showing_actual_rock = false
+		x_rock
+		diameter_in_km = Math.random()
+		rotation = Math.random() * 360
+		constructor(obj: obj) {
+			super(obj);
+		}
+		override step() {
+			if (pixelMultiple >= 1 && !this.showing_actual_rock) {
+				this.showing_actual_rock = true;
+				this.element.innerHTML = `<x-rock></x-rock><x-label>${this.obj.tuple[4]}</x-label>`;
+				this.x_rock = this.element.querySelector('x-rock');
+
+			} else if (pixelMultiple < 1 && this.showing_actual_rock) {
+				this.showing_actual_rock = false;
+				this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
+			}
+			this.rotation += 0.1;
+			if (this.rotation > 360)
+				this.rotation -= 360;
+			super.step();
+		}
+		override stylize() {
+			if (this.showing_actual_rock) {
+				const size = this.diameter_in_km * pixelMultiple;
+				this.x_rock.style.width = size;
+				this.x_rock.style.height = size;
+				this.x_rock.style.transform = `rotateZ(${this.rotation}deg)`;
+			}
+			super.stylize();
 		}
 	}
 

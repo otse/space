@@ -55,13 +55,13 @@ function init() {
 
 	lmp.init();
 
-	for (let i = 0; i < 10; i++) {
+	for (let i = 0; i < 100; i++) {
 		let rock = new small_objects.tp_rock;
 		//rock.name = `rock ${i}`;
 		//rock.type = 'rock';
 		rock.pos = [Math.random() * 20 - 10, Math.random() * 20 - 10];
 		const chunk = lod.add(small_objects.grid, rock);
-		chunk.renew(rock);
+		chunk.observe();
 	}
 
 	var rock_spawner = 0;
@@ -74,7 +74,7 @@ function init() {
 		rock.name = 'Debris';
 		rock.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
 		const chunk = lod.add(small_objects.grid, rock);
-		chunk.renew(rock);
+		chunk.observe();
 		return false;
 	});
 
@@ -117,9 +117,9 @@ function init() {
 			res.end(style);
 			return;
 		}
-		else if (req.url == '/outer%20space.css') {
-			let style = fs.readFileSync('outer space.css');
-			res.writeHead(200, { CONTENT_TYPE: "text/css" });
+		else if (req.url == '/tex/pngwing.com.png') {
+			let style = fs.readFileSync('tex/pngwing.com.png');
+			res.writeHead(200, { CONTENT_TYPE: "image/png" });
 			res.end(style);
 			return;
 		}

@@ -20,9 +20,9 @@ class toggle {
 
 namespace lod {
 
-	const chunk_minimum_lifetime = 10;
+	const chunk_unobserved_lifetime = 10;
 
-	const obj_default_lifetime = 30;
+	const obj_default_refill = 30;
 
 	const observer_makes_sectors = true;
 
@@ -48,7 +48,7 @@ namespace lod {
 
 		readonly arrays: chunk[][] = []
 		constructor(readonly chunk_span) {
-			
+
 		}
 		update_observer(observer: observer, pos: vec2) {
 			observer.big = this.big(pos);
@@ -100,7 +100,7 @@ namespace lod {
 
 	export class chunk extends toggle {
 		readonly objs: obj[] = []
-		decay = chunk_minimum_lifetime
+		decay = chunk_unobserved_lifetime
 		constructor(
 			readonly big: vec2,
 			readonly grid: grid
@@ -114,11 +114,11 @@ namespace lod {
 			const { chunk } = obj;
 			if (!chunk)
 				return;
-			let chunkNew = chunk.grid.chart(chunk.grid.big(obj.pos));
+			const chunkNew = chunk.grid.chart(chunk.grid.big(obj.pos));
 			if (chunk != chunkNew) {
 				chunk.remove(obj);
 				chunkNew.add(obj);
-				chunkNew.renew(obj);
+				chunkNew.observe();
 			}
 		}
 		add(obj: obj) {
@@ -143,31 +143,18 @@ namespace lod {
 			return objects;
 		}
 		observe() {
-			for (const obj of this.objs) {
-				obj.observe();
-			}
-		}
-		renew(obj: obj | null) {
-			const chunk_decay_padding = 2;
-			if (obj)
-				this.decay = Math.max(obj.decay + chunk_decay_padding, chunk_minimum_lifetime);
-			else
-				this.decay = chunk_minimum_lifetime;
+			this.decay = chunk_unobserved_lifetime;
 			if (this.on())
 				return;
 			this.grid.chunks.push(this);
-			// hooks.call('chunkRenew', this);
 		}
 		expire() {
 			if (this.off())
 				return;
 			hooks.call('chunkExpire', this);
-			//console.log('chunk expire');
 		}
 		tick() {
 			hooks.call('chunkTick', this);
-			//for (const obj of this.objs)
-			//	obj.tick();
 		}
 	}
 
@@ -191,10 +178,12 @@ namespace lod {
 						continue;
 					if (this.chunks.indexOf(chunk) == -1)
 						this.chunks.push(chunk);
-					chunk.renew(null);
 					chunk.observe();
 				}
 			}
+		}
+		reset() {
+			this.chunks = [];
 		}
 		gather() {
 			let objects: object[] = [];
@@ -225,30 +214,15 @@ namespace lod {
 		pos: vec2 = [0, 0]
 		chunk: chunk | null = null
 		random: any = {}
-		decay = 0
-		lifetime = obj_default_lifetime
 		constructor() {
 			this.id = obj.ids++;
-			this.observe();
 		}
 		gather() {
 			let sent = [this.random, this.id, this.pos, this.type, this.name];
 			return sent;
 		}
-		observe() {
-			this.decay = this.lifetime;
-		}
-		decayed() {
-			if (this.decay <= 0) {
-				lod.remove(this);
-				console.log(` ${this.type} expired into intergalactic space `);
-				return true;
-			}
-			return false;
-		}
 		tick() {
-			/// override
-			this.decay -= tick_rate;
+			
 		}
 	}
 }

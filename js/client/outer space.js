@@ -233,8 +233,11 @@ var outer_space;
             outer_space.objs.push(this);
         }
         choose_element() {
-            if (this.is_type(['ply', 'rock', 'collision'])) {
+            if (this.is_type(['ply', 'collision'])) {
                 this.element = new float(this);
+            }
+            else if (this.is_type(['rock'])) {
+                this.element = new rock(this);
             }
             // else if (this.is_type(['region'])) {
             // this.element = new region(this, 10);
@@ -274,7 +277,7 @@ var outer_space;
                 let tween = pts.mult(pts.subtract(this.tween_pos, this.tuple[2]), factor);
                 this.tuple[2] = pts.add(this.tuple[2], tween);
             }
-            (_b = this.element) === null || _b === void 0 ? void 0 : _b.stylize();
+            (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();
         }
     }
     outer_space.obj = obj;
@@ -311,12 +314,15 @@ var outer_space;
     class float extends element {
         constructor(obj) {
             super(obj);
-            this.element = document.createElement('div');
-            this.element.classList.add('float');
-            this.element.innerHTML = `<span></span><span>${this.obj.tuple[4]}</span>`;
+            this.element = document.createElement('x-float');
+            //this.element.classList.add('float');
+            this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
             this.attach_onclick(this.element);
             this.stylize();
             this.append();
+        }
+        step() {
+            this.stylize();
         }
         stylize() {
             let proj = project(this.obj.tuple[2]);
@@ -326,6 +332,39 @@ var outer_space;
         }
     }
     outer_space.float = float;
+    class rock extends float {
+        constructor(obj) {
+            super(obj);
+            this.showing_actual_rock = false;
+            this.diameter_in_km = Math.random();
+            this.rotation = Math.random() * 360;
+        }
+        step() {
+            if (outer_space.pixelMultiple >= 1 && !this.showing_actual_rock) {
+                this.showing_actual_rock = true;
+                this.element.innerHTML = `<x-rock></x-rock><x-label>${this.obj.tuple[4]}</x-label>`;
+                this.x_rock = this.element.querySelector('x-rock');
+            }
+            else if (outer_space.pixelMultiple < 1 && this.showing_actual_rock) {
+                this.showing_actual_rock = false;
+                this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
+            }
+            this.rotation += 0.1;
+            if (this.rotation > 360)
+                this.rotation -= 360;
+            super.step();
+        }
+        stylize() {
+            if (this.showing_actual_rock) {
+                const size = this.diameter_in_km * outer_space.pixelMultiple;
+                this.x_rock.style.width = size;
+                this.x_rock.style.height = size;
+                this.x_rock.style.transform = `rotateZ(${this.rotation}deg)`;
+            }
+            super.stylize();
+        }
+    }
+    outer_space.rock = rock;
     class region extends element {
         constructor(obj, radius) {
             super(obj);
