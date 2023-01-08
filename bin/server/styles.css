@@ -153,6 +153,9 @@ x-ui {
   font-family: 'Space Mono';
   font-size: 13px;
   user-select: none;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
 }
 x-ui x-pos {
   display: inline-flex;
@@ -171,6 +174,7 @@ x-ui x-buttons {
   display: flex;
 }
 x-ui x-button {
+  cursor: pointer;
   display: inline-flex;
   padding: 4px;
   /* border-bottom: 1px solid #97d6da; */
@@ -181,7 +185,7 @@ x-ui x-button {
   /* color: #97d6da; */
 }
 x-ui x-button:hover {
-  background: rgba(81, 88, 121, 0.3);
+  background: #515879;
 }
 x-right-bar {
   z-index: 3;

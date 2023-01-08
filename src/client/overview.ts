@@ -59,6 +59,7 @@ class overview extends right_bar.toggler_behavior {
 
 		let text = '';
 		text += `
+			<x-ui>
 			<x-tabs>
 			<x-tab>
 				General
@@ -88,6 +89,7 @@ class overview extends right_bar.toggler_behavior {
 			</table>
 			</x-inner-content>
 			</x-outer-content>
+			</x-ui>
 		`;
 		this.toggler.content.innerHTML = text;
 		this.x_inner_content = this.get_element('x-inner-content')!;

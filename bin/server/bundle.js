@@ -434,6 +434,7 @@ var space = (function () {
             overview.instance = this;
             let text = '';
             text += `
+			<x-ui>
 			<x-tabs>
 			<x-tab>
 				General
@@ -463,6 +464,7 @@ var space = (function () {
 			</table>
 			</x-inner-content>
 			</x-outer-content>
+			</x-ui>
 		`;
             this.toggler.content.innerHTML = text;
             this.x_inner_content = this.get_element('x-inner-content');
@@ -555,6 +557,7 @@ var space = (function () {
         constructor(toggler) {
             super(toggler);
             this.attached_onscreen = false;
+            this.attached_solid = false;
             selected_item.instance = this;
             this.build_attachment();
             this.x_ui = document.createElement('x-ui');
@@ -592,11 +595,13 @@ var space = (function () {
             if (obj) {
                 if (outer_space$1.is_onscreen(obj) && !this.attached_onscreen) {
                     this.attached_onscreen = true;
+                    this.attached_solid = false;
                     this.attachment.append(this.x_ui);
                     this.toggler.content.innerHTML = 'Shown on HUD';
                 }
-                else if (!outer_space$1.is_onscreen(obj)) {
+                else if (!outer_space$1.is_onscreen(obj) && !this.attached_solid) {
                     this.attached_onscreen = false;
+                    this.attached_solid = true;
                     this.x_ui.remove();
                     this.toggler.content.innerHTML = '';
                     this.toggler.content.append(this.x_ui);
@@ -712,11 +717,12 @@ var space = (function () {
                     const follow_button = this.get_element('x-button[data-a="follow"]', this.x_ui);
                     if (follow_button) {
                         follow_button.onclick = () => {
+                            console.log('woo');
                             space$1.action_follow_target(obj);
                         };
                     }
-                    if (is_minable) {
-                        const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
+                    const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
+                    if (mine_button) {
                         mine_button.onclick = () => {
                             console.log('yeah');
                         };
@@ -1164,6 +1170,7 @@ var space = (function () {
         class float extends element {
             constructor(obj) {
                 super(obj);
+                this.neg = [0, 0];
                 this.element = document.createElement('x-float');
                 //this.element.classList.add('float');
                 this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
@@ -1176,8 +1183,8 @@ var space = (function () {
             }
             stylize() {
                 let proj = project(this.obj.tuple[2]);
-                this.element.style.top = proj[1];
-                this.element.style.left = proj[0];
+                this.element.style.top = proj[1] - this.neg[1];
+                this.element.style.left = proj[0] - this.neg[0];
                 //console.log('half', half);
             }
         }

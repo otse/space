@@ -186,7 +186,7 @@ namespace outer_space {
 		const [random] = object;
 		if (random.userId == space.sply.id) {
 			console.log(`we're us`);
-			you = obj.element;
+			you = obj.element as float;
 			you!.element?.classList.add('you');
 		}
 	}
@@ -383,6 +383,7 @@ namespace outer_space {
 	}
 
 	export class float extends element {
+		neg: vec2 = [0, 0]
 		constructor(obj: obj) {
 			super(obj);
 			this.element = document.createElement('x-float');
@@ -397,8 +398,8 @@ namespace outer_space {
 		}
 		override stylize() {
 			let proj = project(this.obj.tuple[2]);
-			this.element.style.top = proj[1];
-			this.element.style.left = proj[0];
+			this.element.style.top = proj[1] - this.neg[1];
+			this.element.style.left = proj[0] - this.neg[0];
 			//console.log('half', half);
 		}
 	}

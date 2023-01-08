@@ -7,6 +7,7 @@ class selected_item extends right_bar.toggler_behavior {
     constructor(toggler) {
         super(toggler);
         this.attached_onscreen = false;
+        this.attached_solid = false;
         selected_item.instance = this;
         this.build_attachment();
         this.x_ui = document.createElement('x-ui');
@@ -44,11 +45,13 @@ class selected_item extends right_bar.toggler_behavior {
         if (obj) {
             if (outer_space.is_onscreen(obj) && !this.attached_onscreen) {
                 this.attached_onscreen = true;
+                this.attached_solid = false;
                 this.attachment.append(this.x_ui);
                 this.toggler.content.innerHTML = 'Shown on HUD';
             }
-            else if (!outer_space.is_onscreen(obj)) {
+            else if (!outer_space.is_onscreen(obj) && !this.attached_solid) {
                 this.attached_onscreen = false;
+                this.attached_solid = true;
                 this.x_ui.remove();
                 this.toggler.content.innerHTML = '';
                 this.toggler.content.append(this.x_ui);
@@ -164,11 +167,12 @@ class selected_item extends right_bar.toggler_behavior {
                 const follow_button = this.get_element('x-button[data-a="follow"]', this.x_ui);
                 if (follow_button) {
                     follow_button.onclick = () => {
+                        console.log('woo');
                         space.action_follow_target(obj);
                     };
                 }
-                if (is_minable) {
-                    const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
+                const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
+                if (mine_button) {
                     mine_button.onclick = () => {
                         console.log('yeah');
                     };

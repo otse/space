@@ -181,6 +181,9 @@ x-ui {
 	font-family: 'Space Mono';
 	font-size: 13px;
 	user-select: none;
+	display: flex;
+	align-items: flex-start;
+	flex-direction: column;
 
 	x-pos {
 		display: inline-flex;
@@ -203,6 +206,7 @@ x-ui {
 	}
 	
 	x-button {
+		cursor: pointer;
 		display: inline-flex;
 		padding: 4px;
 		/* border-bottom: 1px solid #97d6da; */
@@ -213,7 +217,7 @@ x-ui {
 		/* color: #97d6da; */
 	
 		&:hover {
-			background: rgb(81 88 121 / 30%);
+			background: rgb(81 88 121 / 100%);
 		}
 	}
 }

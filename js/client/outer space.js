@@ -346,6 +346,7 @@ var outer_space;
     class float extends element {
         constructor(obj) {
             super(obj);
+            this.neg = [0, 0];
             this.element = document.createElement('x-float');
             //this.element.classList.add('float');
             this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
@@ -358,8 +359,8 @@ var outer_space;
         }
         stylize() {
             let proj = project(this.obj.tuple[2]);
-            this.element.style.top = proj[1];
-            this.element.style.left = proj[0];
+            this.element.style.top = proj[1] - this.neg[1];
+            this.element.style.left = proj[0] - this.neg[0];
             //console.log('half', half);
         }
     }
