@@ -14,8 +14,10 @@ namespace right_bar {
 			readonly toggler: toggler) {
 			toggler.behavior = this;
 		}
-		get_element(selector: string): HTMLElement {
-			return this.toggler.content.querySelector(selector) as HTMLElement;
+		get_element(selector: string, element?: HTMLElement): HTMLElement {
+			if (!element)
+				element = this.toggler.content;
+			return element.querySelector(selector) as HTMLElement;
 		}
 		on_open() { }
 		on_close() { }
@@ -89,7 +91,6 @@ namespace right_bar {
 				<span>Selected</span>
 			</x-title>
 			<x-content>
-				nothing to see here
 			</x-content>
 		</x-begin>
 		
@@ -128,17 +129,13 @@ namespace right_bar {
 
 	export function step() {
 		for (const toggler of togglers) {
-			if (toggler.opened) {
-				toggler.step();
-			}
+			toggler.step();
 		}
 	}
 
 	export function on_fetch() {
 		for (const toggler of togglers) {
-			if (toggler.opened) {
-				toggler.fetch();
-			}
+			toggler.fetch();
 		}
 	}
 }

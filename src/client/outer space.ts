@@ -33,6 +33,8 @@ namespace outer_space {
 
 	export var stamp = 0
 
+	export var disableClick = false;
+
 	export function project(unit: vec2) {
 		const half = pts.divide(mapSize, 2);
 		let pos = pts.subtract(unit, center);
@@ -53,7 +55,7 @@ namespace outer_space {
 
 	export function is_onscreen(obj: obj) {
 		let proj = project(obj.tuple[2]);
-		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1] - deduct_nav_bar]);
+		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1]]);
 		return aabb.test(new aabb2(proj, proj));
 	}
 
@@ -64,7 +66,9 @@ namespace outer_space {
 		renderer.onclick = (event) => {
 			if (!started)
 				return;
-			console.log(' clicked map ');
+			if (disableClick)
+				return;
+			console.log(' clicked o/s ');
 
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
@@ -83,7 +87,7 @@ namespace outer_space {
 
 		document.body.addEventListener('gesturechange', function (e) {
 			const ev = e as any;
-			const multiplier = pixelMultiple / 120;
+			const multiplier = pixelMultiple / zoom_max;
 			const zoomAmount = 2 * multiplier;
 			if (ev.scale < 1.0)
 				pixelMultiple -= zoomAmount;

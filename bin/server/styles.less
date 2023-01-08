@@ -12,6 +12,11 @@ outer-space {
 	font-size: 11px;
 	color: lightgray;
 
+	x-attachment {
+		z-index: 3;
+		position: absolute;
+	}
+
 	zoom-level {
 		font-family: 'Space Mono';
 		display: block;
@@ -158,6 +163,61 @@ outer-space {
 	}
 }
 
+@borderColor: rgb(255 255 255 / 33%);
+
+x-name-value-pair {
+	display: flex;
+	width: 100%;
+	justify-content: space-between;
+
+	x-name {}
+
+	x-value {
+		ttext-transform: capitalize;
+	}
+}
+
+x-ui {
+	font-family: 'Space Mono';
+	font-size: 13px;
+	user-select: none;
+
+	x-pos {
+		display: inline-flex;
+	}
+	
+	x-icon {
+		font-family: 'Material Symbols Outlined';
+		font-size: 16px;
+	}
+	
+	x-horizontal-rule {
+		display: block;
+		width: 100%;
+		margin: 4px 0;
+		border-top: 1px solid @borderColor;
+	}
+	
+	x-buttons {
+		display: flex;
+	}
+	
+	x-button {
+		display: inline-flex;
+		padding: 4px;
+		/* border-bottom: 1px solid #97d6da; */
+		/* border-radius: 3px; */
+		/* background: rgba(128, 128, 128, 0.5); */
+		margin: 0 2px;
+		text-decoration: underline;
+		/* color: #97d6da; */
+	
+		&:hover {
+			background: rgb(81 88 121 / 30%);
+		}
+	}
+}
+
 x-right-bar {
 	z-index: 3;
 	position: absolute;
@@ -202,8 +262,6 @@ x-right-bar {
 			}
 		}
 
-		@borderColor: rgb(255 255 255 / 33%);
-
 		x-content {
 			overflow: hidden;
 			ccolor: #cecece;
@@ -213,53 +271,6 @@ x-right-bar {
 			display: none;
 			flex-direction: column;
 			align-items: flex-start;
-
-			x-name-value-pair {
-				display: flex;
-				width: 100%;
-				justify-content: space-between;
-
-				x-name {}
-
-				x-value {
-					ttext-transform: capitalize;
-				}
-			}
-
-			x-pos {
-				display: inline-flex;
-			}
-
-			x-icon {
-				font-family: 'Material Symbols Outlined';
-				font-size: 16px;
-			}
-
-			x-horizontal-rule {
-				display: block;
-				width: 100%;
-				margin: 4px 0;
-				border-top: 1px solid @borderColor;
-			}
-
-			x-buttons {
-				display: flex;
-			}
-
-			x-button {
-				display: inline-flex;
-				padding: 4px;
-				/* border-bottom: 1px solid #97d6da; */
-				/* border-radius: 3px; */
-				/* background: rgba(128, 128, 128, 0.5); */
-				margin: 0 2px;
-				text-decoration: underline;
-				/* color: #97d6da; */
-
-				&:hover {
-					background: rgb(81 88 121 / 30%);
-				}
-			}
 
 			x-tabs {
 				display: flex;

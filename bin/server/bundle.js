@@ -271,8 +271,10 @@ var space = (function () {
                 this.toggler = toggler;
                 toggler.behavior = this;
             }
-            get_element(selector) {
-                return this.toggler.content.querySelector(selector);
+            get_element(selector, element) {
+                if (!element)
+                    element = this.toggler.content;
+                return element.querySelector(selector);
             }
             on_open() { }
             on_close() { }
@@ -342,7 +344,6 @@ var space = (function () {
 				<span>Selected</span>
 			</x-title>
 			<x-content>
-				nothing to see here
 			</x-content>
 		</x-begin>
 		
@@ -379,17 +380,13 @@ var space = (function () {
         right_bar.stop = stop;
         function step() {
             for (const toggler of right_bar.togglers) {
-                if (toggler.opened) {
-                    toggler.step();
-                }
+                toggler.step();
             }
         }
         right_bar.step = step;
         function on_fetch() {
             for (const toggler of right_bar.togglers) {
-                if (toggler.opened) {
-                    toggler.fetch();
-                }
+                toggler.fetch();
             }
         }
         right_bar.on_fetch = on_fetch;
@@ -557,8 +554,10 @@ var space = (function () {
     class selected_item extends right_bar$1.toggler_behavior {
         constructor(toggler) {
             super(toggler);
-            this.built = false;
+            this.attached_onscreen = false;
             selected_item.instance = this;
+            this.build_attachment();
+            this.x_ui = document.createElement('x-ui');
         }
         on_open() {
             //this.toggler.content.innerHTML = 'n/a';
@@ -569,28 +568,64 @@ var space = (function () {
         on_fetch() {
             //this.build();
         }
+        build_attachment() {
+            this.attachment = document.createElement('x-attachment');
+            this.attachment.innerHTML = '';
+            this.attachment.onmouseover = () => {
+                outer_space$1.disableClick = true;
+            };
+            this.attachment.onmouseleave = () => {
+                outer_space$1.disableClick = false;
+            };
+            outer_space$1.renderer.append(this.attachment);
+        }
         on_step() {
             //this.build();
             const obj = outer_space$1.obj.focus;
-            if (obj && obj.lost)
-                this.build_lost();
-            else if (this.built_obj != obj)
-                this.build_once();
+            if (obj) {
+                if (obj.lost)
+                    this.build_lost();
+                else if (this.built_obj != obj)
+                    this.build_once();
+            }
             this.update_teller();
+            if (obj) {
+                if (outer_space$1.is_onscreen(obj) && !this.attached_onscreen) {
+                    this.attached_onscreen = true;
+                    this.attachment.append(this.x_ui);
+                    this.toggler.content.innerHTML = 'Shown on HUD';
+                }
+                else if (!outer_space$1.is_onscreen(obj)) {
+                    this.attached_onscreen = false;
+                    this.x_ui.remove();
+                    this.toggler.content.innerHTML = '';
+                    this.toggler.content.append(this.x_ui);
+                }
+            }
+            if (this.attached_onscreen && obj) {
+                const proj = outer_space$1.project(obj.tuple[2]);
+                this.attachment.style.display = 'block';
+                this.attachment.style.position = 'selected';
+                this.attachment.style.top = `${proj[1]}`;
+                this.attachment.style.left = `${proj[0]}`;
+            }
+            else {
+                this.attachment.style.display = 'none';
+            }
         }
         update_teller() {
             const obj = outer_space$1.obj.focus;
             if (!obj)
                 return;
-            const x_onscreen = this.get_element('x-on-screen');
+            const x_onscreen = this.get_element('x-on-screen', this.x_ui);
             if (x_onscreen) {
-                x_onscreen.innerHTML = `On-screen: ${outer_space$1.is_onscreen(obj)}`;
+                x_onscreen.innerHTML = `${!outer_space$1.is_onscreen(obj) ? 'Off-screen' : ''}`;
             }
-            const x_pos = this.get_element('x-pos');
+            const x_pos = this.get_element('x-pos', this.x_ui);
             if (x_pos) {
                 x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
             }
-            const x_dist = this.get_element('x-dist');
+            const x_dist = this.get_element('x-dist', this.x_ui);
             if (x_dist) {
                 const unit = units$1.very_pretty_dist_format(pts.dist(outer_space$1.center, obj.tuple[2]));
                 x_dist.innerHTML = `${unit}`;
@@ -601,6 +636,7 @@ var space = (function () {
             this.toggler.content.innerHTML = text;
         }
         build_once() {
+            console.log('build once');
             let text = '';
             const obj = outer_space$1.obj.focus;
             this.built_obj = obj;
@@ -671,16 +707,16 @@ var space = (function () {
                             text += `<x-button data-a="mine">Mine</x-button>`;
                         text += `</x-buttons>`;
                     }
-                    this.toggler.content.innerHTML = text;
+                    this.x_ui.innerHTML = text;
                     //this.update_pos();
-                    const follow_button = this.get_element('x-button[data-a="follow"]');
+                    const follow_button = this.get_element('x-button[data-a="follow"]', this.x_ui);
                     if (follow_button) {
                         follow_button.onclick = () => {
                             space$1.action_follow_target(obj);
                         };
                     }
                     if (is_minable) {
-                        const mine_button = this.get_element('x-button[data-a="mine"]');
+                        const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
                         mine_button.onclick = () => {
                             console.log('yeah');
                         };
@@ -689,7 +725,7 @@ var space = (function () {
             }
             else {
                 text += 'Nothing';
-                this.toggler.content.innerHTML = text;
+                this.x_ui.innerHTML = text;
             }
         }
     }
@@ -811,6 +847,7 @@ var space = (function () {
         outer_space.pixelMultiple = 50;
         outer_space.zoomLimits = [5, 120];
         outer_space.stamp = 0;
+        outer_space.disableClick = false;
         function project(unit) {
             const half = pts.divide(outer_space.mapSize, 2);
             let pos = pts.subtract(unit, outer_space.center);
@@ -831,7 +868,7 @@ var space = (function () {
         outer_space.unproject = unproject;
         function is_onscreen(obj) {
             let proj = project(obj.tuple[2]);
-            let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1] - deduct_nav_bar]);
+            let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
             return aabb.test(new aabb2(proj, proj));
         }
         outer_space.is_onscreen = is_onscreen;
@@ -842,7 +879,9 @@ var space = (function () {
                 var _a, _b;
                 if (!started)
                     return;
-                console.log(' clicked map ');
+                if (outer_space.disableClick)
+                    return;
+                console.log(' clicked o/s ');
                 let pixel = [event.clientX, event.clientY];
                 let unit = unproject(pixel);
                 outer_space.marker.obj.tuple[2] = unit;
@@ -857,7 +896,7 @@ var space = (function () {
             };
             document.body.addEventListener('gesturechange', function (e) {
                 const ev = e;
-                const multiplier = outer_space.pixelMultiple / 120;
+                const multiplier = outer_space.pixelMultiple / zoom_max;
                 const zoomAmount = 2 * multiplier;
                 if (ev.scale < 1.0)
                     outer_space.pixelMultiple -= zoomAmount;

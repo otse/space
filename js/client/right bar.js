@@ -6,8 +6,10 @@ var right_bar;
             this.toggler = toggler;
             toggler.behavior = this;
         }
-        get_element(selector) {
-            return this.toggler.content.querySelector(selector);
+        get_element(selector, element) {
+            if (!element)
+                element = this.toggler.content;
+            return element.querySelector(selector);
         }
         on_open() { }
         on_close() { }
@@ -77,7 +79,6 @@ var right_bar;
 				<span>Selected</span>
 			</x-title>
 			<x-content>
-				nothing to see here
 			</x-content>
 		</x-begin>
 		
@@ -114,17 +115,13 @@ var right_bar;
     right_bar.stop = stop;
     function step() {
         for (const toggler of right_bar.togglers) {
-            if (toggler.opened) {
-                toggler.step();
-            }
+            toggler.step();
         }
     }
     right_bar.step = step;
     function on_fetch() {
         for (const toggler of right_bar.togglers) {
-            if (toggler.opened) {
-                toggler.fetch();
-            }
+            toggler.fetch();
         }
     }
     right_bar.on_fetch = on_fetch;

@@ -11,6 +11,10 @@ outer-space {
   font-size: 11px;
   color: lightgray;
 }
+outer-space x-attachment {
+  z-index: 3;
+  position: absolute;
+}
 outer-space zoom-level {
   font-family: 'Space Mono';
   display: block;
@@ -137,6 +141,48 @@ outer-space .star.focus {
     border-radius: 50%;
   }
 }
+x-name-value-pair {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+x-name-value-pair x-value {
+  ttext-transform: capitalize;
+}
+x-ui {
+  font-family: 'Space Mono';
+  font-size: 13px;
+  user-select: none;
+}
+x-ui x-pos {
+  display: inline-flex;
+}
+x-ui x-icon {
+  font-family: 'Material Symbols Outlined';
+  font-size: 16px;
+}
+x-ui x-horizontal-rule {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.33);
+}
+x-ui x-buttons {
+  display: flex;
+}
+x-ui x-button {
+  display: inline-flex;
+  padding: 4px;
+  /* border-bottom: 1px solid #97d6da; */
+  /* border-radius: 3px; */
+  /* background: rgba(128, 128, 128, 0.5); */
+  margin: 0 2px;
+  text-decoration: underline;
+  /* color: #97d6da; */
+}
+x-ui x-button:hover {
+  background: rgba(81, 88, 121, 0.3);
+}
 x-right-bar {
   z-index: 3;
   position: absolute;
@@ -187,43 +233,6 @@ x-right-bar x-begin x-content {
   display: none;
   flex-direction: column;
   align-items: flex-start;
-}
-x-right-bar x-begin x-content x-name-value-pair {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-}
-x-right-bar x-begin x-content x-name-value-pair x-value {
-  ttext-transform: capitalize;
-}
-x-right-bar x-begin x-content x-pos {
-  display: inline-flex;
-}
-x-right-bar x-begin x-content x-icon {
-  font-family: 'Material Symbols Outlined';
-  font-size: 16px;
-}
-x-right-bar x-begin x-content x-horizontal-rule {
-  display: block;
-  width: 100%;
-  margin: 4px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.33);
-}
-x-right-bar x-begin x-content x-buttons {
-  display: flex;
-}
-x-right-bar x-begin x-content x-button {
-  display: inline-flex;
-  padding: 4px;
-  /* border-bottom: 1px solid #97d6da; */
-  /* border-radius: 3px; */
-  /* background: rgba(128, 128, 128, 0.5); */
-  margin: 0 2px;
-  text-decoration: underline;
-  /* color: #97d6da; */
-}
-x-right-bar x-begin x-content x-button:hover {
-  background: rgba(81, 88, 121, 0.3);
 }
 x-right-bar x-begin x-content x-tabs {
   display: flex;

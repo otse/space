@@ -27,6 +27,7 @@ var outer_space;
     outer_space.pixelMultiple = 50;
     outer_space.zoomLimits = [5, 120];
     outer_space.stamp = 0;
+    outer_space.disableClick = false;
     function project(unit) {
         const half = pts.divide(outer_space.mapSize, 2);
         let pos = pts.subtract(unit, outer_space.center);
@@ -47,7 +48,7 @@ var outer_space;
     outer_space.unproject = unproject;
     function is_onscreen(obj) {
         let proj = project(obj.tuple[2]);
-        let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1] - deduct_nav_bar]);
+        let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
         return aabb.test(new aabb2(proj, proj));
     }
     outer_space.is_onscreen = is_onscreen;
@@ -58,7 +59,9 @@ var outer_space;
             var _a, _b;
             if (!started)
                 return;
-            console.log(' clicked map ');
+            if (outer_space.disableClick)
+                return;
+            console.log(' clicked o/s ');
             let pixel = [event.clientX, event.clientY];
             let unit = unproject(pixel);
             outer_space.marker.obj.tuple[2] = unit;
@@ -73,7 +76,7 @@ var outer_space;
         };
         document.body.addEventListener('gesturechange', function (e) {
             const ev = e;
-            const multiplier = outer_space.pixelMultiple / 120;
+            const multiplier = outer_space.pixelMultiple / zoom_max;
             const zoomAmount = 2 * multiplier;
             if (ev.scale < 1.0)
                 outer_space.pixelMultiple -= zoomAmount;
