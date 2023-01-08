@@ -190,9 +190,9 @@ x-ui x-button:hover {
 x-right-bar {
   z-index: 3;
   position: absolute;
-  bottom: 30;
+  ttop: 30;
   right: 0;
-  margin: 20px;
+  mmargin: 20px;
   margin-right: 0;
   bbackground: hsla(0, 0%, 50%, 0.5);
   border-radius: 5px;
