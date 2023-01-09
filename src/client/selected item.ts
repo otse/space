@@ -8,7 +8,7 @@ class selected_item extends right_bar.toggler_behavior {
 	static instance: selected_item;
 
 	built_obj?: outer_space.obj
-	built_lost = false
+	built_void = false
 	x_ui
 	attachment
 	floating = false
@@ -55,20 +55,11 @@ class selected_item extends right_bar.toggler_behavior {
 	override on_step() {
 		//this.build();
 		const obj = outer_space.obj.focus;
-		if (obj) {
-			if (obj.lost) {
-				if (!this.built_lost) {
-					this.built_lost = true;
-					//this.attach_solid();
-					this.x_ui.innerHTML = 'Object lost';
-				}
-			}
-			else if (this.built_obj != obj) {
-				this.build_once();
-			}
+		if (obj && !obj.lost && obj != this.built_obj) {
+			this.build_once();
 		}
-		this.update_teller();
 		if (obj) {
+			this.built_void = false;
 			const onscreen = outer_space.element_is_onscreen(obj, this.x_ui) == 1;
 			if (onscreen && !this.floating) {
 				this.attach_onscreen();
@@ -77,16 +68,21 @@ class selected_item extends right_bar.toggler_behavior {
 				this.attach_solid();
 			}
 		}
-		if (!obj && this.built_obj) {
+		if (!obj && !this.built_void) {
+			this.built_void = true;
+			this.attachment.style.display = 'none';
+			this.attach_solid();
+			this.x_ui.innerHTML = `Void`;
+		}
+		if (obj?.lost && this.built_obj) {
 			this.built_obj = undefined;
-			if (this.floating) {
-				this.attachment.style.display = 'none';
-				this.attach_solid();
-				this.x_ui.innerHTML = 'Nothing';
-			}
-			else {
-				this.x_ui.innerHTML = 'Nothing';
-			}
+			this.x_ui.innerHTML = `
+			<x-name-value-pair data-a="offscreen">
+				<x-name></x-name>
+				<x-value></x-value>
+			</x-name-value-pair>
+			Object lost
+			`;
 		}
 		if (this.floating && obj) {
 			const proj = outer_space.project(obj.tuple[2]);
@@ -95,6 +91,7 @@ class selected_item extends right_bar.toggler_behavior {
 			this.attachment.style.top = `${proj[1]}`;
 			this.attachment.style.left = `${proj[0]}`;
 		}
+		this.update_teller();
 	}
 	update_teller() {
 		const obj = outer_space.obj.focus;
@@ -117,25 +114,20 @@ class selected_item extends right_bar.toggler_behavior {
 	}
 	build_once() {
 		console.log('build once');
-
 		let text = '';
 		const obj = outer_space.obj.focus;
 		this.built_obj = obj;
-		this.built_lost = false;
-		if (obj) {
-			const is_minable = obj.is_type(['rock', 'debris']);
-			if (obj.lost) {
-				text += `~~ Lost ~~`;
-			}
-			else {
-				text += `
+		if (!obj)
+			return;
+		const is_minable = obj.is_type(['rock', 'debris']);
+		text += `
 				<x-name-value-pair data-a="offscreen">
 					<x-name></x-name>
 					<x-value></x-value>
 				</x-name-value-pair>
 				`;
-				if (obj.is_type(['region'])) {
-					text += `
+		if (obj.is_type(['region'])) {
+			text += `
 					<x-name-value-pair>
 						<x-name>Name:</x-name>
 						<x-value>${obj.tuple[4]}</x-value>
@@ -150,9 +142,9 @@ class selected_item extends right_bar.toggler_behavior {
 					</x-name-value-pair>
 					
 					`;
-				}
-				else if (obj.is_type(['star'])) {
-					text += `
+		}
+		else if (obj.is_type(['star'])) {
+			text += `
 					<x-name-value-pair>
 						<x-name>Name:</x-name>
 						<x-value>${obj.tuple[4]}</x-value>
@@ -170,10 +162,10 @@ class selected_item extends right_bar.toggler_behavior {
 						<x-value><x-dist></x-dist></x-value>
 					</x-name-value-pair>
 					`;
-					//<!--Center: ${pts.to_string(obj.tuple[2], 2)}-->
-				}
-				else {
-					text += `
+			//<!--Center: ${pts.to_string(obj.tuple[2], 2)}-->
+		}
+		else {
+			text += `
 					<x-name-value-pair>
 						<x-name>Name:</x-name>
 						<x-value>${obj.tuple[4]}</x-value>
@@ -189,37 +181,31 @@ class selected_item extends right_bar.toggler_behavior {
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
 					`;
-					text += `<x-button data-a="follow">Follow</x-button>`;
-					if (is_minable)
-						text += `<x-button data-a="mine">Mine</x-button>`;
-					text += `</x-buttons>`;
-				}
-				this.x_ui.innerHTML = text;
+			text += `<x-button data-a="follow">Follow</x-button>`;
+			if (is_minable)
+				text += `<x-button data-a="mine">Mine</x-button>`;
+			text += `</x-buttons>`;
+		}
+		this.x_ui.innerHTML = text;
 
-				//this.update_pos();
+		//this.update_pos();
 
-				const follow_button = this.get_element('x-button[data-a="follow"]', this.x_ui);
-				if (follow_button) {
-					follow_button.onclick = () => {
-						console.log('woo');
+		const follow_button = this.get_element('x-button[data-a="follow"]', this.x_ui);
+		if (follow_button) {
+			follow_button.onclick = () => {
+				console.log('woo');
 
-						space.action_follow_target(obj);
-					}
-				}
-
-				const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
-				if (mine_button) {
-					mine_button.onclick = () => {
-						console.log('yeah');
-					}
-				}
+				space.action_follow_target(obj);
 			}
+		}
 
+		const mine_button = this.get_element('x-button[data-a="mine"]', this.x_ui);
+		if (mine_button) {
+			mine_button.onclick = () => {
+				console.log('yeah');
+			}
 		}
-		else {
-			text += 'Nothing';
-			this.x_ui.innerHTML = text;
-		}
+
 	}
 
 }
