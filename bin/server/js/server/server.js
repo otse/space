@@ -41,7 +41,7 @@ function init() {
     locations_1.locations.init();
     small_objects_1.default.init();
     lost_minor_planet_1.default.init();
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
         let rock = new small_objects_1.default.tp_rock;
         //rock.name = `rock ${i}`;
         //rock.type = 'rock';

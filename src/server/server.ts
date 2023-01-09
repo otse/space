@@ -55,7 +55,7 @@ function init() {
 
 	lmp.init();
 
-	for (let i = 0; i < 100; i++) {
+	for (let i = 0; i < 200; i++) {
 		let rock = new small_objects.tp_rock;
 		//rock.name = `rock ${i}`;
 		//rock.type = 'rock';

@@ -366,9 +366,11 @@ var outer_space;
         }
         stylize() {
             let proj = project(this.obj.tuple[2]);
-            this.element.style.top = proj[1] - this.neg[1];
-            this.element.style.left = proj[0] - this.neg[0];
-            //console.log('half', half);
+            //this.element.style.top = proj[1] - this.neg[1];
+            //this.element.style.left = proj[0] - this.neg[0];
+            let x = proj[0] - this.neg[0];
+            let y = proj[1] - this.neg[1];
+            this.element.style.transform = `translate(${x}px, ${y}px)`;
         }
     }
     outer_space.float = float;
@@ -396,13 +398,17 @@ var outer_space;
         }
         stylize() {
             if (this.showing_actual_rock) {
+                let proj = project(this.obj.tuple[2]);
                 const size = this.diameter_in_km * outer_space.pixelMultiple;
                 this.x_rock.style.width = size;
                 this.x_rock.style.height = size;
-                this.x_rock.style.margin = `${-size / 2}px`;
-                this.x_rock.style.transform = `rotateZ(${this.rotation}deg)`;
+                let x = proj[0] - this.neg[0] - size / 2;
+                let y = proj[1] - this.neg[1] - size / 2;
+                this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${this.rotation}deg)`;
             }
-            super.stylize();
+            else {
+                super.stylize();
+            }
         }
     }
     outer_space.rock = rock;

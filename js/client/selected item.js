@@ -79,8 +79,9 @@ class selected_item extends right_bar.toggler_behavior {
             const proj = outer_space.project(obj.tuple[2]);
             this.attachment.style.display = 'block';
             this.attachment.style.position = 'selected';
-            this.attachment.style.top = `${proj[1]}`;
-            this.attachment.style.left = `${proj[0]}`;
+            this.attachment.style.transform = `translate(${proj[0]}px, ${proj[1]}px)`;
+            //this.attachment.style.top = `${proj[1]}`;
+            //this.attachment.style.left = `${proj[0]}`;
         }
         this.update_teller();
     }
