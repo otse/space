@@ -556,8 +556,8 @@ var space = (function () {
     class selected_item extends right_bar$1.toggler_behavior {
         constructor(toggler) {
             super(toggler);
-            this.attached_onscreen = false;
-            this.attached_solid = false;
+            this.built_lost = false;
+            this.floating = false;
             selected_item.instance = this;
             this.build_attachment();
             this.x_ui = document.createElement('x-ui');
@@ -582,49 +582,69 @@ var space = (function () {
             };
             outer_space$1.renderer.append(this.attachment);
         }
+        attach_onscreen() {
+            this.floating = true;
+            this.attachment.append(this.x_ui);
+            this.toggler.content.innerHTML = 'Shown on HUD';
+        }
+        attach_solid() {
+            this.floating = false;
+            this.x_ui.remove();
+            this.toggler.content.innerHTML = '';
+            this.toggler.content.append(this.x_ui);
+        }
         on_step() {
             //this.build();
             const obj = outer_space$1.obj.focus;
             if (obj) {
-                if (obj.lost)
-                    this.build_lost();
-                else if (this.built_obj != obj)
+                if (obj.lost) {
+                    if (!this.built_lost) {
+                        this.built_lost = true;
+                        //this.attach_solid();
+                        this.x_ui.innerHTML = 'Object lost';
+                    }
+                }
+                else if (this.built_obj != obj) {
                     this.build_once();
+                }
             }
             this.update_teller();
             if (obj) {
-                if (outer_space$1.is_onscreen(obj) && !this.attached_onscreen) {
-                    this.attached_onscreen = true;
-                    this.attached_solid = false;
-                    this.attachment.append(this.x_ui);
-                    this.toggler.content.innerHTML = 'Shown on HUD';
+                const onscreen = outer_space$1.element_is_onscreen(obj, this.x_ui) == 1;
+                if (onscreen && !this.floating) {
+                    this.attach_onscreen();
                 }
-                else if (!outer_space$1.is_onscreen(obj) && !this.attached_solid) {
-                    this.attached_onscreen = false;
-                    this.attached_solid = true;
-                    this.x_ui.remove();
-                    this.toggler.content.innerHTML = '';
-                    this.toggler.content.append(this.x_ui);
+                else if (!onscreen && this.floating) {
+                    this.attach_solid();
                 }
             }
-            if (this.attached_onscreen && obj) {
+            if (!obj && this.built_obj) {
+                this.built_obj = undefined;
+                if (this.floating) {
+                    this.attachment.style.display = 'none';
+                    this.attach_solid();
+                    this.x_ui.innerHTML = 'Nothing';
+                }
+                else {
+                    this.x_ui.innerHTML = 'Nothing';
+                }
+            }
+            if (this.floating && obj) {
                 const proj = outer_space$1.project(obj.tuple[2]);
                 this.attachment.style.display = 'block';
                 this.attachment.style.position = 'selected';
                 this.attachment.style.top = `${proj[1]}`;
                 this.attachment.style.left = `${proj[0]}`;
             }
-            else {
-                this.attachment.style.display = 'none';
-            }
         }
         update_teller() {
             const obj = outer_space$1.obj.focus;
             if (!obj)
                 return;
-            const x_onscreen = this.get_element('x-on-screen', this.x_ui);
-            if (x_onscreen) {
-                x_onscreen.innerHTML = `${!outer_space$1.is_onscreen(obj) ? 'Off-screen' : ''}`;
+            //console.log("x-ui onscreen:", );
+            const x_offscreen = this.get_element('x-name-value-pair[data-a="offscreen"]', this.x_ui);
+            if (x_offscreen) {
+                x_offscreen.innerHTML = `${!outer_space$1.is_onscreen(obj) ? 'Off-screen' : ''}`;
             }
             const x_pos = this.get_element('x-pos', this.x_ui);
             if (x_pos) {
@@ -636,22 +656,24 @@ var space = (function () {
                 x_dist.innerHTML = `${unit}`;
             }
         }
-        build_lost() {
-            const text = `~~ Lost ~~`;
-            this.toggler.content.innerHTML = text;
-        }
         build_once() {
             console.log('build once');
             let text = '';
             const obj = outer_space$1.obj.focus;
             this.built_obj = obj;
+            this.built_lost = false;
             if (obj) {
                 const is_minable = obj.is_type(['rock', 'debris']);
                 if (obj.lost) {
                     text += `~~ Lost ~~`;
                 }
                 else {
-                    text += `<x-on-screen></x-on-screen>`;
+                    text += `
+				<x-name-value-pair data-a="offscreen">
+					<x-name></x-name>
+					<x-value></x-value>
+				</x-name-value-pair>
+				`;
                     if (obj.is_type(['region'])) {
                         text += `
 					<x-name-value-pair>
@@ -878,6 +900,13 @@ var space = (function () {
             return aabb.test(new aabb2(proj, proj));
         }
         outer_space.is_onscreen = is_onscreen;
+        function element_is_onscreen(obj, element) {
+            let proj = project(obj.tuple[2]);
+            let size = [element.clientWidth, element.clientHeight];
+            let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
+            return aabb.test(new aabb2(proj, pts.add(proj, size)));
+        }
+        outer_space.element_is_onscreen = element_is_onscreen;
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
             outer_space.zoomLevel = document.querySelector("outer-space zoom-level");

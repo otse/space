@@ -52,6 +52,13 @@ var outer_space;
         return aabb.test(new aabb2(proj, proj));
     }
     outer_space.is_onscreen = is_onscreen;
+    function element_is_onscreen(obj, element) {
+        let proj = project(obj.tuple[2]);
+        let size = [element.clientWidth, element.clientHeight];
+        let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
+        return aabb.test(new aabb2(proj, pts.add(proj, size)));
+    }
+    outer_space.element_is_onscreen = element_is_onscreen;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");

@@ -141,14 +141,6 @@ outer-space .star.focus {
     border-radius: 50%;
   }
 }
-x-name-value-pair {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-}
-x-name-value-pair x-value {
-  ttext-transform: capitalize;
-}
 x-ui {
   font-family: 'Space Mono';
   font-size: 13px;
@@ -156,6 +148,14 @@ x-ui {
   display: flex;
   align-items: flex-start;
   flex-direction: column;
+}
+x-ui x-name-value-pair {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+x-ui x-name-value-pair x-value {
+  ttext-transform: capitalize;
 }
 x-ui x-pos {
   display: inline-flex;

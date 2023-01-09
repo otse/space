@@ -59,6 +59,13 @@ namespace outer_space {
 		return aabb.test(new aabb2(proj, proj));
 	}
 
+	export function element_is_onscreen(obj: obj, element: HTMLElement) {
+		let proj = project(obj.tuple[2]);
+		let size: vec2 = [element.clientWidth, element.clientHeight];
+		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1]]);
+		return aabb.test(new aabb2(proj, pts.add(proj, size)));
+	}
+
 	export function init() {
 		renderer = document.querySelector("outer-space");
 		zoomLevel = document.querySelector("outer-space zoom-level");
