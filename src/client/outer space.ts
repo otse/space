@@ -61,6 +61,9 @@ namespace outer_space {
 
 	export function element_is_onscreen(obj: obj, element: HTMLElement) {
 		let proj = project(obj.tuple[2]);
+		//const rect = element.getBoundingClientRect();
+		//console.log(rect.top);
+		//proj = [rect.left, rect.top];		
 		let size: vec2 = [element.clientWidth, element.clientHeight];
 		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1]]);
 		return aabb.test(new aabb2(proj, pts.add(proj, size)));
@@ -270,7 +273,8 @@ namespace outer_space {
 		marker!.enabled = true;
 		marker!.sticky = target.element;
 		marker!.obj.tuple[2] = target.tuple[2];
-		selected_item.instance.toggler.open();
+		if (!selected_item.instance.toggler.opened)
+			selected_item.instance.toggler.open();
 		console.log('focus on obj');
 		return true;
 	}
@@ -446,8 +450,7 @@ namespace outer_space {
 				let y = proj[1] - this.neg[1] - size / 2;
 				this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${this.rotation}deg)`;
 			}
-			else
-			{
+			else {
 				super.stylize();
 			}
 		}

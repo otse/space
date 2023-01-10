@@ -564,7 +564,7 @@ var space = (function () {
         }
         on_open() {
             //this.toggler.content.innerHTML = 'n/a';
-            this.build_once();
+            //this.build_once();
         }
         on_close() {
         }
@@ -585,10 +585,27 @@ var space = (function () {
         attach_onscreen() {
             this.floating = true;
             this.attachment.append(this.x_ui);
-            this.toggler.content.innerHTML = 'Shown on HUD';
+            this.attachment.style.display = 'block';
+            this.toggler.content.innerHTML = `
+			<x-ui>
+			Shown on HUD
+			<x-buttons>
+			<x-button data-a="dock">dock</x-button>
+			</x-buttons>
+			</x-ui>
+		`;
+            const dock_button = this.get_element('x-button[data-a="dock"]', this.toggler.content);
+            if (dock_button) {
+                dock_button.onclick = () => {
+                    console.log('dock!');
+                    this.docked_obj = this.built_obj;
+                    this.attach_solid();
+                };
+            }
         }
         attach_solid() {
             this.floating = false;
+            this.attachment.style.display = 'none';
             this.x_ui.remove();
             this.toggler.content.innerHTML = '';
             this.toggler.content.append(this.x_ui);
@@ -597,10 +614,13 @@ var space = (function () {
             //this.build();
             const obj = outer_space$1.obj.focus;
             if (obj && !obj.lost && obj != this.built_obj) {
+                console.log('lets build once');
+                this.docked_obj = undefined;
+                this.built_void = false;
                 this.build_once();
             }
-            if (obj) {
-                this.built_void = false;
+            if (obj && !this.docked_obj) {
+                // this section attaches and detaches the ui based on onscreen-ness
                 const onscreen = outer_space$1.element_is_onscreen(obj, this.x_ui) == 1;
                 if (onscreen && !this.floating) {
                     this.attach_onscreen();
@@ -610,25 +630,23 @@ var space = (function () {
                 }
             }
             if (!obj && !this.built_void) {
-                this.built_void = true;
-                this.attachment.style.display = 'none';
+                this.built_obj = undefined;
+                this.docked_obj = undefined;
                 this.attach_solid();
                 this.x_ui.innerHTML = `Void`;
             }
-            if ((obj === null || obj === void 0 ? void 0 : obj.lost) && this.built_obj) {
+            if (obj && obj.lost && this.built_obj) {
                 this.built_obj = undefined;
+                this.docked_obj = undefined;
                 this.x_ui.innerHTML = `
-			<x-name-value-pair data-a="offscreen">
-				<x-name></x-name>
-				<x-value></x-value>
-			</x-name-value-pair>
-			Object lost
+				Object lost
+				<x-name-value-pair data-a="offscreen">
+				</x-name-value-pair>
 			`;
             }
             if (this.floating && obj) {
                 const proj = outer_space$1.project(obj.tuple[2]);
-                this.attachment.style.display = 'block';
-                this.attachment.style.position = 'selected';
+                //this.attachment.style.position = 'selected';
                 this.attachment.style.transform = `translate(${proj[0]}px, ${proj[1]}px)`;
                 //this.attachment.style.top = `${proj[1]}`;
                 //this.attachment.style.left = `${proj[0]}`;
@@ -662,12 +680,6 @@ var space = (function () {
             if (!obj)
                 return;
             const is_minable = obj.is_type(['rock', 'debris']);
-            text += `
-				<x-name-value-pair data-a="offscreen">
-					<x-name></x-name>
-					<x-value></x-value>
-				</x-name-value-pair>
-				`;
             if (obj.is_type(['region'])) {
                 text += `
 					<x-name-value-pair>
@@ -728,6 +740,10 @@ var space = (function () {
                     text += `<x-button data-a="mine">Mine</x-button>`;
                 text += `</x-buttons>`;
             }
+            text += `
+				<x-name-value-pair data-a="offscreen">
+				</x-name-value-pair>
+				`;
             this.x_ui.innerHTML = text;
             //this.update_pos();
             const follow_button = this.get_element('x-button[data-a="follow"]', this.x_ui);
@@ -890,6 +906,9 @@ var space = (function () {
         outer_space.is_onscreen = is_onscreen;
         function element_is_onscreen(obj, element) {
             let proj = project(obj.tuple[2]);
+            //const rect = element.getBoundingClientRect();
+            //console.log(rect.top);
+            //proj = [rect.left, rect.top];		
             let size = [element.clientWidth, element.clientHeight];
             let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
             return aabb.test(new aabb2(proj, pts.add(proj, size)));
@@ -1074,7 +1093,8 @@ var space = (function () {
             outer_space.marker.enabled = true;
             outer_space.marker.sticky = target.element;
             outer_space.marker.obj.tuple[2] = target.tuple[2];
-            selected_item.instance.toggler.open();
+            if (!selected_item.instance.toggler.opened)
+                selected_item.instance.toggler.open();
             console.log('focus on obj');
             return true;
         }

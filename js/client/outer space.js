@@ -54,6 +54,9 @@ var outer_space;
     outer_space.is_onscreen = is_onscreen;
     function element_is_onscreen(obj, element) {
         let proj = project(obj.tuple[2]);
+        //const rect = element.getBoundingClientRect();
+        //console.log(rect.top);
+        //proj = [rect.left, rect.top];		
         let size = [element.clientWidth, element.clientHeight];
         let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
         return aabb.test(new aabb2(proj, pts.add(proj, size)));
@@ -240,7 +243,8 @@ var outer_space;
         outer_space.marker.enabled = true;
         outer_space.marker.sticky = target.element;
         outer_space.marker.obj.tuple[2] = target.tuple[2];
-        selected_item.instance.toggler.open();
+        if (!selected_item.instance.toggler.opened)
+            selected_item.instance.toggler.open();
         console.log('focus on obj');
         return true;
     }

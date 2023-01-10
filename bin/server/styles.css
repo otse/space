@@ -143,7 +143,7 @@ outer-space .star.focus {
 }
 x-ui {
   font-family: 'Space Mono';
-  font-size: 13px;
+  font-size: 12px;
   user-select: none;
   display: flex;
   align-items: flex-start;
@@ -155,7 +155,7 @@ x-ui x-name-value-pair {
   justify-content: space-between;
 }
 x-ui x-name-value-pair x-value {
-  ttext-transform: capitalize;
+  text-transform: capitalize;
 }
 x-ui x-pos {
   display: inline-flex;
@@ -168,7 +168,7 @@ x-ui x-horizontal-rule {
   display: block;
   width: 100%;
   margin: 4px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.33);
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
 }
 x-ui x-buttons {
   display: flex;
@@ -233,23 +233,25 @@ x-right-bar x-begin x-content {
   ccolor: #cecece;
   padding: 5px;
   bbackground: rgba(77, 77, 77, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.33);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   display: none;
   flex-direction: column;
   align-items: flex-start;
+  text-transform: lowercase;
 }
 x-right-bar x-begin x-content x-tabs {
   display: flex;
   align-items: center;
+  text-transform: uppercase;
 }
 x-right-bar x-begin x-content x-tab {
   cursor: pointer;
   display: flex;
   padding: 2px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.33);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   bborder-top: none;
-  border-top-left-radius: 2px;
-  border-top-right-radius: 2px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
 }
 x-right-bar x-begin x-content x-tab:hover {
   bbackground: rgba(81, 88, 121, 0.3);
@@ -260,7 +262,7 @@ x-right-bar x-begin x-content x-tab.selected {
 }
 x-right-bar x-begin x-content x-tab:not(.selected) {
   border: 1px solid transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.33);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 }
 x-right-bar x-begin x-content x-scrollable {
   display: block;
@@ -284,7 +286,7 @@ x-right-bar x-begin x-content x-outer-content {
   display: flex;
   wwidth: 200px;
   padding: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.33);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-top: none;
 }
 x-right-bar x-begin x-content x-outer-content x-inner-content {

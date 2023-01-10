@@ -8,6 +8,7 @@ class selected_item extends right_bar.toggler_behavior {
 	static instance: selected_item;
 
 	built_obj?: outer_space.obj
+	docked_obj?: outer_space.obj
 	built_void = false
 	x_ui
 	attachment
@@ -21,7 +22,7 @@ class selected_item extends right_bar.toggler_behavior {
 	}
 	override on_open() {
 		//this.toggler.content.innerHTML = 'n/a';
-		this.build_once();
+		//this.build_once();
 	}
 	override on_close() {
 
@@ -44,10 +45,29 @@ class selected_item extends right_bar.toggler_behavior {
 	attach_onscreen() {
 		this.floating = true;
 		this.attachment.append(this.x_ui);
-		this.toggler.content.innerHTML = 'Shown on HUD';
+		this.attachment.style.display = 'block';
+		this.toggler.content.innerHTML = `
+			<x-ui>
+			Shown on HUD
+			<x-buttons>
+			<x-button data-a="dock">dock</x-button>
+			</x-buttons>
+			</x-ui>
+		`;
+		const dock_button = this.get_element('x-button[data-a="dock"]', this.toggler.content);
+		if (dock_button) {
+			dock_button.onclick = () => {
+				console.log('dock!');
+				
+				this.docked_obj = this.built_obj;
+				this.attach_solid();
+			}
+		}
+		
 	}
 	attach_solid() {
 		this.floating = false;
+		this.attachment.style.display = 'none';
 		this.x_ui.remove();
 		this.toggler.content.innerHTML = '';
 		this.toggler.content.append(this.x_ui);
@@ -56,10 +76,13 @@ class selected_item extends right_bar.toggler_behavior {
 		//this.build();
 		const obj = outer_space.obj.focus;
 		if (obj && !obj.lost && obj != this.built_obj) {
+			console.log('lets build once');
+			this.docked_obj = undefined;
+			this.built_void = false;
 			this.build_once();
 		}
-		if (obj) {
-			this.built_void = false;
+		if (obj && !this.docked_obj) {
+			// this section attaches and detaches the ui based on onscreen-ness
 			const onscreen = outer_space.element_is_onscreen(obj, this.x_ui) == 1;
 			if (onscreen && !this.floating) {
 				this.attach_onscreen();
@@ -69,25 +92,23 @@ class selected_item extends right_bar.toggler_behavior {
 			}
 		}
 		if (!obj && !this.built_void) {
-			this.built_void = true;
-			this.attachment.style.display = 'none';
+			this.built_obj = undefined;
+			this.docked_obj = undefined;
 			this.attach_solid();
 			this.x_ui.innerHTML = `Void`;
 		}
-		if (obj?.lost && this.built_obj) {
+		if (obj && obj.lost && this.built_obj) {
 			this.built_obj = undefined;
+			this.docked_obj = undefined;
 			this.x_ui.innerHTML = `
-			<x-name-value-pair data-a="offscreen">
-				<x-name></x-name>
-				<x-value></x-value>
-			</x-name-value-pair>
-			Object lost
+				Object lost
+				<x-name-value-pair data-a="offscreen">
+				</x-name-value-pair>
 			`;
 		}
 		if (this.floating && obj) {
 			const proj = outer_space.project(obj.tuple[2]);
-			this.attachment.style.display = 'block';
-			this.attachment.style.position = 'selected';
+			//this.attachment.style.position = 'selected';
 			this.attachment.style.transform = `translate(${proj[0]}px, ${proj[1]}px)`;
 			//this.attachment.style.top = `${proj[1]}`;
 			//this.attachment.style.left = `${proj[0]}`;
@@ -121,12 +142,7 @@ class selected_item extends right_bar.toggler_behavior {
 		if (!obj)
 			return;
 		const is_minable = obj.is_type(['rock', 'debris']);
-		text += `
-				<x-name-value-pair data-a="offscreen">
-					<x-name></x-name>
-					<x-value></x-value>
-				</x-name-value-pair>
-				`;
+		
 		if (obj.is_type(['region'])) {
 			text += `
 					<x-name-value-pair>
@@ -187,6 +203,10 @@ class selected_item extends right_bar.toggler_behavior {
 				text += `<x-button data-a="mine">Mine</x-button>`;
 			text += `</x-buttons>`;
 		}
+		text += `
+				<x-name-value-pair data-a="offscreen">
+				</x-name-value-pair>
+				`;
 		this.x_ui.innerHTML = text;
 
 		//this.update_pos();
