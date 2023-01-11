@@ -19,7 +19,7 @@ var outer_space;
 (function (outer_space) {
     const deduct_nav_bar = 60;
     const zoom_min = 0.0001;
-    const zoom_max = 120;
+    const zoom_max = 200;
     outer_space.tick_rate = 2;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
@@ -273,11 +273,14 @@ var outer_space;
             }
         }
         choose_element() {
-            if (this.is_type(['ply', 'collision'])) {
-                this.element = new float(this);
+            if (this.is_type(['ply'])) {
+                this.element = new spaceship(this);
             }
             else if (this.is_type(['rock'])) {
                 this.element = new rock(this);
+            }
+            else {
+                this.element = new float(this);
             }
             // else if (this.is_type(['region'])) {
             // this.element = new region(this, 10);
@@ -378,6 +381,43 @@ var outer_space;
         }
     }
     outer_space.float = float;
+    class spaceship extends float {
+        constructor(obj) {
+            super(obj);
+            this.showing_actual_spaceship = false;
+            this.rotation = Math.random() * 360;
+        }
+        step() {
+            if (outer_space.pixelMultiple >= 1 && !this.showing_actual_spaceship) {
+                this.showing_actual_spaceship = true;
+                this.element.innerHTML = `<x-spaceship></x-spaceship>`;
+                this.x_spaceship = this.element.querySelector('x-spaceship');
+            }
+            else if (outer_space.pixelMultiple < 1 && this.showing_actual_spaceship) {
+                this.showing_actual_spaceship = false;
+                this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
+            }
+            super.step();
+        }
+        stylize() {
+            //console.log('stylize spaceship');
+            if (this.showing_actual_spaceship) {
+                let proj = project(this.obj.tuple[2]);
+                const size = 4 * outer_space.pixelMultiple;
+                const width = 499 / 500 * outer_space.pixelMultiple;
+                const height = 124 / 500 * outer_space.pixelMultiple;
+                this.x_spaceship.style.width = width;
+                this.x_spaceship.style.height = height;
+                let x = proj[0] - this.neg[0] - width / 2;
+                let y = proj[1] - this.neg[1] - height / 2;
+                this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${this.rotation}deg)`;
+            }
+            else {
+                super.stylize();
+            }
+        }
+    }
+    outer_space.spaceship = spaceship;
     class rock extends float {
         constructor(obj) {
             super(obj);

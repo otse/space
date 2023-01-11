@@ -13,6 +13,8 @@ var https = require('https');
 const fs = require('fs');
 const path = require('path');
 const qs = require('querystring');
+const url = require('url');
+
 //var format = require('date-format');
 
 const port = 2;
@@ -111,16 +113,16 @@ function init() {
 			res.end(style);
 			return;
 		}
-		else if (req.url == '/tex/bg.png') {
-			let style = fs.readFileSync('tex/bg.png');
-			res.writeHead(200, { CONTENT_TYPE: "image/png" });
-			res.end(style);
-			return;
-		}
-		else if (req.url == '/tex/pngwing.com.png') {
-			let style = fs.readFileSync('tex/pngwing.com.png');
-			res.writeHead(200, { CONTENT_TYPE: "image/png" });
-			res.end(style);
+		else if (req.url.search('/tex/') != -1) {
+			const parsed = url.parse(req.url, true);
+			const file = `tex/${path.basename(parsed.pathname)}`;
+			if (fs.existsSync(file)) {
+				let data = fs.readFileSync(file);
+				res.writeHead(200, { CONTENT_TYPE: "image/png" });
+				res.end(data);
+			}
+			else
+				res.end('0');
 			return;
 		}
 		else if (req.url == '/bundle.js') {

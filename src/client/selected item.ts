@@ -50,7 +50,7 @@ class selected_item extends right_bar.toggler_behavior {
 			<x-ui>
 			Shown on HUD
 			<x-buttons>
-			<x-button data-a="dock">dock</x-button>
+			<x-button data-a="dock">Dock</x-button>
 			</x-buttons>
 			</x-ui>
 		`;

@@ -65,6 +65,10 @@ outer-space x-rock {
   background: url(tex/pngwing.com.png);
   background-size: 100% 100%;
 }
+outer-space x-spaceship {
+  background: url(tex/carrier.png);
+  background-size: 100% 100%;
+}
 outer-space .region {
   font-family: 'Space Mono';
   font-size: 18px;
@@ -155,7 +159,7 @@ x-ui x-name-value-pair {
   justify-content: space-between;
 }
 x-ui x-name-value-pair x-value {
-  text-transform: capitalize;
+  ttext-transform: capitalize;
 }
 x-ui x-pos {
   display: inline-flex;
@@ -237,7 +241,6 @@ x-right-bar x-begin x-content {
   display: none;
   flex-direction: column;
   align-items: flex-start;
-  text-transform: lowercase;
 }
 x-right-bar x-begin x-content x-tabs {
   display: flex;
@@ -334,5 +337,5 @@ x-right-bar x-begin.selected-item x-content {
 }
 x-right-bar x-begin.overview x-content {
   wwidth: 150px;
-  bbackground: rgba(82, 82, 169, 0.5);
+  bbackground: rgba(95, 125, 75, 0.5);
 }
