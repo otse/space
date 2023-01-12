@@ -19,7 +19,8 @@ var outer_space;
 (function (outer_space) {
     const deduct_nav_bar = 60;
     const zoom_min = 0.0001;
-    const zoom_max = 200;
+    const zoom_max = 600;
+    const zoom_divider = 100;
     outer_space.tick_rate = 2;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
@@ -57,7 +58,7 @@ var outer_space;
         //const rect = element.getBoundingClientRect();
         //console.log(rect.top);
         //proj = [rect.left, rect.top];		
-        let size = [element.clientWidth, element.clientHeight];
+        let size = [element.clientWidth || 100, element.clientHeight || 100];
         let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
         return aabb.test(new aabb2(proj, pts.add(proj, size)));
     }
@@ -86,7 +87,7 @@ var outer_space;
         };
         document.body.addEventListener('gesturechange', function (e) {
             const ev = e;
-            const multiplier = outer_space.pixelMultiple / zoom_max;
+            const multiplier = outer_space.pixelMultiple / zoom_divider;
             const zoomAmount = 2 * multiplier;
             if (ev.scale < 1.0)
                 outer_space.pixelMultiple -= zoomAmount;
@@ -221,7 +222,7 @@ var outer_space;
             //you.pos = pts.add(you.pos, [0.001, 0]);
             outer_space.center = outer_space.you.obj.tuple[2];
         }
-        const multiplier = outer_space.pixelMultiple / zoom_max;
+        const multiplier = outer_space.pixelMultiple / zoom_divider;
         const increment = 10 * multiplier;
         if (!right_bar.toggler.hovering) {
             if (app.wheel == 1)
@@ -256,6 +257,7 @@ var outer_space;
             this.networked = true;
             this.old_pos = [0, 0];
             this.new_pos = [0, 0];
+            this.velocity = 0;
             this.lost = false;
             this.icon = 'radio_button_unchecked';
             outer_space.objs.push(this);
@@ -320,8 +322,15 @@ var outer_space;
                     this.old_pos = this.tuple[2];
                 const factor = app.delta / outer_space.tick_rate;
                 const dif = pts.subtract(this.new_pos, this.old_pos);
-                const tween = pts.mult(dif, factor);
-                this.tuple[2] = pts.add(this.tuple[2], tween);
+                const keep_up_vector = pts.mult(dif, factor);
+                this.tuple[2] = pts.add(this.tuple[2], keep_up_vector);
+                /*const fps = 1 / app.delta;
+                const keep_up_per_second = pts.divide(keep_up_vector, 1);
+                const tween_km_per_second = pts.mult(keep_up_per_second, fps);
+                const km_per_second = pts.length_((tween_km_per_second));
+                const km_per_hour = Math.round(km_per_second * 3600);
+                this.velocity = km_per_hour;*/
+                this.velocity = this.tuple[0].vel * 3600;
             }
             (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();
         }
@@ -388,12 +397,12 @@ var outer_space;
             this.rotation = Math.random() * 360;
         }
         step() {
-            if (outer_space.pixelMultiple >= 1 && !this.showing_actual_spaceship) {
+            if (outer_space.pixelMultiple >= 3 && !this.showing_actual_spaceship) {
                 this.showing_actual_spaceship = true;
                 this.element.innerHTML = `<x-spaceship></x-spaceship>`;
                 this.x_spaceship = this.element.querySelector('x-spaceship');
             }
-            else if (outer_space.pixelMultiple < 1 && this.showing_actual_spaceship) {
+            else if (outer_space.pixelMultiple < 3 && this.showing_actual_spaceship) {
                 this.showing_actual_spaceship = false;
                 this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
             }
@@ -404,8 +413,9 @@ var outer_space;
             if (this.showing_actual_spaceship) {
                 let proj = project(this.obj.tuple[2]);
                 const size = 4 * outer_space.pixelMultiple;
+                // every spaceship pixel is 2 meter
                 const width = 499 / 500 * outer_space.pixelMultiple;
-                const height = 124 / 500 * outer_space.pixelMultiple;
+                const height = 128 / 500 * outer_space.pixelMultiple;
                 this.x_spaceship.style.width = width;
                 this.x_spaceship.style.height = height;
                 let x = proj[0] - this.neg[0] - width / 2;

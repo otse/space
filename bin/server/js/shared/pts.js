@@ -91,6 +91,9 @@ class pts {
     static together(zx) {
         return zx[0] + zx[1];
     }
+    static length_(a) {
+        return a[0] * a[0] + a[1] * a[1];
+    }
     static uneven(a, n = -1) {
         let b = pts.clone(a);
         if (b[0] % 2 != 1) {

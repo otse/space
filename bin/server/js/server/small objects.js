@@ -81,13 +81,14 @@ var small_objects;
             this.type = 'rock';
             this.angle = Math.random() * Math.PI * 2;
             this.lifetime = 60 * 3;
-            this.speed = 0.3 + Math.random() * 0.3;
+            this.speed = 1.0; // + Math.random() * 0.3;
         }
         tick() {
             if (this.timed_out())
                 return;
             super.tick();
             const speed = this.speed * lod_1.default.tick_rate;
+            this.random.vel = speed;
             let x = speed * Math.sin(this.angle);
             let y = speed * Math.cos(this.angle);
             this.pos = pts_1.default.add(this.pos, [x, y]);

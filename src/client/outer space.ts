@@ -11,7 +11,8 @@ namespace outer_space {
 
 	const deduct_nav_bar = 60;
 	const zoom_min = 0.0001;
-	const zoom_max = 200;
+	const zoom_max = 600;
+	const zoom_divider = 100;
 
 	export const tick_rate = 2;
 
@@ -64,7 +65,7 @@ namespace outer_space {
 		//const rect = element.getBoundingClientRect();
 		//console.log(rect.top);
 		//proj = [rect.left, rect.top];		
-		let size: vec2 = [element.clientWidth, element.clientHeight];
+		let size: vec2 = [element.clientWidth || 100, element.clientHeight || 100];
 		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1]]);
 		return aabb.test(new aabb2(proj, pts.add(proj, size)));
 	}
@@ -97,7 +98,7 @@ namespace outer_space {
 
 		document.body.addEventListener('gesturechange', function (e) {
 			const ev = e as any;
-			const multiplier = pixelMultiple / zoom_max;
+			const multiplier = pixelMultiple / zoom_divider;
 			const zoomAmount = 2 * multiplier;
 			if (ev.scale < 1.0)
 				pixelMultiple -= zoomAmount;
@@ -247,7 +248,7 @@ namespace outer_space {
 			center = you.obj.tuple[2];
 		}
 
-		const multiplier = pixelMultiple / zoom_max;
+		const multiplier = pixelMultiple / zoom_divider;
 		const increment = 10 * multiplier;
 
 		if (!right_bar.toggler.hovering) {
@@ -288,6 +289,7 @@ namespace outer_space {
 		networked = true
 		old_pos: vec2 = [0, 0]
 		new_pos: vec2 = [0, 0]
+		velocity = 0
 		lost = false
 		icon = 'radio_button_unchecked'
 		constructor(
@@ -357,8 +359,17 @@ namespace outer_space {
 
 				const factor = app.delta / tick_rate;
 				const dif = pts.subtract(this.new_pos, this.old_pos);
-				const tween = pts.mult(dif, factor);
-				this.tuple[2] = pts.add(this.tuple[2], tween);
+				const keep_up_vector = pts.mult(dif, factor);
+				this.tuple[2] = pts.add(this.tuple[2], keep_up_vector);
+				
+				/*const fps = 1 / app.delta;
+				const keep_up_per_second = pts.divide(keep_up_vector, 1);
+				const tween_km_per_second = pts.mult(keep_up_per_second, fps);
+				const km_per_second = pts.length_((tween_km_per_second));
+				const km_per_hour = Math.round(km_per_second * 3600);
+				this.velocity = km_per_hour;*/
+
+				this.velocity = this.tuple[0].vel * 3600;
 			}
 			this.element?.step();
 		}
@@ -428,12 +439,12 @@ namespace outer_space {
 			super(obj);
 		}
 		override step() {
-			if (pixelMultiple >= 1 && !this.showing_actual_spaceship) {
+			if (pixelMultiple >= 3 && !this.showing_actual_spaceship) {
 				this.showing_actual_spaceship = true;
 				this.element.innerHTML = `<x-spaceship></x-spaceship>`;
 				this.x_spaceship = this.element.querySelector('x-spaceship');
 			}
-			else if (pixelMultiple < 1 && this.showing_actual_spaceship) {
+			else if (pixelMultiple < 3 && this.showing_actual_spaceship) {
 				this.showing_actual_spaceship = false;
 				this.element.innerHTML = `<x-triangle></x-triangle><x-label>${this.obj.tuple[4]}</x-label>`;
 			}
@@ -445,8 +456,9 @@ namespace outer_space {
 				
 				let proj = project(this.obj.tuple[2]);
 				const size = 4 * pixelMultiple;
+				// every spaceship pixel is 2 meter
 				const width = 499 / 500 * pixelMultiple;
-				const height = 124 / 500 * pixelMultiple;
+				const height = 128 / 500 * pixelMultiple;
 				this.x_spaceship.style.width = width;
 				this.x_spaceship.style.height = height;
 				let x = proj[0] - this.neg[0] - width / 2;

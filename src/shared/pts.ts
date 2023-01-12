@@ -21,7 +21,7 @@ class pts {
 	}
 
 	static fixed(a: vec2) {
-		return[a[0]]
+		return [a[0]]
 	}
 
 	static func(bb: aabb2, callback: (pos: vec2) => any) {
@@ -37,7 +37,7 @@ class pts {
 	static project(a: vec2): vec2 { // dimetric
 		return [a[0] / 2 + a[1] / 2, a[1] / 4 - a[0] / 4];
 	}
-	
+
 	static unproject(a: vec2): vec2 { // dimetric
 		return [a[0] - a[1] * 2, a[1] * 2 + a[0]];
 	}
@@ -56,7 +56,7 @@ class pts {
 		return [clamp(a[0], min[0], max[0]), clamp(a[1], min[1], max[1])];
 	}
 	*/
-	
+
 	static floor(a: vec2): vec2 {
 		return [Math.floor(a[0]), Math.floor(a[1])];
 	}
@@ -117,6 +117,10 @@ class pts {
 		return zx[0] + zx[1];
 	}
 
+	static length_(a: vec2) {
+		return a[0] * a[0] + a[1] * a[1];
+	}
+
 	static uneven(a: vec2, n: number = -1): vec2 {
 		let b = pts.clone(a);
 		if (b[0] % 2 != 1) {
@@ -137,7 +141,7 @@ class pts {
 		}
 		return b;
 	}
-	
+
 	static angle(a: vec2, b: vec2) {
 		return -Math.atan2(
 			a[0] - b[0],

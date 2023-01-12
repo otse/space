@@ -121,6 +121,11 @@ class selected_item extends right_bar.toggler_behavior {
             const unit = units.very_pretty_dist_format(pts.dist(outer_space.center, obj.tuple[2]));
             x_dist.innerHTML = `${unit}`;
         }
+        const x_velocity = this.get_element('x-velocity', this.x_ui);
+        if (x_velocity) {
+            const velocity = obj.velocity;
+            x_velocity.innerHTML = `${(velocity)} km/h`;
+        }
     }
     build_once() {
         console.log('build once');
@@ -181,6 +186,10 @@ class selected_item extends right_bar.toggler_behavior {
 					<x-name-value-pair>
 						<x-name>Dist:</x-name>
 						<x-value><x-dist></x-dist></x-value>
+					</x-name-value-pair>
+					<x-name-value-pair>
+						<x-name>Velocity:</x-name>
+						<x-value><x-velocity>0</x-velocity></x-value>
 					</x-name-value-pair>
 					<x-horizontal-rule></x-horizontal-rule>
 					<x-buttons>
