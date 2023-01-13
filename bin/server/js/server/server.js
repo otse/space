@@ -315,7 +315,8 @@ function init() {
             }
             return;
         }
-        else if (actions_1.default.handle(req, res)) {
+        else if (session && actions_1.default.handle(session, req, res)) {
+            0;
         }
         else {
             console.log('unhandled');

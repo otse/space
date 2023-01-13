@@ -48,13 +48,13 @@ var outer_space;
     }
     outer_space.unproject = unproject;
     function is_onscreen(obj) {
-        let proj = project(obj.tuple[2]);
+        let proj = project(obj.pos);
         let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
         return aabb.test(new aabb2(proj, proj));
     }
     outer_space.is_onscreen = is_onscreen;
     function element_is_onscreen(obj, element) {
-        let proj = project(obj.tuple[2]);
+        let proj = project(obj.pos);
         //const rect = element.getBoundingClientRect();
         //console.log(rect.top);
         //proj = [rect.left, rect.top];		
@@ -66,6 +66,8 @@ var outer_space;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
+        outer_space.marker = new ping();
+        outer_space.marker.obj.networked = false;
         outer_space.renderer.onclick = (event) => {
             var _a, _b;
             if (!started)
@@ -75,9 +77,11 @@ var outer_space;
             console.log(' clicked o/s ');
             let pixel = [event.clientX, event.clientY];
             let unit = unproject(pixel);
-            outer_space.marker.obj.tuple[2] = unit;
+            outer_space.marker.obj.pos = unit;
             outer_space.marker.enabled = true;
             outer_space.marker.sticky = undefined;
+            if (!selected_item.instance.toggler.opened)
+                selected_item.instance.toggler.open();
             (_b = (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.blur();
             obj.focus = undefined;
             //selected_item.instance.toggler.close();
@@ -121,7 +125,6 @@ var outer_space;
                 outer_space.objs[i].remove();
             outer_space.objs = [];
             outer_space.you = undefined;
-            outer_space.marker = undefined;
             started = false;
             clearTimeout(fetcher);
             right_bar.stop();
@@ -133,10 +136,9 @@ var outer_space;
     }
     function statics() {
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
+        outer_space.marker.obj.pos = [0, 0];
         //you = new float(-1, center, 'you', 'you');
         //you.stamp = -1;
-        outer_space.marker = new ping();
-        outer_space.marker.obj.networked = false;
         let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
         collision.obj.stamp = -1;
         for (let blob of space.regions) {
@@ -188,10 +190,9 @@ var outer_space;
                 const [random, id, pos, type, name] = object;
                 let bee = get_obj_by_id(id);
                 if (bee) {
-                    //bee.tuple[2] = pos;
-                    bee.old_pos = bee.tuple[2];
+                    bee.tuple = object;
+                    bee.old_pos = bee.pos;
                     bee.new_pos = pos;
-                    //bee.element?.stylize();
                 }
                 else {
                     bee = new obj(object);
@@ -220,7 +221,7 @@ var outer_space;
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
         if (outer_space.you) {
             //you.pos = pts.add(you.pos, [0.001, 0]);
-            outer_space.center = outer_space.you.obj.tuple[2];
+            outer_space.center = outer_space.you.obj.pos;
         }
         const multiplier = outer_space.pixelMultiple / zoom_divider;
         const increment = 10 * multiplier;
@@ -243,7 +244,7 @@ var outer_space;
         (_c = target.element) === null || _c === void 0 ? void 0 : _c.focus();
         outer_space.marker.enabled = true;
         outer_space.marker.sticky = target.element;
-        outer_space.marker.obj.tuple[2] = target.tuple[2];
+        outer_space.marker.obj.pos = target.pos;
         if (!selected_item.instance.toggler.opened)
             selected_item.instance.toggler.open();
         console.log('focus on obj');
@@ -255,6 +256,7 @@ var outer_space;
             this.tuple = tuple;
             this.stamp = 0;
             this.networked = true;
+            this.pos = [0, 0];
             this.old_pos = [0, 0];
             this.new_pos = [0, 0];
             this.velocity = 0;
@@ -262,6 +264,7 @@ var outer_space;
             this.icon = 'radio_button_unchecked';
             outer_space.objs.push(this);
             this.set_icon();
+            this.pos = tuple[2];
         }
         set_icon() {
             if (this.is_type(['ply'])) {
@@ -314,23 +317,28 @@ var outer_space;
         step() {
             var _a, _b;
             if (this.networked) {
-                if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
-                    outer_space.marker.obj.tuple[2] = this.tuple[2];
                 if (!pts.together(this.new_pos))
                     this.new_pos = this.tuple[2];
                 if (!pts.together(this.old_pos))
                     this.old_pos = this.tuple[2];
-                const factor = app.delta / outer_space.tick_rate;
-                const dif = pts.subtract(this.new_pos, this.old_pos);
-                const keep_up_vector = pts.mult(dif, factor);
-                this.tuple[2] = pts.add(this.tuple[2], keep_up_vector);
+                if (app.delta > outer_space.tick_rate) {
+                    this.old_pos = this.new_pos;
+                    this.pos = this.new_pos;
+                }
+                else {
+                    const factor = app.delta / outer_space.tick_rate;
+                    const dif = pts.subtract(this.new_pos, this.old_pos);
+                    const keep_up_vector = pts.mult(dif, factor);
+                    this.pos = pts.add(this.pos, keep_up_vector);
+                }
+                if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
+                    outer_space.marker.obj.pos = this.pos;
                 /*const fps = 1 / app.delta;
                 const keep_up_per_second = pts.divide(keep_up_vector, 1);
                 const tween_km_per_second = pts.mult(keep_up_per_second, fps);
                 const km_per_second = pts.length_((tween_km_per_second));
                 const km_per_hour = Math.round(km_per_second * 3600);
                 this.velocity = km_per_hour;*/
-                this.velocity = this.tuple[0].vel * 3600;
             }
             (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();
         }
@@ -381,7 +389,7 @@ var outer_space;
             this.stylize();
         }
         stylize() {
-            let proj = project(this.obj.tuple[2]);
+            let proj = project(this.obj.pos);
             //this.element.style.top = proj[1] - this.neg[1];
             //this.element.style.left = proj[0] - this.neg[0];
             let x = proj[0] - this.neg[0];
@@ -397,6 +405,9 @@ var outer_space;
             this.rotation = Math.random() * 360;
         }
         step() {
+            const angle = this.obj.tuple[0].angle || 0;
+            console.log(angle);
+            this.rotation = angle * (180 / Math.PI) + 90;
             if (outer_space.pixelMultiple >= 3 && !this.showing_actual_spaceship) {
                 this.showing_actual_spaceship = true;
                 this.element.innerHTML = `<x-spaceship></x-spaceship>`;
@@ -411,7 +422,7 @@ var outer_space;
         stylize() {
             //console.log('stylize spaceship');
             if (this.showing_actual_spaceship) {
-                let proj = project(this.obj.tuple[2]);
+                let proj = project(this.obj.pos);
                 const size = 4 * outer_space.pixelMultiple;
                 // every spaceship pixel is 2 meter
                 const width = 499 / 500 * outer_space.pixelMultiple;
@@ -420,7 +431,7 @@ var outer_space;
                 this.x_spaceship.style.height = height;
                 let x = proj[0] - this.neg[0] - width / 2;
                 let y = proj[1] - this.neg[1] - height / 2;
-                this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${this.rotation}deg)`;
+                this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${-this.rotation}deg)`;
             }
             else {
                 super.stylize();
@@ -452,7 +463,7 @@ var outer_space;
         }
         stylize() {
             if (this.showing_actual_rock) {
-                let proj = project(this.obj.tuple[2]);
+                let proj = project(this.obj.pos);
                 const size = this.diameter_in_km * outer_space.pixelMultiple;
                 this.x_rock.style.width = size;
                 this.x_rock.style.height = size;
@@ -479,7 +490,7 @@ var outer_space;
             this.append();
         }
         stylize() {
-            let proj = project(this.obj.tuple[2]);
+            let proj = project(this.obj.pos);
             const radius = this.radius * outer_space.pixelMultiple;
             this.element.style.top = proj[1] - radius;
             this.element.style.left = proj[0] - radius;
@@ -504,7 +515,7 @@ var outer_space;
         }
         stylize() {
             // console.log('ping stylize');
-            let proj = project(this.obj.tuple[2]);
+            let proj = project(this.obj.pos);
             this.element.style.top = proj[1];
             this.element.style.left = proj[0];
             this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
@@ -526,7 +537,7 @@ var outer_space;
             this.append();
         }
         stylize() {
-            let proj = project(this.obj.tuple[2]);
+            let proj = project(this.obj.pos);
             const radius = this.obj.tuple[0].radius * outer_space.pixelMultiple;
             this.element.style.top = proj[1] - radius;
             this.element.style.left = proj[0] - radius;

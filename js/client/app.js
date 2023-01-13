@@ -99,8 +99,8 @@ var app;
         if (!last)
             last = current;
         app.delta = (current - last) / 1000;
-        if (app.delta > 1 / 30)
-            app.delta = 1 / 30;
+        //if (delta > 1 / 10)
+        //	delta = 1 / 10;
         last = current;
         space.step();
         app.wheel = 0;

@@ -99,8 +99,8 @@ var space = (function () {
             if (!last)
                 last = current;
             app.delta = (current - last) / 1000;
-            if (app.delta > 1 / 30)
-                app.delta = 1 / 30;
+            //if (delta > 1 / 10)
+            //	delta = 1 / 10;
             last = current;
             space$1.step();
             app.wheel = 0;
@@ -231,7 +231,7 @@ var space = (function () {
             return b;
         }
         static angle(a, b) {
-            return -Math.atan2(a[0] - b[0], a[1] - b[1]);
+            return Math.atan2(a[0] - b[0], a[1] - b[1]);
         }
         // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
         static dist(a, b) {
@@ -633,10 +633,21 @@ var space = (function () {
                 }
             }
             if (!obj && !this.built_void) {
+                this.built_void = true;
                 this.built_obj = undefined;
                 this.docked_obj = undefined;
                 this.attach_solid();
-                this.x_ui.innerHTML = `Void`;
+                this.x_ui.innerHTML = `
+			Void
+			<x-buttons>
+			<x-button data-a="fly">Fly</x-button>
+			</x-buttons>
+			`;
+                const fly_button = this.get_element('x-button[data-a="fly"]', this.x_ui);
+                fly_button.onclick = () => {
+                    console.log('fly');
+                    space$1.action_fly_to_ping();
+                };
             }
             if (obj && obj.lost && this.built_obj) {
                 this.built_obj = undefined;
@@ -648,7 +659,7 @@ var space = (function () {
 			`;
             }
             if (this.floating && obj) {
-                const proj = outer_space$1.project(obj.tuple[2]);
+                const proj = outer_space$1.project(obj.pos);
                 //this.attachment.style.position = 'selected';
                 this.attachment.style.transform = `translate(${proj[0]}px, ${proj[1]}px)`;
                 //this.attachment.style.top = `${proj[1]}`;
@@ -667,17 +678,19 @@ var space = (function () {
             }
             const x_pos = this.get_element('x-pos', this.x_ui);
             if (x_pos) {
-                x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
+                x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.pos, 2)}</span> ]`;
             }
             const x_dist = this.get_element('x-dist', this.x_ui);
             if (x_dist) {
-                const unit = units$1.very_pretty_dist_format(pts.dist(outer_space$1.center, obj.tuple[2]));
+                const unit = units$1.very_pretty_dist_format(pts.dist(outer_space$1.center, obj.pos));
                 x_dist.innerHTML = `${unit}`;
             }
             const x_velocity = this.get_element('x-velocity', this.x_ui);
             if (x_velocity) {
-                const velocity = obj.velocity;
-                x_velocity.innerHTML = `${(velocity)} km/h`;
+                obj.velocity;
+                const km_per_second = obj.tuple[0].vel || 0;
+                const m_per_second = km_per_second * 1000;
+                x_velocity.innerHTML = `${Math.round(m_per_second)} m/s`;
             }
         }
         build_once() {
@@ -912,13 +925,13 @@ var space = (function () {
         }
         outer_space.unproject = unproject;
         function is_onscreen(obj) {
-            let proj = project(obj.tuple[2]);
+            let proj = project(obj.pos);
             let aabb = new aabb2([0, deduct_nav_bar], [outer_space.mapSize[0], outer_space.mapSize[1]]);
             return aabb.test(new aabb2(proj, proj));
         }
         outer_space.is_onscreen = is_onscreen;
         function element_is_onscreen(obj, element) {
-            let proj = project(obj.tuple[2]);
+            let proj = project(obj.pos);
             //const rect = element.getBoundingClientRect();
             //console.log(rect.top);
             //proj = [rect.left, rect.top];		
@@ -930,6 +943,8 @@ var space = (function () {
         function init() {
             outer_space.renderer = document.querySelector("outer-space");
             outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
+            outer_space.marker = new ping();
+            outer_space.marker.obj.networked = false;
             outer_space.renderer.onclick = (event) => {
                 var _a, _b;
                 if (!started)
@@ -939,9 +954,11 @@ var space = (function () {
                 console.log(' clicked o/s ');
                 let pixel = [event.clientX, event.clientY];
                 let unit = unproject(pixel);
-                outer_space.marker.obj.tuple[2] = unit;
+                outer_space.marker.obj.pos = unit;
                 outer_space.marker.enabled = true;
                 outer_space.marker.sticky = undefined;
+                if (!selected_item.instance.toggler.opened)
+                    selected_item.instance.toggler.open();
                 (_b = (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.blur();
                 obj.focus = undefined;
                 //selected_item.instance.toggler.close();
@@ -985,7 +1002,6 @@ var space = (function () {
                     outer_space.objs[i].remove();
                 outer_space.objs = [];
                 outer_space.you = undefined;
-                outer_space.marker = undefined;
                 started = false;
                 clearTimeout(fetcher);
                 right_bar$1.stop();
@@ -995,10 +1011,9 @@ var space = (function () {
         outer_space.stop = stop;
         function statics() {
             outer_space.mapSize = [window.innerWidth, window.innerHeight];
+            outer_space.marker.obj.pos = [0, 0];
             //you = new float(-1, center, 'you', 'you');
             //you.stamp = -1;
-            outer_space.marker = new ping();
-            outer_space.marker.obj.networked = false;
             let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
             collision.obj.stamp = -1;
             for (let blob of space$1.regions) {
@@ -1050,10 +1065,9 @@ var space = (function () {
                     const [random, id, pos, type, name] = object;
                     let bee = get_obj_by_id(id);
                     if (bee) {
-                        //bee.tuple[2] = pos;
-                        bee.old_pos = bee.tuple[2];
+                        bee.tuple = object;
+                        bee.old_pos = bee.pos;
                         bee.new_pos = pos;
-                        //bee.element?.stylize();
                     }
                     else {
                         bee = new obj(object);
@@ -1082,7 +1096,7 @@ var space = (function () {
             outer_space.mapSize = [window.innerWidth, window.innerHeight];
             if (outer_space.you) {
                 //you.pos = pts.add(you.pos, [0.001, 0]);
-                outer_space.center = outer_space.you.obj.tuple[2];
+                outer_space.center = outer_space.you.obj.pos;
             }
             const multiplier = outer_space.pixelMultiple / zoom_divider;
             const increment = 10 * multiplier;
@@ -1105,7 +1119,7 @@ var space = (function () {
             (_c = target.element) === null || _c === void 0 ? void 0 : _c.focus();
             outer_space.marker.enabled = true;
             outer_space.marker.sticky = target.element;
-            outer_space.marker.obj.tuple[2] = target.tuple[2];
+            outer_space.marker.obj.pos = target.pos;
             if (!selected_item.instance.toggler.opened)
                 selected_item.instance.toggler.open();
             console.log('focus on obj');
@@ -1117,6 +1131,7 @@ var space = (function () {
                 this.tuple = tuple;
                 this.stamp = 0;
                 this.networked = true;
+                this.pos = [0, 0];
                 this.old_pos = [0, 0];
                 this.new_pos = [0, 0];
                 this.velocity = 0;
@@ -1124,6 +1139,7 @@ var space = (function () {
                 this.icon = 'radio_button_unchecked';
                 outer_space.objs.push(this);
                 this.set_icon();
+                this.pos = tuple[2];
             }
             set_icon() {
                 if (this.is_type(['ply'])) {
@@ -1176,23 +1192,28 @@ var space = (function () {
             step() {
                 var _a, _b;
                 if (this.networked) {
-                    if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
-                        outer_space.marker.obj.tuple[2] = this.tuple[2];
                     if (!pts.together(this.new_pos))
                         this.new_pos = this.tuple[2];
                     if (!pts.together(this.old_pos))
                         this.old_pos = this.tuple[2];
-                    const factor = app$1.delta / outer_space.tick_rate;
-                    const dif = pts.subtract(this.new_pos, this.old_pos);
-                    const keep_up_vector = pts.mult(dif, factor);
-                    this.tuple[2] = pts.add(this.tuple[2], keep_up_vector);
+                    if (app$1.delta > outer_space.tick_rate) {
+                        this.old_pos = this.new_pos;
+                        this.pos = this.new_pos;
+                    }
+                    else {
+                        const factor = app$1.delta / outer_space.tick_rate;
+                        const dif = pts.subtract(this.new_pos, this.old_pos);
+                        const keep_up_vector = pts.mult(dif, factor);
+                        this.pos = pts.add(this.pos, keep_up_vector);
+                    }
+                    if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
+                        outer_space.marker.obj.pos = this.pos;
                     /*const fps = 1 / app.delta;
                     const keep_up_per_second = pts.divide(keep_up_vector, 1);
                     const tween_km_per_second = pts.mult(keep_up_per_second, fps);
                     const km_per_second = pts.length_((tween_km_per_second));
                     const km_per_hour = Math.round(km_per_second * 3600);
                     this.velocity = km_per_hour;*/
-                    this.velocity = this.tuple[0].vel * 3600;
                 }
                 (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();
             }
@@ -1243,7 +1264,7 @@ var space = (function () {
                 this.stylize();
             }
             stylize() {
-                let proj = project(this.obj.tuple[2]);
+                let proj = project(this.obj.pos);
                 //this.element.style.top = proj[1] - this.neg[1];
                 //this.element.style.left = proj[0] - this.neg[0];
                 let x = proj[0] - this.neg[0];
@@ -1259,6 +1280,9 @@ var space = (function () {
                 this.rotation = Math.random() * 360;
             }
             step() {
+                const angle = this.obj.tuple[0].angle || 0;
+                console.log(angle);
+                this.rotation = angle * (180 / Math.PI) + 90;
                 if (outer_space.pixelMultiple >= 3 && !this.showing_actual_spaceship) {
                     this.showing_actual_spaceship = true;
                     this.element.innerHTML = `<x-spaceship></x-spaceship>`;
@@ -1273,7 +1297,7 @@ var space = (function () {
             stylize() {
                 //console.log('stylize spaceship');
                 if (this.showing_actual_spaceship) {
-                    let proj = project(this.obj.tuple[2]);
+                    let proj = project(this.obj.pos);
                     4 * outer_space.pixelMultiple;
                     // every spaceship pixel is 2 meter
                     const width = 499 / 500 * outer_space.pixelMultiple;
@@ -1282,7 +1306,7 @@ var space = (function () {
                     this.x_spaceship.style.height = height;
                     let x = proj[0] - this.neg[0] - width / 2;
                     let y = proj[1] - this.neg[1] - height / 2;
-                    this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${this.rotation}deg)`;
+                    this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${-this.rotation}deg)`;
                 }
                 else {
                     super.stylize();
@@ -1314,7 +1338,7 @@ var space = (function () {
             }
             stylize() {
                 if (this.showing_actual_rock) {
-                    let proj = project(this.obj.tuple[2]);
+                    let proj = project(this.obj.pos);
                     const size = this.diameter_in_km * outer_space.pixelMultiple;
                     this.x_rock.style.width = size;
                     this.x_rock.style.height = size;
@@ -1341,7 +1365,7 @@ var space = (function () {
                 this.append();
             }
             stylize() {
-                let proj = project(this.obj.tuple[2]);
+                let proj = project(this.obj.pos);
                 const radius = this.radius * outer_space.pixelMultiple;
                 this.element.style.top = proj[1] - radius;
                 this.element.style.left = proj[0] - radius;
@@ -1366,7 +1390,7 @@ var space = (function () {
             }
             stylize() {
                 // console.log('ping stylize');
-                let proj = project(this.obj.tuple[2]);
+                let proj = project(this.obj.pos);
                 this.element.style.top = proj[1];
                 this.element.style.left = proj[0];
                 this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
@@ -1388,7 +1412,7 @@ var space = (function () {
                 this.append();
             }
             stylize() {
-                let proj = project(this.obj.tuple[2]);
+                let proj = project(this.obj.pos);
                 const radius = this.obj.tuple[0].radius * outer_space.pixelMultiple;
                 this.element.style.top = proj[1] - radius;
                 this.element.style.left = proj[0] - radius;
@@ -1537,6 +1561,13 @@ var space = (function () {
             });
         }
         space.action_follow_target = action_follow_target;
+        function action_fly_to_ping() {
+            return __awaiter(this, void 0, void 0, function* () {
+                const ping = outer_space$1.marker.obj;
+                yield make_request_json('GET', `fly?x=${ping.pos[0]}&y=${ping.pos[1]}`);
+            });
+        }
+        space.action_fly_to_ping = action_fly_to_ping;
         function action_begin_mine_target(obj) {
         }
         space.action_begin_mine_target = action_begin_mine_target;

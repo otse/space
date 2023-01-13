@@ -22,7 +22,7 @@ namespace outer_space {
 
 	export var locations: any[] = []
 
-	export var marker: ping | undefined
+	export var marker: ping
 
 	export var you: float | undefined
 
@@ -55,13 +55,13 @@ namespace outer_space {
 	}
 
 	export function is_onscreen(obj: obj) {
-		let proj = project(obj.tuple[2]);
+		let proj = project(obj.pos);
 		let aabb = new aabb2([0, deduct_nav_bar], [mapSize[0], mapSize[1]]);
 		return aabb.test(new aabb2(proj, proj));
 	}
 
 	export function element_is_onscreen(obj: obj, element: HTMLElement) {
-		let proj = project(obj.tuple[2]);
+		let proj = project(obj.pos);
 		//const rect = element.getBoundingClientRect();
 		//console.log(rect.top);
 		//proj = [rect.left, rect.top];		
@@ -74,6 +74,9 @@ namespace outer_space {
 		renderer = document.querySelector("outer-space");
 		zoomLevel = document.querySelector("outer-space zoom-level");
 
+		marker = new ping();
+		marker.obj.networked = false;
+
 		renderer.onclick = (event) => {
 			if (!started)
 				return;
@@ -83,9 +86,11 @@ namespace outer_space {
 
 			let pixel = [event.clientX, event.clientY] as vec2;
 			let unit = unproject(pixel);
-			marker!.obj.tuple[2] = unit;
-			marker!.enabled = true;
-			marker!.sticky = undefined;
+			marker.obj.pos = unit;
+			marker.enabled = true;
+			marker.sticky = undefined;
+			if (!selected_item.instance.toggler.opened)
+				selected_item.instance.toggler.open();
 
 			obj.focus?.element?.blur();
 			obj.focus = undefined;
@@ -135,7 +140,6 @@ namespace outer_space {
 				objs[i].remove();
 			objs = [];
 			you = undefined;
-			marker = undefined;
 			started = false;
 			clearTimeout(fetcher);
 			right_bar.stop();
@@ -150,11 +154,10 @@ namespace outer_space {
 	function statics() {
 		mapSize = [window.innerWidth, window.innerHeight];
 
+		marker.obj.pos = [0, 0];
+
 		//you = new float(-1, center, 'you', 'you');
 		//you.stamp = -1;
-
-		marker = new ping();
-		marker.obj.networked = false;
 
 		let collision = new float(new obj([{}, -1, [2, 1], 'collision', 'collision']));
 		collision.obj.stamp = -1;
@@ -212,10 +215,9 @@ namespace outer_space {
 			const [random, id, pos, type, name] = object;
 			let bee = get_obj_by_id(id);
 			if (bee) {
-				//bee.tuple[2] = pos;
-				bee.old_pos = bee.tuple[2];
+				bee.tuple = object;
+				bee.old_pos = bee.pos;
 				bee.new_pos = pos;
-				//bee.element?.stylize();
 			}
 			else {
 				bee = new obj(object);
@@ -245,7 +247,7 @@ namespace outer_space {
 
 		if (you) {
 			//you.pos = pts.add(you.pos, [0.001, 0]);
-			center = you.obj.tuple[2];
+			center = you.obj.pos;
 		}
 
 		const multiplier = pixelMultiple / zoom_divider;
@@ -271,9 +273,9 @@ namespace outer_space {
 		obj.focus?.element?.blur();
 		obj.focus = target;
 		target.element?.focus();
-		marker!.enabled = true;
-		marker!.sticky = target.element;
-		marker!.obj.tuple[2] = target.tuple[2];
+		marker.enabled = true;
+		marker.sticky = target.element;
+		marker.obj.pos = target.pos;
 		if (!selected_item.instance.toggler.opened)
 			selected_item.instance.toggler.open();
 		console.log('focus on obj');
@@ -287,6 +289,7 @@ namespace outer_space {
 		element?: element
 		stamp = 0
 		networked = true
+		pos: vec2 = [0, 0]
 		old_pos: vec2 = [0, 0]
 		new_pos: vec2 = [0, 0]
 		velocity = 0
@@ -297,6 +300,7 @@ namespace outer_space {
 		) {
 			objs.push(this);
 			this.set_icon();
+			this.pos = tuple[2];
 		}
 		set_icon() {
 			if (this.is_type(['ply'])) {
@@ -348,28 +352,31 @@ namespace outer_space {
 		}
 		step() {
 			if (this.networked) {
-				if (obj.focus == this && marker!.sticky?.obj == this)
-					marker!.obj.tuple[2] = this.tuple[2];
-
 				if (!pts.together(this.new_pos))
 					this.new_pos = this.tuple[2];
 
 				if (!pts.together(this.old_pos))
 					this.old_pos = this.tuple[2];
 
-				const factor = app.delta / tick_rate;
-				const dif = pts.subtract(this.new_pos, this.old_pos);
-				const keep_up_vector = pts.mult(dif, factor);
-				this.tuple[2] = pts.add(this.tuple[2], keep_up_vector);
-				
+				if (app.delta > tick_rate) {
+					this.old_pos = this.new_pos;
+					this.pos = this.new_pos;
+				} else {
+					const factor = app.delta / tick_rate;
+					const dif = pts.subtract(this.new_pos, this.old_pos);
+					const keep_up_vector = pts.mult(dif, factor);
+					this.pos = pts.add(this.pos, keep_up_vector);
+				}
+
+				if (obj.focus == this && marker.sticky?.obj == this)
+					marker.obj.pos = this.pos;
+
 				/*const fps = 1 / app.delta;
 				const keep_up_per_second = pts.divide(keep_up_vector, 1);
 				const tween_km_per_second = pts.mult(keep_up_per_second, fps);
 				const km_per_second = pts.length_((tween_km_per_second));
 				const km_per_hour = Math.round(km_per_second * 3600);
 				this.velocity = km_per_hour;*/
-
-				this.velocity = this.tuple[0].vel * 3600;
 			}
 			this.element?.step();
 		}
@@ -422,7 +429,7 @@ namespace outer_space {
 			this.stylize();
 		}
 		override stylize() {
-			let proj = project(this.obj.tuple[2]);
+			let proj = project(this.obj.pos);
 			//this.element.style.top = proj[1] - this.neg[1];
 			//this.element.style.left = proj[0] - this.neg[0];
 			let x = proj[0] - this.neg[0];
@@ -439,6 +446,10 @@ namespace outer_space {
 			super(obj);
 		}
 		override step() {
+			const angle = this.obj.tuple[0].angle || 0;
+			console.log(angle);
+			this.rotation = angle * (180 / Math.PI) + 90;
+
 			if (pixelMultiple >= 3 && !this.showing_actual_spaceship) {
 				this.showing_actual_spaceship = true;
 				this.element.innerHTML = `<x-spaceship></x-spaceship>`;
@@ -453,8 +464,8 @@ namespace outer_space {
 		override stylize() {
 			//console.log('stylize spaceship');
 			if (this.showing_actual_spaceship) {
-				
-				let proj = project(this.obj.tuple[2]);
+
+				let proj = project(this.obj.pos);
 				const size = 4 * pixelMultiple;
 				// every spaceship pixel is 2 meter
 				const width = 499 / 500 * pixelMultiple;
@@ -463,7 +474,7 @@ namespace outer_space {
 				this.x_spaceship.style.height = height;
 				let x = proj[0] - this.neg[0] - width / 2;
 				let y = proj[1] - this.neg[1] - height / 2;
-				this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${this.rotation}deg)`;
+				this.element.style.transform = `translate(${x}px, ${y}px) rotateZ(${-this.rotation}deg)`;
 			}
 			else {
 				super.stylize();
@@ -496,7 +507,7 @@ namespace outer_space {
 		}
 		override stylize() {
 			if (this.showing_actual_rock) {
-				let proj = project(this.obj.tuple[2]);
+				let proj = project(this.obj.pos);
 				const size = this.diameter_in_km * pixelMultiple;
 				this.x_rock.style.width = size;
 				this.x_rock.style.height = size;
@@ -523,7 +534,7 @@ namespace outer_space {
 			this.append();
 		}
 		override stylize() {
-			let proj = project(this.obj.tuple[2]);
+			let proj = project(this.obj.pos);
 			const radius = this.radius * pixelMultiple;
 			this.element.style.top = proj[1] - radius;
 			this.element.style.left = proj[0] - radius;
@@ -549,7 +560,7 @@ namespace outer_space {
 		}
 		override stylize() {
 			// console.log('ping stylize');
-			let proj = project(this.obj.tuple[2]);
+			let proj = project(this.obj.pos);
 			this.element.style.top = proj[1];
 			this.element.style.left = proj[0];
 			this.element.style.visibility = this.enabled ? 'visible' : 'hidden';
@@ -572,7 +583,7 @@ namespace outer_space {
 			this.append();
 		}
 		override stylize() {
-			let proj = project(this.obj.tuple[2]);
+			let proj = project(this.obj.pos);
 			const radius = this.obj.tuple[0].radius * pixelMultiple;
 			this.element.style.top = proj[1] - radius;
 			this.element.style.left = proj[0] - radius;

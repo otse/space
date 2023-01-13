@@ -163,6 +163,11 @@ namespace space {
 
 	}
 
+	export async function action_fly_to_ping() {
+		const ping = outer_space.marker.obj;
+		const res = await make_request_json('GET', `fly?x=${ping.pos[0]}&y=${ping.pos[1]}`);
+	}
+
 	export function action_begin_mine_target(obj: outer_space.obj) {
 
 	}

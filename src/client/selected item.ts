@@ -92,10 +92,22 @@ class selected_item extends right_bar.toggler_behavior {
 			}
 		}
 		if (!obj && !this.built_void) {
+			this.built_void = true;
 			this.built_obj = undefined;
 			this.docked_obj = undefined;
 			this.attach_solid();
-			this.x_ui.innerHTML = `Void`;
+			this.x_ui.innerHTML = `
+			Void
+			<x-buttons>
+			<x-button data-a="fly">Fly</x-button>
+			</x-buttons>
+			`;
+			const fly_button = this.get_element('x-button[data-a="fly"]', this.x_ui);
+			fly_button.onclick = () => {
+				console.log('fly');
+				space.action_fly_to_ping();
+			}
+
 		}
 		if (obj && obj.lost && this.built_obj) {
 			this.built_obj = undefined;
@@ -107,7 +119,7 @@ class selected_item extends right_bar.toggler_behavior {
 			`;
 		}
 		if (this.floating && obj) {
-			const proj = outer_space.project(obj.tuple[2]);
+			const proj = outer_space.project(obj.pos);
 			//this.attachment.style.position = 'selected';
 			this.attachment.style.transform = `translate(${proj[0]}px, ${proj[1]}px)`;
 			//this.attachment.style.top = `${proj[1]}`;
@@ -126,17 +138,20 @@ class selected_item extends right_bar.toggler_behavior {
 		}
 		const x_pos = this.get_element('x-pos', this.x_ui);
 		if (x_pos) {
-			x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.tuple[2], 2)}</span> ]`;
+			x_pos.innerHTML = `Pos: [ <span>${pts.to_string(obj.pos, 2)}</span> ]`;
 		}
 		const x_dist = this.get_element('x-dist', this.x_ui);
 		if (x_dist) {
-			const unit = units.very_pretty_dist_format(pts.dist(outer_space.center, obj.tuple[2]));
+			const unit = units.very_pretty_dist_format(pts.dist(outer_space.center, obj.pos));
 			x_dist.innerHTML = `${unit}`;
 		}
 		const x_velocity = this.get_element('x-velocity', this.x_ui);
 		if (x_velocity) {
 			const velocity = obj.velocity;
-			x_velocity.innerHTML = `${(velocity)} km/h`;
+			const km_per_second = obj.tuple[0].vel || 0;
+			const km_per_hour = km_per_second * 3600;
+			const m_per_second = km_per_second * 1000;
+			x_velocity.innerHTML = `${Math.round(m_per_second)} m/s`;
 		}
 	}
 	build_once() {

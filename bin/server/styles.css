@@ -68,6 +68,7 @@ outer-space x-rock {
 outer-space x-spaceship {
   background: url(tex/carrier.png);
   background-size: 100% 100%;
+  image-rendering: pixelated;
 }
 outer-space .region {
   font-family: 'Space Mono';

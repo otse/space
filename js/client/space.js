@@ -148,6 +148,13 @@ var space;
         });
     }
     space.action_follow_target = action_follow_target;
+    function action_fly_to_ping() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const ping = outer_space.marker.obj;
+            const res = yield make_request_json('GET', `fly?x=${ping.pos[0]}&y=${ping.pos[1]}`);
+        });
+    }
+    space.action_fly_to_ping = action_fly_to_ping;
     function action_begin_mine_target(obj) {
     }
     space.action_begin_mine_target = action_begin_mine_target;

@@ -40,7 +40,7 @@ var small_objects;
             lod_1.default.remove(ship);
     }
     small_objects.when_user_purged = when_user_purged;
-    class obj_lifetime extends lod_1.default.obj {
+    class timed_obj extends lod_1.default.obj {
         constructor() {
             super();
             this.lifetime = 100;
@@ -54,11 +54,17 @@ var small_objects;
             return false;
         }
     }
-    small_objects.obj_lifetime = obj_lifetime;
+    small_objects.timed_obj = timed_obj;
     class ply_ship extends lod_1.default.obj {
+        static get(userId) {
+            return small_objects.ply_ships[userId];
+        }
         constructor() {
             super();
+            this.target = [0, 0];
+            this.speed = 2.0;
             this.userId = -1;
+            this.flyTowardsTarget = false;
             this.type = 'ply';
         }
         set() {
@@ -68,11 +74,24 @@ var small_objects;
         tick() {
             super.tick();
             //this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+            if (this.flyTowardsTarget) {
+                const speed = this.speed * lod_1.default.tick_rate;
+                let angle = pts_1.default.angle(this.pos, this.target);
+                this.random.vel = this.speed;
+                this.random.angle = angle;
+                let x = speed * Math.sin(angle);
+                let y = speed * Math.cos(angle);
+                this.pos = pts_1.default.subtract(this.pos, [x, y]);
+                if (pts_1.default.dist(this.pos, this.target) <= this.speed) {
+                    this.flyTowardsTarget = false;
+                    console.log('arrived at target');
+                }
+            }
             lod_1.default.chunk.swap(this);
         }
     }
     small_objects.ply_ship = ply_ship;
-    class tp_rock extends obj_lifetime {
+    class tp_rock extends timed_obj {
         constructor() {
             super();
             this.angle = 0;
@@ -81,17 +100,18 @@ var small_objects;
             this.type = 'rock';
             this.angle = Math.random() * Math.PI * 2;
             this.lifetime = 60 * 3;
-            this.speed = 1.0; // + Math.random() * 0.3;
+            this.speed = 0.3 + Math.random() * 0.3;
         }
         tick() {
             if (this.timed_out())
                 return;
             super.tick();
             const speed = this.speed * lod_1.default.tick_rate;
-            this.random.vel = speed;
+            this.random.vel = this.speed;
             let x = speed * Math.sin(this.angle);
             let y = speed * Math.cos(this.angle);
-            this.pos = pts_1.default.add(this.pos, [x, y]);
+            let add = [x, y];
+            this.pos = pts_1.default.add(this.pos, add);
             lod_1.default.chunk.swap(this);
             //console.log('tickk');
         }

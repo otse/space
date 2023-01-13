@@ -4,7 +4,7 @@ import lod from "./lod"
 
 export namespace small_objects {
 
-	export var ply_ships = {};
+	export var ply_ships: { [index: number]: ply_ship } = {};
 
 	export var grid: lod.grid
 
@@ -44,7 +44,7 @@ export namespace small_objects {
 			lod.remove(ship);
 	}
 
-	export class obj_lifetime extends lod.obj {
+	export class timed_obj extends lod.obj {
 		lifetime = 100
 		constructor() {
 			super();
@@ -60,7 +60,13 @@ export namespace small_objects {
 	}
 
 	export class ply_ship extends lod.obj {
+		target: vec2 = [0, 0]
+		speed = 2.0
 		userId = -1
+		flyTowardsTarget = false
+		static get(userId: number) {
+			return ply_ships[userId];
+		}
 		constructor() {
 			super();
 			this.type = 'ply';
@@ -72,11 +78,28 @@ export namespace small_objects {
 		override tick() {
 			super.tick();
 			//this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
+
+			if (this.flyTowardsTarget) {				
+				const speed = this.speed * lod.tick_rate;
+				let angle = pts.angle(this.pos, this.target);
+				this.random.vel = this.speed;
+				this.random.angle = angle;				
+
+				let x = speed * Math.sin(angle);
+				let y = speed * Math.cos(angle);
+				this.pos = pts.subtract(this.pos, [x, y]);
+
+				if (pts.dist(this.pos, this.target) <= this.speed) {
+					this.flyTowardsTarget = false;
+					console.log('arrived at target');
+					
+				}
+			}
 			lod.chunk.swap(this);
 		}
 	}
 
-	export class tp_rock extends obj_lifetime {
+	export class tp_rock extends timed_obj {
 		angle = 0
 		speed = 0.3 // 0.3 km per second
 		constructor() {
@@ -85,17 +108,18 @@ export namespace small_objects {
 			this.type = 'rock';
 			this.angle = Math.random() * Math.PI * 2;
 			this.lifetime = 60 * 3;
-			this.speed = 1.0;// + Math.random() * 0.3;
+			this.speed = 0.3 + Math.random() * 0.3;
 		}
 		override tick() {
 			if (this.timed_out())
 				return;
 			super.tick();
-			const speed = this.speed * lod.tick_rate; 
-			this.random.vel = speed;
+			const speed = this.speed * lod.tick_rate;
+			this.random.vel = this.speed;
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
-			this.pos = pts.add(this.pos, [x, y]);
+			let add: vec2 = [x, y];
+			this.pos = pts.add(this.pos, add);
 			lod.chunk.swap(this);
 			//console.log('tickk');
 		}
