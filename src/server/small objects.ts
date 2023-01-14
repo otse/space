@@ -1,6 +1,7 @@
 import hooks from "../shared/hooks";
 import pts from "../shared/pts";
 import lod from "./lod"
+import continuum from "./continuum";
 
 export namespace small_objects {
 
@@ -27,18 +28,19 @@ export namespace small_objects {
 		grid.tick();
 	}
 
-	export function when_user_minted(user) {
+	function when_user_minted(user) {
 		console.log('userMinted', user.id);
 		user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
 		let ship = new small_objects.ply_ship;
 		ship.userId = user.id;
+		ship.user = user;
 		ship.name = user.username;
 		ship.pos = user.pos;
 		ship.set();
 		lod.add(grid, ship);
 	}
 
-	export function when_user_purged(user) {
+	function when_user_purged(user) {
 		let ship = ply_ships[user.id];
 		if (ship)
 			lod.remove(ship);
@@ -64,6 +66,7 @@ export namespace small_objects {
 		speed = 2.0
 		userId = -1
 		flyTowardsTarget = false
+		user: continuum.user_json
 		static get(userId: number) {
 			return ply_ships[userId];
 		}
@@ -83,7 +86,7 @@ export namespace small_objects {
 				const speed = this.speed * lod.tick_rate;
 				let angle = pts.angle(this.pos, this.target);
 				this.random.vel = this.speed;
-				this.random.angle = angle;				
+				this.random.ang = angle;
 
 				let x = speed * Math.sin(angle);
 				let y = speed * Math.cos(angle);

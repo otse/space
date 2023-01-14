@@ -28,18 +28,17 @@ var small_objects;
         user.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
         let ship = new small_objects.ply_ship;
         ship.userId = user.id;
+        ship.user = user;
         ship.name = user.username;
         ship.pos = user.pos;
         ship.set();
         lod_1.default.add(small_objects.grid, ship);
     }
-    small_objects.when_user_minted = when_user_minted;
     function when_user_purged(user) {
         let ship = small_objects.ply_ships[user.id];
         if (ship)
             lod_1.default.remove(ship);
     }
-    small_objects.when_user_purged = when_user_purged;
     class timed_obj extends lod_1.default.obj {
         constructor() {
             super();
@@ -78,7 +77,7 @@ var small_objects;
                 const speed = this.speed * lod_1.default.tick_rate;
                 let angle = pts_1.default.angle(this.pos, this.target);
                 this.random.vel = this.speed;
-                this.random.angle = angle;
+                this.random.ang = angle;
                 let x = speed * Math.sin(angle);
                 let y = speed * Math.cos(angle);
                 this.pos = pts_1.default.subtract(this.pos, [x, y]);

@@ -4,7 +4,7 @@ exports.tick = void 0;
 const locations_1 = require("./locations");
 const small_objects_1 = require("./small objects");
 const lod_1 = require("./lod");
-const lost_minor_planet_1 = require("./lost minor planet");
+const continuum_1 = require("./continuum");
 const session_1 = require("./session");
 const hooks_1 = require("../shared/hooks");
 const actions_1 = require("./actions");
@@ -41,7 +41,7 @@ function init() {
     setInterval(tick, lod_1.default.tick_rate * 1000);
     locations_1.locations.init();
     small_objects_1.default.init();
-    lost_minor_planet_1.default.init();
+    continuum_1.default.init();
     for (let i = 0; i < 200; i++) {
         let rock = new small_objects_1.default.tp_rock;
         //rock.name = `rock ${i}`;
@@ -110,7 +110,7 @@ function init() {
         }
         else if (req.url == '/regions.json') {
             res.writeHead(200, { CONTENT_TYPE: APPLICATION_JSON });
-            let str = JSON.stringify(lost_minor_planet_1.default.regions);
+            let str = JSON.stringify(continuum_1.default.regions);
             res.end(str);
             return;
         }
@@ -133,18 +133,18 @@ function init() {
                 const password = parsed.password;
                 // if (parsed['username'] == 'asdf')
                 //	console.log('this is not your windows frend');
-                if (lost_minor_planet_1.default.table[username] || lost_minor_planet_1.default.object_exists(lost_minor_planet_1.default.user_path(username))) {
-                    let ply = lost_minor_planet_1.default.get_user_from_table_or_fetch(username);
+                if (continuum_1.default.table[username] || continuum_1.default.object_exists(continuum_1.default.user_path(username))) {
+                    let ply = continuum_1.default.get_user_from_table_or_fetch(username);
                     let logged_in_elsewhere = false;
                     let ip2;
-                    for (ip2 in lost_minor_planet_1.default.logins) {
-                        let username2 = lost_minor_planet_1.default.logins[ip2];
+                    for (ip2 in continuum_1.default.logins) {
+                        let username2 = continuum_1.default.logins[ip2];
                         if (username == username2 && ip != ip2) {
                             logged_in_elsewhere = true;
                             break;
                         }
                     }
-                    if (lost_minor_planet_1.default.logins[ip] == username) {
+                    if (continuum_1.default.logins[ip] == username) {
                         res.writeHead(400);
                         res.end(`You're already logged in with this user`);
                     }
@@ -153,11 +153,11 @@ function init() {
                         let msg = `Logged into ${username}`;
                         if (logged_in_elsewhere) {
                             msg += '. You\'ve been logged out of your other device';
-                            delete lost_minor_planet_1.default.logins[ip2];
+                            delete continuum_1.default.logins[ip2];
                         }
-                        lost_minor_planet_1.default.delete_user(ip, true);
-                        lost_minor_planet_1.default.logins[ip] = ply.username;
-                        lost_minor_planet_1.default.out_logins();
+                        continuum_1.default.delete_user(ip, true);
+                        continuum_1.default.logins[ip] = ply.username;
+                        continuum_1.default.out_logins();
                         res.end(msg);
                     }
                     else if (ply.password != password) {
@@ -188,7 +188,7 @@ function init() {
                 const password = parsed.password;
                 const doesItHaveLetter = /[a-zA-Z]/.test(parsed['username']);
                 var letterNumber = /^[0-9a-zA-Z]+$/;
-                if (lost_minor_planet_1.default.has_user(username)) {
+                if (continuum_1.default.has_user(username)) {
                     res.writeHead(400);
                     res.end(`Username taken`);
                 }
@@ -213,18 +213,18 @@ function init() {
                     res.end('Your passwords aren\'t the same');
                 }
                 else {
-                    let ply = lost_minor_planet_1.default.new_user();
+                    let ply = continuum_1.default.new_user();
                     ply.guest = false;
                     ply.ip = 'N/A';
                     ply.username = username;
                     ply.password = password;
-                    lost_minor_planet_1.default.delete_user(ip, true);
-                    lost_minor_planet_1.default.users.push(username);
-                    lost_minor_planet_1.default.out_users();
-                    lost_minor_planet_1.default.table[username] = ply;
+                    continuum_1.default.delete_user(ip, true);
+                    continuum_1.default.users.push(username);
+                    continuum_1.default.out_users();
+                    continuum_1.default.table[username] = ply;
                     res.writeHead(200);
                     res.end(`Congratulations, you've registered as ${username}. Now login`);
-                    lost_minor_planet_1.default.out_user(ply);
+                    continuum_1.default.out_user(ply);
                 }
             });
             return;
@@ -234,13 +234,13 @@ function init() {
 
             sendSwhere();
         }*/
-        let ply = lost_minor_planet_1.default.get_user_from_ip(req.socket.remoteAddress);
+        let user = continuum_1.default.get_user_from_ip(req.socket.remoteAddress);
         let session;
-        if (ply) {
+        if (user) {
             session = new session_1.default;
-            session.ply = ply;
+            session.ply = user;
             session.observer = new lod_1.default.observer(small_objects_1.default.grid, 3);
-            small_objects_1.default.grid.update_observer(session.observer, ply.pos);
+            small_objects_1.default.grid.update_observer(session.observer, user.pos);
         }
         const send_sply = function (ply) {
             let reduced = {
@@ -264,15 +264,15 @@ function init() {
             res.end(str);
         };
         if (req.url == '/ply') {
-            if (ply)
-                send_sply(ply);
+            if (user)
+                send_sply(user);
             else
                 send_object(['sply', false]);
             return;
         }
         else if (req.url == '/guest') {
-            if (!lost_minor_planet_1.default.logins[ip]) {
-                let guest = lost_minor_planet_1.default.make_quest(ip);
+            if (!continuum_1.default.logins[ip]) {
+                let guest = continuum_1.default.make_quest(ip);
                 res.end('true');
             }
             else
@@ -280,7 +280,7 @@ function init() {
             return;
         }
         else if (req.url == '/purge') {
-            let res = lost_minor_planet_1.default.delete_user(ip, true);
+            let res = continuum_1.default.delete_user(ip, true);
             send_object(res || false);
             return;
         }
@@ -296,16 +296,16 @@ function init() {
         }
         else if (req.url == '/logout') {
             console.log('going to log you out');
-            if (lost_minor_planet_1.default.logins[ip]) {
-                const username = lost_minor_planet_1.default.logins[ip];
-                const ply = lost_minor_planet_1.default.table[username];
+            if (continuum_1.default.logins[ip]) {
+                const username = continuum_1.default.logins[ip];
+                const ply = continuum_1.default.table[username];
                 if (ply) {
                     if (ply.guest) {
                         send_object([false, `can't logout guest user`]);
                     }
                     else {
-                        delete lost_minor_planet_1.default.logins[ip];
-                        lost_minor_planet_1.default.out_logins();
+                        delete continuum_1.default.logins[ip];
+                        continuum_1.default.out_logins();
                         send_object([true, `logging out ${username}`]);
                     }
                 }

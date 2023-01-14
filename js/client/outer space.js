@@ -24,14 +24,13 @@ var outer_space;
     outer_space.tick_rate = 2;
     outer_space.mapSize = [100, 100];
     outer_space.locations = [];
-    outer_space.center = [0, -1];
     outer_space.pixelMultiple = 50;
     outer_space.zoomLimits = [5, 120];
     outer_space.stamp = 0;
     outer_space.disableClick = false;
     function project(unit) {
         const half = pts.divide(outer_space.mapSize, 2);
-        let pos = pts.subtract(unit, outer_space.center);
+        let pos = pts.subtract(unit, outer_space.center.pos);
         pos = pts.mult(pos, outer_space.pixelMultiple);
         pos = pts.add(pos, half);
         pos = pts.add(pos, [0, deduct_nav_bar / 2]);
@@ -43,7 +42,7 @@ var outer_space;
         let pos = pts.subtract(pixel, half);
         pos = pts.subtract(pos, [0, deduct_nav_bar / 2]);
         pos = pts.divide(pos, outer_space.pixelMultiple);
-        pos = pts.add(pos, outer_space.center);
+        pos = pts.add(pos, outer_space.center.pos);
         return pos;
     }
     outer_space.unproject = unproject;
@@ -66,6 +65,7 @@ var outer_space;
     function init() {
         outer_space.renderer = document.querySelector("outer-space");
         outer_space.zoomLevel = document.querySelector("outer-space zoom-level");
+        outer_space.center = new obj([{}, -1, [0, 0], 'center', 'center']);
         outer_space.marker = new ping();
         outer_space.marker.obj.networked = false;
         outer_space.renderer.onclick = (event) => {
@@ -175,6 +175,7 @@ var outer_space;
         const [random] = object;
         if (random.userId == space.sply.id) {
             console.log(`we're us`);
+            outer_space.center = obj;
             outer_space.you = obj.element;
             (_a = outer_space.you.element) === null || _a === void 0 ? void 0 : _a.classList.add('you');
         }
@@ -196,7 +197,7 @@ var outer_space;
                 }
                 else {
                     bee = new obj(object);
-                    bee.choose_element();
+                    bee.new_element();
                     handle_you(object, bee);
                 }
                 bee.stamp = outer_space.stamp;
@@ -219,10 +220,6 @@ var outer_space;
         if (!started)
             return;
         outer_space.mapSize = [window.innerWidth, window.innerHeight];
-        if (outer_space.you) {
-            //you.pos = pts.add(you.pos, [0.001, 0]);
-            outer_space.center = outer_space.you.obj.pos;
-        }
         const multiplier = outer_space.pixelMultiple / zoom_divider;
         const increment = 10 * multiplier;
         if (!right_bar.toggler.hovering) {
@@ -234,6 +231,7 @@ var outer_space;
         outer_space.pixelMultiple = space.clamp(outer_space.pixelMultiple, zoom_min, zoom_max);
         outer_space.zoomLevel.innerHTML = `pixels / kilometer: ${outer_space.pixelMultiple.toFixed(4)}`;
         obj.steps();
+        obj.element_steps();
         right_bar.step();
     }
     outer_space.step = step;
@@ -267,29 +265,34 @@ var outer_space;
             this.pos = tuple[2];
         }
         set_icon() {
-            if (this.is_type(['ply'])) {
-                this.icon = 'rocket';
-            }
-            else if (this.is_type(['rock'])) {
-                this.icon = 'landscape';
-            }
-            else if (this.is_type(['star'])) {
-                this.icon = 'radio_button_unchecked';
-            }
+            this.icon = (() => {
+                switch (this.tuple[3]) {
+                    case 'ply':
+                    case 'pirate':
+                        return 'rocket';
+                    case 'rock':
+                        return 'landscape';
+                    case 'star':
+                        return 'radio_button_unchecked';
+                    default:
+                        return 'rocket';
+                }
+            })();
         }
-        choose_element() {
-            if (this.is_type(['ply'])) {
-                this.element = new spaceship(this);
+        new_element() {
+            switch (this.tuple[3]) {
+                case 'ply':
+                    new spaceship(this);
+                    break;
+                case 'rock':
+                    new rock(this);
+                    break;
+                case 'star':
+                    new star(this);
+                    break;
+                default:
+                    new float(this);
             }
-            else if (this.is_type(['rock'])) {
-                this.element = new rock(this);
-            }
-            else {
-                this.element = new float(this);
-            }
-            // else if (this.is_type(['region'])) {
-            // this.element = new region(this, 10);
-            // }
         }
         remove() {
             var _a;
@@ -314,8 +317,14 @@ var outer_space;
                 obj.step();
             }
         }
+        static element_steps() {
+            var _a;
+            for (const obj of outer_space.objs) {
+                (_a = obj.element) === null || _a === void 0 ? void 0 : _a.step();
+            }
+        }
         step() {
-            var _a, _b;
+            var _a;
             if (this.networked) {
                 if (!pts.together(this.new_pos))
                     this.new_pos = this.tuple[2];
@@ -340,7 +349,7 @@ var outer_space;
                 const km_per_hour = Math.round(km_per_second * 3600);
                 this.velocity = km_per_hour;*/
             }
-            (_b = this.element) === null || _b === void 0 ? void 0 : _b.step();
+            //this.element?.step();
         }
     }
     outer_space.obj = obj;
@@ -405,8 +414,7 @@ var outer_space;
             this.rotation = Math.random() * 360;
         }
         step() {
-            const angle = this.obj.tuple[0].angle || 0;
-            console.log(angle);
+            const angle = this.obj.tuple[0].ang || 0;
             this.rotation = angle * (180 / Math.PI) + 90;
             if (outer_space.pixelMultiple >= 3 && !this.showing_actual_spaceship) {
                 this.showing_actual_spaceship = true;

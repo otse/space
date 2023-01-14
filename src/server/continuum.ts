@@ -1,16 +1,14 @@
 var fs = require('fs');
 
 import hooks from "../shared/hooks";
-import small_objects from "./small objects";
 
-
-interface LostMinorPlanet {
+interface continuum_file {
 	users: number
 	writes: number
 	boo: number
 }
 
-namespace lost_minor_planet {
+namespace continuum {
 
 	export interface user_json {
 		id: number
@@ -23,7 +21,9 @@ namespace lost_minor_planet {
 		goto: vec2
 	}
 
-	export var meta, regions, logins, users;
+	export var meta: continuum_file
+
+	export var regions, logins, users;
 
 	//export var asd: {[user: string]: ply_json }
 
@@ -172,4 +172,4 @@ namespace lost_minor_planet {
 	}
 }
 
-export default lost_minor_planet;
+export default continuum;

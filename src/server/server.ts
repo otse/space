@@ -2,7 +2,7 @@ import { write } from "fs";
 import { locations } from "./locations";
 import small_objects from "./small objects";
 import lod from "./lod";
-import lmp from "./lost minor planet";
+import lmp from "./continuum";
 import short_lived from "./session";
 import { send } from "process";
 import hooks from "../shared/hooks";
@@ -281,15 +281,15 @@ function init() {
 			sendSwhere();
 		}*/
 
-		let ply = lmp.get_user_from_ip(req.socket.remoteAddress);
+		let user = lmp.get_user_from_ip(req.socket.remoteAddress);
 
 		let session: short_lived | undefined;
 
-		if (ply) {
+		if (user) {
 			session = new short_lived;
-			session.ply = ply;
+			session.ply = user;
 			session.observer = new lod.observer(small_objects.grid, 3);
-			small_objects.grid.update_observer(session.observer, ply.pos);
+			small_objects.grid.update_observer(session.observer, user.pos);
 		}
 		const send_sply = function (ply) {
 			let reduced: any = {
@@ -317,8 +317,8 @@ function init() {
 		}
 
 		if (req.url == '/ply') {
-			if (ply)
-				send_sply(ply);
+			if (user)
+				send_sply(user);
 			else
 				send_object(['sply', false]);
 			return;

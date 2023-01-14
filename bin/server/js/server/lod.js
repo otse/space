@@ -24,7 +24,6 @@ class toggle {
 var lod;
 (function (lod) {
     const chunk_unobserved_lifetime = 10;
-    const obj_default_refill = 30;
     const observer_makes_sectors = true;
     lod.tick_rate = 1;
     // useful for new objects, use chunk.swap otherwise
@@ -190,18 +189,6 @@ var lod;
         }
     }
     lod.observer = observer;
-    /*
-    todo obj decay is not a good system.
-    it extends obj lifetime by observation.
-    meaning if the lod is unobserved for 16 seconds,
-    then the obj decays and is removed.
-    this doesnt imitate reality very well.
-
-    the goal is to keep the lod cleaned up.
-    if nobody sees obj x for 16 seconds, then presumably nobody
-    would care beyond that time-span,
-    and it is safe to destroy to unclutter the lod.
-    */
     class obj {
         constructor() {
             this.id = 0;
@@ -213,7 +200,13 @@ var lod;
             this.id = obj.ids++;
         }
         gather() {
-            let sent = [this.random, this.id, this.pos, this.type, this.name];
+            let sent = [
+                this.random,
+                this.id,
+                this.pos,
+                this.type,
+                this.name,
+            ];
             return sent;
         }
         tick() {

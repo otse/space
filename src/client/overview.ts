@@ -122,7 +122,7 @@ class overview extends right_bar.toggler_behavior {
 		let table = '';
 		let copy = outer_space.objs.slice();
 
-		const dist = (obj: outer_space.obj) => pts.dist(outer_space.center, obj.tuple[2]);
+		const dist = (obj: outer_space.obj) => pts.dist(outer_space.center.pos, obj.tuple[2]);
 		copy.sort((a, b) => dist(a) > dist(b) ? 1 : -1);
 
 		if (tab.active?.name == 'General') {
@@ -138,7 +138,7 @@ class overview extends right_bar.toggler_behavior {
 		for (const obj of copy) {
 			const type = obj.tuple[3];
 			
-			const dist = pts.dist(outer_space.center, obj.tuple[2]);
+			const dist = pts.dist(outer_space.center.pos, obj.tuple[2]);
 			table += `
 				<tr data-a="${obj.tuple[1]}">
 				<td><x-icon>${obj.icon}</x-icon></td>

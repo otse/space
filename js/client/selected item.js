@@ -129,7 +129,7 @@ class selected_item extends right_bar.toggler_behavior {
         }
         const x_dist = this.get_element('x-dist', this.x_ui);
         if (x_dist) {
-            const unit = units.very_pretty_dist_format(pts.dist(outer_space.center, obj.pos));
+            const unit = units.very_pretty_dist_format(pts.dist(outer_space.center.pos, obj.pos));
             x_dist.innerHTML = `${unit}`;
         }
         const x_velocity = this.get_element('x-velocity', this.x_ui);

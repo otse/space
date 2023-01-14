@@ -102,7 +102,7 @@ class overview extends right_bar.toggler_behavior {
         var _a, _b, _c, _d;
         let table = '';
         let copy = outer_space.objs.slice();
-        const dist = (obj) => pts.dist(outer_space.center, obj.tuple[2]);
+        const dist = (obj) => pts.dist(outer_space.center.pos, obj.tuple[2]);
         copy.sort((a, b) => dist(a) > dist(b) ? 1 : -1);
         if (((_a = tab.active) === null || _a === void 0 ? void 0 : _a.name) == 'General') {
             copy = copy.filter(a => a.is_type(['ply']));
@@ -115,7 +115,7 @@ class overview extends right_bar.toggler_behavior {
         }
         for (const obj of copy) {
             const type = obj.tuple[3];
-            const dist = pts.dist(outer_space.center, obj.tuple[2]);
+            const dist = pts.dist(outer_space.center.pos, obj.tuple[2]);
             table += `
 				<tr data-a="${obj.tuple[1]}">
 				<td><x-icon>${obj.icon}</x-icon></td>
