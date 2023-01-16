@@ -63,7 +63,7 @@ export namespace small_objects {
 
 	export class ply_ship extends lod.obj {
 		target: vec2 = [0, 0]
-		speed = 2.0
+		speed = 300000
 		userId = -1
 		flyTowardsTarget = false
 		user: continuum.user_json
@@ -82,15 +82,15 @@ export namespace small_objects {
 			super.tick();
 			//this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
 
-			if (this.flyTowardsTarget) {				
+			if (this.flyTowardsTarget) {
 				const speed = this.speed * lod.tick_rate;
-				let angle = pts.angle(this.pos, this.target);
+				const angle = pts.angle(this.pos, this.target);
 				this.random.vel = this.speed;
 				this.random.ang = angle;
 
-				let x = speed * Math.sin(angle);
-				let y = speed * Math.cos(angle);
-				this.pos = pts.subtract(this.pos, [x, y]);
+				let incr = pts.towards(angle, speed);
+				this.pos = pts.subtract(this.pos, incr);
+				this.user.pos = this.pos;
 
 				if (pts.dist(this.pos, this.target) <= this.speed) {
 					this.flyTowardsTarget = false;

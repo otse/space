@@ -121,6 +121,7 @@ class pts {
 		return a[0] * a[0] + a[1] * a[1];
 	}
 
+	// todo even and uneven are useless freak functions
 	static uneven(a: vec2, n: number = -1): vec2 {
 		let b = pts.clone(a);
 		if (b[0] % 2 != 1) {
@@ -131,6 +132,7 @@ class pts {
 		}
 		return b;
 	}
+
 	static even(a: vec2, n: number = -1): vec2 {
 		let b = pts.clone(a);
 		if (b[0] % 2 != 0) {
@@ -145,7 +147,11 @@ class pts {
 	static angle(a: vec2, b: vec2) {
 		return Math.atan2(
 			a[0] - b[0],
-			a[1] - b[1])
+			a[1] - b[1]);
+	}
+
+	static towards(angle: number, speed: number): vec2 {
+		return [speed * Math.sin(angle), speed * Math.cos(angle)];
 	}
 
 	// https://vorg.github.io/pex/docs/pex-geom/Vec2.html

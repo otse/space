@@ -69,7 +69,7 @@ var outer_space;
         outer_space.marker = new ping();
         outer_space.marker.obj.networked = false;
         outer_space.renderer.onclick = (event) => {
-            var _a, _b;
+            var _a;
             if (!started)
                 return;
             if (outer_space.disableClick)
@@ -82,8 +82,8 @@ var outer_space;
             outer_space.marker.sticky = undefined;
             if (!selected_item.instance.toggler.opened)
                 selected_item.instance.toggler.open();
-            (_b = (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.blur();
-            obj.focus = undefined;
+            (_a = outer_space.focusObj === null || outer_space.focusObj === void 0 ? void 0 : outer_space.focusObj.element) === null || _a === void 0 ? void 0 : _a.blur();
+            outer_space.focusObj = undefined;
             //selected_item.instance.toggler.close();
             //overview.instance.toggler.open();
             //thing.focus = undefined;
@@ -106,7 +106,6 @@ var outer_space;
     outer_space.init = init;
     var started;
     var fetcher;
-    outer_space.objs = [];
     function start() {
         if (!started) {
             console.log(' outer space start ');
@@ -124,7 +123,7 @@ var outer_space;
             while (i--)
                 outer_space.objs[i].remove();
             outer_space.objs = [];
-            outer_space.you = undefined;
+            outer_space.youObj = undefined;
             started = false;
             clearTimeout(fetcher);
             right_bar.stop();
@@ -171,13 +170,13 @@ var outer_space;
     }
     outer_space.get_obj_by_id = get_obj_by_id;
     function handle_you(object, obj) {
-        var _a;
+        var _a, _b;
         const [random] = object;
         if (random.userId == space.sply.id) {
             console.log(`we're us`);
             outer_space.center = obj;
-            outer_space.you = obj.element;
-            (_a = outer_space.you.element) === null || _a === void 0 ? void 0 : _a.classList.add('you');
+            outer_space.youObj = obj;
+            (_b = (_a = outer_space.youObj.element) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.classList.add('you');
         }
     }
     function fetch() {
@@ -201,6 +200,8 @@ var outer_space;
                     handle_you(object, bee);
                 }
                 bee.stamp = outer_space.stamp;
+                if (outer_space.youObj)
+                    outer_space.youObj.stamp = -1;
             }
             let i = outer_space.objs.length;
             while (i--) {
@@ -236,10 +237,10 @@ var outer_space;
     }
     outer_space.step = step;
     function focus_obj(target) {
-        var _a, _b, _c;
-        (_b = (_a = obj.focus) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.blur();
-        obj.focus = target;
-        (_c = target.element) === null || _c === void 0 ? void 0 : _c.focus();
+        var _a, _b;
+        (_a = outer_space.focusObj === null || outer_space.focusObj === void 0 ? void 0 : outer_space.focusObj.element) === null || _a === void 0 ? void 0 : _a.blur();
+        outer_space.focusObj = target;
+        (_b = target.element) === null || _b === void 0 ? void 0 : _b.focus();
         outer_space.marker.enabled = true;
         outer_space.marker.sticky = target.element;
         outer_space.marker.obj.pos = target.pos;
@@ -249,6 +250,7 @@ var outer_space;
         return true;
     }
     outer_space.focus_obj = focus_obj;
+    outer_space.objs = [];
     class obj {
         constructor(tuple) {
             this.tuple = tuple;
@@ -340,7 +342,7 @@ var outer_space;
                     const keep_up_vector = pts.mult(dif, factor);
                     this.pos = pts.add(this.pos, keep_up_vector);
                 }
-                if (obj.focus == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
+                if (outer_space.focusObj == this && ((_a = outer_space.marker.sticky) === null || _a === void 0 ? void 0 : _a.obj) == this)
                     outer_space.marker.obj.pos = this.pos;
                 /*const fps = 1 / app.delta;
                 const keep_up_per_second = pts.divide(keep_up_vector, 1);

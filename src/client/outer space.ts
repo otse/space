@@ -24,8 +24,8 @@ namespace outer_space {
 
 	export var marker: ping
 
-	export var you: float | undefined
-
+	export var youObj: obj | undefined
+	export var focusObj: obj | undefined
 	export var center: obj
 
 	export var pixelMultiple = 50
@@ -93,8 +93,8 @@ namespace outer_space {
 			if (!selected_item.instance.toggler.opened)
 				selected_item.instance.toggler.open();
 
-			obj.focus?.element?.blur();
-			obj.focus = undefined;
+			focusObj?.element?.blur();
+			focusObj = undefined;
 
 			//selected_item.instance.toggler.close();
 			//overview.instance.toggler.open();
@@ -121,8 +121,6 @@ namespace outer_space {
 	var started;
 	var fetcher;
 
-	export var objs: obj[] = []
-
 	export function start() {
 		if (!started) {
 			console.log(' outer space start ');
@@ -140,7 +138,7 @@ namespace outer_space {
 			while (i--)
 				objs[i].remove();
 			objs = [];
-			you = undefined;
+			youObj = undefined;
 			started = false;
 			clearTimeout(fetcher);
 			right_bar.stop();
@@ -202,8 +200,8 @@ namespace outer_space {
 		if (random.userId == space.sply.id) {
 			console.log(`we're us`);
 			center = obj;
-			you = obj.element as float;
-			you!.element?.classList.add('you');
+			youObj = obj
+			youObj!.element?.element?.classList.add('you');
 		}
 	}
 
@@ -227,6 +225,8 @@ namespace outer_space {
 				handle_you(object, bee);
 			}
 			bee.stamp = outer_space.stamp;
+			if (youObj)
+				youObj.stamp = -1;
 		}
 		let i = objs.length;
 		while (i--) {
@@ -268,8 +268,8 @@ namespace outer_space {
 	}
 
 	export function focus_obj(target: obj) {
-		obj.focus?.element?.blur();
-		obj.focus = target;
+		focusObj?.element?.blur();
+		focusObj = target;
 		target.element?.focus();
 		marker.enabled = true;
 		marker.sticky = target.element;
@@ -282,8 +282,9 @@ namespace outer_space {
 
 	type tuple = [random: any, id: number, pos: vec2, type: string, name: string];
 
+	export var objs: obj[] = []
+
 	export class obj {
-		static focus?: obj
 		element?: element
 		stamp = 0
 		networked = true
@@ -375,7 +376,7 @@ namespace outer_space {
 					this.pos = pts.add(this.pos, keep_up_vector);
 				}
 
-				if (obj.focus == this && marker.sticky?.obj == this)
+				if (focusObj == this && marker.sticky?.obj == this)
 					marker.obj.pos = this.pos;
 
 				/*const fps = 1 / app.delta;

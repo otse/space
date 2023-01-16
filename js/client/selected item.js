@@ -62,7 +62,7 @@ class selected_item extends right_bar.toggler_behavior {
     }
     on_step() {
         //this.build();
-        const obj = outer_space.obj.focus;
+        const obj = outer_space.focusObj;
         if (obj && !obj.lost && obj != this.built_obj) {
             console.log('lets build once');
             this.docked_obj = undefined;
@@ -115,7 +115,7 @@ class selected_item extends right_bar.toggler_behavior {
         this.update_teller();
     }
     update_teller() {
-        const obj = outer_space.obj.focus;
+        const obj = outer_space.focusObj;
         if (!obj)
             return;
         //console.log("x-ui onscreen:", );
@@ -144,7 +144,7 @@ class selected_item extends right_bar.toggler_behavior {
     build_once() {
         console.log('build once');
         let text = '';
-        const obj = outer_space.obj.focus;
+        const obj = outer_space.focusObj;
         this.built_obj = obj;
         if (!obj)
             return;

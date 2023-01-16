@@ -92,6 +92,7 @@ class pts {
     static length_(a) {
         return a[0] * a[0] + a[1] * a[1];
     }
+    // todo even and uneven are useless freak functions
     static uneven(a, n = -1) {
         let b = pts.clone(a);
         if (b[0] % 2 != 1) {
@@ -114,6 +115,9 @@ class pts {
     }
     static angle(a, b) {
         return Math.atan2(a[0] - b[0], a[1] - b[1]);
+    }
+    static towards(angle, speed) {
+        return [speed * Math.sin(angle), speed * Math.cos(angle)];
     }
     // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
     static dist(a, b) {

@@ -169,8 +169,8 @@ class overview extends right_bar.toggler_behavior {
 				this.selected_tr?.classList.remove('selected');
 				this.selected_tr = tr;
 				tr.classList.add('selected');
-			}
-			if (tr.dataset.a == outer_space.obj.focus?.tuple[1]) {
+			};
+			if (tr.dataset.a == outer_space.focusObj?.tuple[1]) {
 				select();
 			}
 			tr.onclick = () => {

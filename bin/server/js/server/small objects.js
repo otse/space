@@ -61,7 +61,7 @@ var small_objects;
         constructor() {
             super();
             this.target = [0, 0];
-            this.speed = 2.0;
+            this.speed = 300000;
             this.userId = -1;
             this.flyTowardsTarget = false;
             this.type = 'ply';
@@ -75,12 +75,12 @@ var small_objects;
             //this.pos = [Math.random() * 10 - 5, Math.random() * 10 - 5];
             if (this.flyTowardsTarget) {
                 const speed = this.speed * lod_1.default.tick_rate;
-                let angle = pts_1.default.angle(this.pos, this.target);
+                const angle = pts_1.default.angle(this.pos, this.target);
                 this.random.vel = this.speed;
                 this.random.ang = angle;
-                let x = speed * Math.sin(angle);
-                let y = speed * Math.cos(angle);
-                this.pos = pts_1.default.subtract(this.pos, [x, y]);
+                let incr = pts_1.default.towards(angle, speed);
+                this.pos = pts_1.default.subtract(this.pos, incr);
+                this.user.pos = this.pos;
                 if (pts_1.default.dist(this.pos, this.target) <= this.speed) {
                     this.flyTowardsTarget = false;
                     console.log('arrived at target');
